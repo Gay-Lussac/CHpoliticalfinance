@@ -54,11 +54,11 @@ The phases run in order, but the design docs for later phases are refined while 
 - [x] Views: Home, Vote page, Explorer, Methodology/About
 - [x] SEO basics and `noindex` on donor pages (see [docs/00](docs/00-concept.md), personal data)
 
-**Done when:** the site is deployed on Infomaniak with real data for every vote since 2024. *(Runs locally; deployment pending.)*
+**Done when:** the site is deployed on Infomaniak with real data for every vote since 2024. *(Live at https://polimoney.ch since 2026-09-29.)*
 
 ## Phase 5 · Automation and operations
 
-- [ ] Daily cron (or GitHub Action) for `pipeline sync`
+- [x] Daily cron for `pipeline sync` (03:15, Infomaniak SSH space)
 - [ ] Notifications: failure, new data published, unreviewed donor aliases
 - [ ] Off-host backup of the raw archive, plus a check that DB backups can be restored
 - [ ] Simple status page or footer ("data updated on …")

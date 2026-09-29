@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Run ON THE SERVER. Deploys production = origin/main, nothing else (dev never reaches the server).
+# Run ON THE SERVER (SSH space, ~/chpf). Updates the PIPELINE copy to production = origin/main.
+# The website is a separate Node.js site that pulls main from GitHub itself (docs/05 › Production setup).
 # Fast-forward only: refuses if the server copy has local changes or diverged.
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -11,10 +12,4 @@ git merge -q --ff-only origin/main
 after=$(git rev-parse --short HEAD)
 echo "main: $before -> $after"
 pip3 install -q --user --no-warn-script-location httpx PyMySQL PyYAML
-if command -v npm >/dev/null; then
-  npm --prefix api ci --omit=dev --silent
-  npm --prefix web ci --silent && npm --prefix web run build --silent
-  echo "site built – restart the Node.js site (Manager) to pick up API changes"
-else
-  echo "npm not found – Node.js site not set up yet; skipped API/web build"
-fi
+echo "pipeline updated. Website: redeploy the Node.js site in the Manager if api/ or web/ changed."
