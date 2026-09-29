@@ -186,3 +186,7 @@ td:has(.num) { text-align: right; }
 .chips { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
 .chip { display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; border: 1px solid var(--border); border-radius: 99px; font-size: .85rem; background: var(--bg); }
 .source { margin: 12px 0 0; }
+
+/* share (0–100 %) bars: fixed scale with a visible track */
+.share .share-track { flex: 1; max-width: calc(100% - 64px); height: 14px; background: var(--bg); border-radius: 0 4px 4px 0; display: flex; }
+.share .bar { height: 100%; }

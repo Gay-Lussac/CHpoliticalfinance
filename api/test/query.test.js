@@ -26,3 +26,10 @@ test('rejects unknown fields, measures and bad values', () => {
 test('limit is capped', () => {
   assert.equal(buildQuery(config, { dataset: 'flow', limit: '999999' }).limit, 5000);
 });
+
+test('fixed_filter from config is always applied (privacy guard on alignment)', () => {
+  const q = buildQuery(config, { dataset: 'alignment', group_by: 'recommender_id', measure: 'share:aligned',
+    'filter[donor_id]': '1' });
+  assert.match(q.sql, /WHERE \(donor_type = 'legal'\) AND `donor_id` IN \(\?\)/);
+  assert.throws(() => buildQuery(config, { dataset: 'alignment', 'filter[donor_type]': 'natural' }), QueryError);
+});

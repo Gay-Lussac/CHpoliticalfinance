@@ -44,7 +44,8 @@ export function buildQuery(config, params) {
   const ds = config.datasets[params.dataset];
   if (!ds) throw new QueryError(`unknown dataset; one of ${Object.keys(config.datasets).join(', ')}`);
   const fields = ds.fields;
-  const where = [];
+  // fixed_filter comes from the trusted config file (e.g. the privacy guard on 'alignment'), never from the request
+  const where = ds.fixed_filter ? [`(${ds.fixed_filter})`] : [];
   const args = [];
 
   for (const [key, value] of Object.entries(params)) {

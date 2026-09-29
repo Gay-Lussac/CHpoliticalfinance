@@ -78,6 +78,7 @@ The phases run in order, but the design docs for later phases are refined while 
 
 - [x] Match each vote to its Swissvotes/BFS ballots; import results, party + federation recommendations and English titles (nightly)
 - [x] Vote results (Swissvotes) on vote pages and cards
+- [x] Donor alignment with party/federation recommendations (organisations only; privacy guard in the API)
 - [ ] "Money vs result" and "money by recommending camp" views
 - [ ] Positioning on economic/social axes: deferred. Not expected from the EFK (neutral mandate). It would need party positions
   (e.g. CHES) and should cover organisations only, never private donors (political opinions = sensitive personal data)

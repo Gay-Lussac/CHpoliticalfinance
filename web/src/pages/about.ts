@@ -18,6 +18,8 @@ Les libéralités (dons) de plus de 15 000 CHF par donateur doivent être décla
 <li>Le rattachement d'une organisation à un parti est une estimation fondée sur son nom (ou sur le parti des candidat·e·s soutenu·e·s pour les élections).</li>
 <li>Les campagnes cantonales et communales ne sont pas couvertes.</li>
 </ul>
+<h2>Alignement avec les recommandations de vote</h2>
+<p>Pour les organisations et entreprises donatrices, le site calcule la part de leur argent versée au camp (Oui ou Non) que chaque parti ou association avait recommandé, sur les votations où celui-ci a recommandé Oui ou Non. C’est un simple constat sur l’argent déclaré, pas un positionnement politique. Il n’est <strong>pas</strong> calculé pour les personnes physiques, car il révélerait leurs opinions politiques.</p>
 <h2>Données personnelles</h2>
 <p>Les noms des donateurs sont publiés par le CDF en vertu de la loi. Ce site n'ajoute aucune information provenant d'autres sources et n'indexe pas les pages des donateurs dans les moteurs de recherche. Toute correction publiée par le CDF est reprise automatiquement.</p>`,
   de: `
@@ -36,6 +38,8 @@ Zuwendungen über 15 000 CHF pro Zuwender·in müssen namentlich deklariert werd
 <li>Die Zuordnung einer Organisation zu einer Partei ist eine Schätzung anhand des Namens (bei Wahlen anhand der Partei der unterstützten Kandidierenden).</li>
 <li>Kantonale und kommunale Kampagnen sind nicht erfasst.</li>
 </ul>
+<h2>Übereinstimmung mit den Abstimmungsparolen</h2>
+<p>Für zuwendende Organisationen und Unternehmen berechnet die Website den Anteil ihres Geldes, der an das von einer Partei oder einem Verband empfohlene Lager (Ja oder Nein) ging, bei Abstimmungen mit Ja- oder Nein-Parole. Das ist eine reine Feststellung zum deklarierten Geld, keine politische Einordnung. Für natürliche Personen wird sie <strong>nicht</strong> berechnet, da sie deren politische Ansichten offenlegen würde.</p>
 <h2>Personendaten</h2>
 <p>Die Namen der Zuwendenden werden von der EFK gestützt auf das Gesetz veröffentlicht. Diese Website ergänzt sie nicht mit anderen Quellen und lässt die Seiten der Zuwendenden nicht von Suchmaschinen indexieren. Korrekturen der EFK werden automatisch übernommen.</p>`,
   it: `
@@ -55,6 +59,8 @@ Le liberalità (donazioni) superiori a 15 000 CHF per donatore devono essere dic
 <li>Le campagne cantonali e comunali non sono coperte.</li>
 <li>I titoli ufficiali sono quelli del CDF; alcune designazioni (ad es. istituzioni, descrizioni di prestazioni) sono disponibili solo nella lingua della dichiarazione.</li>
 </ul>
+<h2>Allineamento con le raccomandazioni di voto</h2>
+<p>Per le organizzazioni e le aziende donatrici, il sito calcola la quota del loro denaro versata al fronte (Sì o No) raccomandato da ciascun partito o associazione, nelle votazioni in cui questo ha raccomandato Sì o No. È una semplice constatazione sul denaro dichiarato, non un posizionamento politico. <strong>Non</strong> viene calcolato per le persone fisiche, perché rivelerebbe le loro opinioni politiche.</p>
 <h2>Dati personali</h2>
 <p>I nomi dei donatori sono pubblicati dal CDF in virtù della legge. Questo sito non aggiunge informazioni provenienti da altre fonti e non fa indicizzare le pagine dei donatori dai motori di ricerca. Ogni correzione pubblicata dal CDF viene ripresa automaticamente.</p>`,
   en: `
@@ -74,6 +80,8 @@ Donations above CHF 15,000 per donor must be declared by name.</p>
 <li>Linking an organisation to a party is an estimate based on its name (or, for elections, on the party of the candidates it supports).</li>
 <li>Cantonal and municipal campaigns are not covered.</li>
 </ul>
+<h2>Alignment with voting recommendations</h2>
+<p>For donor organisations and companies, the site computes the share of their money that went to the side (Yes or No) each party or federation recommended, on votes where it recommended Yes or No. It is a plain observation about declared money, not a political positioning. It is <strong>not</strong> computed for private individuals, as it would reveal their political opinions.</p>
 <h2>Personal data</h2>
 <p>Donor names are published by the SFAO as required by law. This site adds no information from other sources and keeps donor pages out of search engines. Any correction published by the SFAO is picked up automatically.</p>`,
 };

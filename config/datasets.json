@@ -5,7 +5,8 @@
     "actor_id": "actor",
     "donor_id": "donor",
     "party_id": "party",
-    "campaign_id": "campaign"
+    "campaign_id": "campaign",
+    "recommender_id": "recommender"
   },
   "datasets": {
     "flow": {
@@ -120,6 +121,32 @@
         "count": "COUNT(*)"
       },
       "default_order": "-amount_chf"
+    },
+    "alignment": {
+      "view": "v_donor_alignment",
+      "description": "Donor alignment with party/federation recommendations: each donation to a vote side × each Yes/No recommendation on that vote. aligned = the money went to the recommended side.",
+      "fixed_filter": "donor_type = 'legal'",
+      "$fixed_filter": "Privacy: alignment of natural persons would reveal political opinions (sensitive data, nFADP). Remove only after a deliberate decision.",
+      "fields": {
+        "donor_id": "int",
+        "financing_id": "int",
+        "year": "int",
+        "stance": "enum:for,against",
+        "recommender_id": "int",
+        "recommender_kind": "enum:party,organisation",
+        "party_id": "int",
+        "recommendation": "enum:yes,no",
+        "aligned": "bool",
+        "value_chf": "money"
+      },
+      "measures": {
+        "sum:value_chf": "SUM(value_chf)",
+        "sum:aligned_chf": "SUM(CASE WHEN aligned THEN value_chf ELSE 0 END)",
+        "share:aligned": "ROUND(100 * SUM(CASE WHEN aligned THEN value_chf ELSE 0 END) / NULLIF(SUM(value_chf), 0), 1)",
+        "count_distinct:financing_id": "COUNT(DISTINCT financing_id)",
+        "count_distinct:donor_id": "COUNT(DISTINCT donor_id)"
+      },
+      "default_order": "-value_chf"
     }
   }
 }

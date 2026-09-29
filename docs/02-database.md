@@ -40,6 +40,7 @@ financing ─┬─ vote_object (1:1, kind = vote)          ← BFS vote number,
 | `ballot` | one ballot question (N per EFK vote: initiative, counter-proposal, tie-break) with its result | Swissvotes `anr` |
 | `recommender` | party or federation whose recommendation is shown (`config/recommenders.yaml`) | Swissvotes column `p-<code>` |
 | `ballot_recommendation` | recommender × ballot → yes/no/none/blank/free/tie-break preference | Swissvotes |
+| `v_donor_alignment` (view) | donation to a vote side × recommender's Yes/No on that vote → `aligned` | derived |
 | `i18n_label` | FR/DE/IT(/EN) labels for any entity | — |
 | `fetch_run`, `raw_payload` | provenance: what we fetched, when, with which checksum | — |
 
@@ -89,3 +90,11 @@ financing ─┬─ vote_object (1:1, kind = vote)          ← BFS vote number,
   ("dans toute la Suisse") have none and are shown as "all of Switzerland".
 - **Donor duplicates** such as "Martullo-Blocher Magdalena" vs "Martullo Blocher Magdalena Silvia", or "economiesuisse" vs its long
   form, exist. `pipeline resolve --review` lists them for `config/donor_overrides.yaml`.
+
+## Donor alignment (derived, legal entities only)
+
+`v_donor_alignment` joins each latest donation to a vote side with every Yes/No recommendation on that vote's main
+ballot. A recommender's score for a donor is the share of the donor's money that went to the side it recommended
+(`share:aligned` in the `alignment` dataset). Free votes and "no recommendation" are excluded from the base.
+The API applies `fixed_filter: donor_type = 'legal'` from `config/datasets.json`. It cannot be overridden by a request,
+because alignment for natural persons would reveal political opinions (sensitive personal data under the nFADP).

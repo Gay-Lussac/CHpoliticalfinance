@@ -4,6 +4,13 @@
   query: { dataset: flow, group_by: [financing_id, stance], measure: [sum:value_chf, count], limit: 50, filter: { is_latest: 'true' } }
   params: { donor_id: donor_id }
   chart: { type: bars, label: financing_id, value: sum_value_chf, color: stance, link: financing }
+- id: donor-alignment
+  title: { fr: "Alignement avec les recommandations de vote", de: "Übereinstimmung mit den Abstimmungsparolen", it: "Allineamento con le raccomandazioni di voto", en: "Alignment with voting recommendations" }
+  subtitle: { fr: "Part de l'argent versé au camp recommandé par chaque parti ou association, sur les votations où il a recommandé Oui ou Non", de: "Anteil des Geldes, das an das von der Partei oder dem Verband empfohlene Lager ging – bei Abstimmungen mit Ja- oder Nein-Parole", it: "Quota del denaro versato al fronte raccomandato da ciascun partito o associazione, nelle votazioni in cui ha raccomandato Sì o No", en: "Share of the money given to the side each party or federation recommended, on votes where it recommended Yes or No" }
+  show_if: { donor_type: legal }
+  query: { dataset: alignment, group_by: [recommender_id], measure: [share:aligned, sum:value_chf, count_distinct:financing_id], order: -share_aligned, limit: 20 }
+  params: { donor_id: donor_id }
+  chart: { type: share, label: recommender_id, value: share_aligned, color: recommender_id }
 - id: donor-by-actor
   title: { fr: Bénéficiaires, de: Empfänger, it: "Beneficiari", en: "Recipients" }
   subtitle: { fr: "Décompte final, sinon budget", de: "Schlussrechnung, sonst Budget", it: "Conto finale, altrimenti preventivo", en: "Final accounts, otherwise budget" }

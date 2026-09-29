@@ -4,7 +4,7 @@ import { parse as parseYaml } from 'yaml';
 
 import { query, type QuerySpec, type Row } from './api';
 import { chf, chfShort, date as fmtDate, esc } from './format';
-import { lang, T, tr } from './i18n';
+import { lang, locale, T, tr } from './i18n';
 import { href } from './router';
 
 type Text = Record<string, string>;
@@ -14,8 +14,9 @@ export interface ViewSpec {
   subtitle?: Text;
   query: QuerySpec;
   params?: Record<string, string>;
+  show_if?: Record<string, unknown>;             // render only when every page-context key matches
   chart: {
-    type: 'bars' | 'stacked' | 'columns' | 'dots' | 'table';
+    type: 'bars' | 'stacked' | 'columns' | 'dots' | 'table' | 'share';
     label?: string; value?: string; series?: string[]; color?: string; link?: string; columns?: string[];
   };
 }
@@ -37,6 +38,7 @@ function colorOf(dim: string | undefined, row: Row): string {
   if (dim === 'stance') return v === 'for' ? cssVar('--series-1') : v === 'against' ? cssVar('--series-2') : cssVar('--neutral');
   if (dim === 'phase') return v === 'budget' ? cssVar('--phase-budget') : cssVar('--phase-final');
   if (dim === 'party_id') return row.party_id_info?.color ?? cssVar('--neutral');
+  if (dim === 'recommender_id') return row.recommender_id_info?.color ?? cssVar('--neutral');
   return cssVar('--series-1');
 }
 const seriesColor = (i: number) => cssVar(`--series-${(i % 7) + 1}`);
@@ -129,6 +131,23 @@ function renderBars(spec: ViewSpec, rows: Row[]): string {
     return `<li><div class="bar-label">${url ? `<a href="${url}" data-link>${name}</a>` : name}</div>${bars}</li>`;
   }).join('');
   return legend(legendItems) + `<ol class="bars">${html}</ol>`;
+}
+
+/** Percentages (0–100) on a fixed scale, e.g. alignment. `value` is the % column; the tip adds the base amount. */
+function renderShare(spec: ViewSpec, rows: Row[]): string {
+  const { label = '', value = '', color } = spec.chart;
+  const html = rows.map((r) => {
+    const v = Math.max(0, Math.min(100, Number(r[value]) || 0));
+    const pctTxt = `${new Intl.NumberFormat(locale(), { maximumFractionDigits: 0 }).format(v)} %`;
+    const base = r.sum_value_chf != null ? chf(r.sum_value_chf) : '';
+    const n = r.count_distinct_financing_id;
+    const tipText = `${labelOf(label, r)}: ${pctTxt}${base ? ` — ${T().alignment_of} ${base}` : ''}${n ? ` · ${T().votes_n(n)}` : ''}`;
+    return `<li><div class="bar-label">${esc(labelOf(label, r))}${n ? ` <span class="muted small">· ${esc(T().votes_n(n))}</span>` : ''}</div>
+      <div class="bar-row" data-tip="${esc(tipText)}" tabindex="0">
+        <span class="share-track"><span class="bar" style="width:${v}%;background:${colorOf(color, r)}"></span></span>
+        <span class="bar-value">${pctTxt}</span></div></li>`;
+  }).join('');
+  return `<ol class="bars share">${html}</ol>`;
 }
 
 /** Horizontal stacked bars, one segment per measure (fixed categorical order). */
@@ -315,6 +334,7 @@ export async function renderView(spec: ViewSpec, context: Record<string, unknown
       switch (spec.chart.type) {
         case 'bars': body.innerHTML = renderBars(spec, rows); break;
         case 'stacked': body.innerHTML = renderStacked(spec, rows); break;
+        case 'share': body.innerHTML = renderShare(spec, rows); break;
         case 'columns': renderColumns(spec, rows, body); break;
         case 'dots': renderDots(spec, rows, body); break;
         default: body.innerHTML = renderTable(spec.chart.columns ?? res.columns, rows);
@@ -344,7 +364,8 @@ export async function renderView(spec: ViewSpec, context: Record<string, unknown
 }
 
 /** Render a list of views into a container, in order, without waiting for each other. */
-export function renderViews(container: HTMLElement, specs: ViewSpec[], context: Record<string, unknown>) {
+export function renderViews(container: HTMLElement, allSpecs: ViewSpec[], context: Record<string, unknown>) {
+  const specs = allSpecs.filter((s) => !s.show_if || Object.entries(s.show_if).every(([k, v]) => context[k] === v));
   const slots = specs.map(() => container.appendChild(document.createElement('div')));
   specs.forEach((s, i) => renderView(s, context).then((el) => slots[i].replaceWith(el)));
 }
