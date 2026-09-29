@@ -125,8 +125,6 @@
     "alignment": {
       "view": "v_donor_alignment",
       "description": "Donor alignment with party/federation recommendations: each donation to a vote side × each Yes/No recommendation on that vote. aligned = the money went to the recommended side.",
-      "fixed_filter": "donor_type = 'legal'",
-      "$fixed_filter": "Privacy: alignment of natural persons would reveal political opinions (sensitive data, nFADP). Remove only after a deliberate decision.",
       "fields": {
         "donor_id": "int",
         "financing_id": "int",
@@ -137,7 +135,8 @@
         "party_id": "int",
         "recommendation": "enum:yes,no",
         "aligned": "bool",
-        "value_chf": "money"
+        "value_chf": "money",
+        "donor_type": "enum:natural,legal"
       },
       "measures": {
         "sum:value_chf": "SUM(value_chf)",

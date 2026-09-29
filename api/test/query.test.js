@@ -27,9 +27,10 @@ test('limit is capped', () => {
   assert.equal(buildQuery(config, { dataset: 'flow', limit: '999999' }).limit, 5000);
 });
 
-test('fixed_filter from config is always applied (privacy guard on alignment)', () => {
-  const q = buildQuery(config, { dataset: 'alignment', group_by: 'recommender_id', measure: 'share:aligned',
+test('fixed_filter from config is always applied and cannot be bypassed', () => {
+  const cfg = structuredClone(config);
+  cfg.datasets.alignment.fixed_filter = "donor_type = 'legal'";
+  const q = buildQuery(cfg, { dataset: 'alignment', group_by: 'recommender_id', measure: 'share:aligned',
     'filter[donor_id]': '1' });
   assert.match(q.sql, /WHERE \(donor_type = 'legal'\) AND `donor_id` IN \(\?\)/);
-  assert.throws(() => buildQuery(config, { dataset: 'alignment', 'filter[donor_type]': 'natural' }), QueryError);
 });

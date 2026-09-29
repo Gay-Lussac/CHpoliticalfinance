@@ -91,10 +91,14 @@ financing ─┬─ vote_object (1:1, kind = vote)          ← BFS vote number,
 - **Donor duplicates** such as "Martullo-Blocher Magdalena" vs "Martullo Blocher Magdalena Silvia", or "economiesuisse" vs its long
   form, exist. `pipeline resolve --review` lists them for `config/donor_overrides.yaml`.
 
-## Donor alignment (derived, legal entities only)
+## Donor alignment (derived)
 
 `v_donor_alignment` joins each latest donation to a vote side with every Yes/No recommendation on that vote's main
 ballot. A recommender's score for a donor is the share of the donor's money that went to the side it recommended
 (`share:aligned` in the `alignment` dataset). Free votes and "no recommendation" are excluded from the base.
-The API applies `fixed_filter: donor_type = 'legal'` from `config/datasets.json`. It cannot be overridden by a request,
-because alignment for natural persons would reveal political opinions (sensitive personal data under the nFADP).
+
+It is shown for **all named donors**, organisations and private individuals, by decision of the publisher (2026-09-29):
+the donations are published by law, and the site only aggregates them. Mitigations kept: donor pages are `noindex`,
+the method is explained on the About page, and EFK corrections or removals are mirrored nightly. To restrict it again,
+add `"fixed_filter": "donor_type = 'legal'"` to the `alignment` dataset in `config/datasets.json`; the API enforces it
+and requests cannot override it.
