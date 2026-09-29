@@ -143,11 +143,17 @@ async function withBallots(rows, lang, detail) {
   const ids = rows.filter((r) => r.kind === 'vote').map((r) => r.id);
   for (const r of rows) r.ballots = [];
   if (!ids.length) return rows;
-  const [ballots] = await pool.query(
-    `SELECT b.id, b.financing_id, b.anr, b.role, b.legal_form, b.yes_share, b.turnout, b.outcome, b.cantons_yes,
-            ${i18nExpr('ballot', 'b.id', 'title', lang, 'NULL')} AS title
-       FROM ballot b WHERE b.financing_id IN (?) ORDER BY b.financing_id, FIELD(b.role,'main','counter_proposal','tie_break')`,
-    [ids]);
+  let ballots;
+  try {
+    [ballots] = await pool.query(
+      `SELECT b.id, b.financing_id, b.anr, b.role, b.legal_form, b.yes_share, b.turnout, b.outcome, b.cantons_yes,
+              ${i18nExpr('ballot', 'b.id', 'title', lang, 'NULL')} AS title
+         FROM ballot b WHERE b.financing_id IN (?) ORDER BY b.financing_id, FIELD(b.role,'main','counter_proposal','tie_break')`,
+      [ids]);
+  } catch (err) {
+    if (err.code === 'ER_NO_SUCH_TABLE') return rows;   // migration 002 not applied yet: serve votes without results
+    throw err;
+  }
   let recs = [];
   if (detail && ballots.length) {
     [recs] = await pool.query(

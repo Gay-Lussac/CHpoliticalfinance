@@ -79,7 +79,8 @@ The phases run in order, but the design docs for later phases are refined while 
 - [x] Match each vote to its Swissvotes/BFS ballots; import results, party + federation recommendations and English titles (nightly)
 - [x] Vote results (Swissvotes) on vote pages and cards
 - [ ] "Money vs result" and "money by recommending camp" views
-- [ ] Positioning on economic/social axes: deferred (see chat notes: not expected from the EFK; would need party positions, e.g. CHES)
+- [ ] Positioning on economic/social axes: deferred. Not expected from the EFK (neutral mandate). It would need party positions
+  (e.g. CHES) and should cover organisations only, never private donors (political opinions = sensitive personal data)
 - [ ] Timeline and compare views; topic tagging of votes
 - [ ] Flow view (2D Sankey, top N)
 - [ ] Embeddable widgets for media
