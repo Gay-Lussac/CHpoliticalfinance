@@ -82,9 +82,17 @@ Infomaniak Managed Cloud Server. Two **isolated** hosting spaces share one Maria
 
 | Part | Where | Code | Runs |
 |---|---|---|---|
-| Website + API | Node.js site `polimoney.ch` (container, `/srv/customer/sites/polimoney.ch`) | pulled by Infomaniak from GitHub, branch `main` | build: `npm --prefix api ci --omit=dev && npm --prefix web ci && npm --prefix web run build` · run: `API_HOST=0.0.0.0 … node api/src/server.js` · port 8787 |
+| Website + API | Node.js site `polimoney.ch` (container, `/srv/customer/sites/polimoney.ch`) | pulled by Infomaniak from GitHub, branch `main` | build: `npm --prefix api ci --omit=dev && npm --prefix web ci && npm --prefix web run build && rm -rf web/node_modules` · run: `API_HOST=0.0.0.0 … node api/src/server.js` · port 8787 |
 | Pipeline | SSH space `xb5xa5_SSH_Admin@xb5xa5.ftp.infomaniak.com`, `~/chpf` | `git clone` of `main`, updated with `deploy/deploy.sh` | Python 3.9 with `pip --user` (no venv available); crontab `15 3 * * *` → `deploy/cron-sync.sh`, emails only on failure |
 | Database | `xb5xa5.myd.infomaniak.com` · `xb5xa5_chpf` | schema via `deploy/init-db.sh` (admin) | users `xb5xa5_admin` (schema), `xb5xa5_etl` (pipeline), `xb5xa5_api` (site) |
+
+Keeping each side minimal:
+- **Website:** the whole repo is pulled, but only `web/dist` and the API are served. Every other path returns the SPA page
+  (checked: `/.env`, `/.git/config`, `/pipeline/…` do not leak). After the build, `web/node_modules` (build tools, ~54 MB)
+  is removed. Only `api/node_modules` (production dependencies) stays.
+- **Pipeline space:** `git sparse-checkout set pipeline config db deploy`, so only what the pipeline uses is checked out
+  (plus root files). `deploy/deploy.sh` keeps working as usual. `cron-sync.sh` prunes logs after 12 months and reports
+  after 6 months. `data/raw` is never pruned.
 
 Things learned while deploying:
 - The Node site runs in a container and must listen on `0.0.0.0` (`API_HOST`), or the proxy shows "Website under maintenance".
