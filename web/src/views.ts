@@ -12,6 +12,7 @@ export interface ViewSpec {
   id: string;
   title: Text;
   subtitle?: Text;
+  note?: Text;                                   // disclaimer / method note shown above the chart
   query: QuerySpec;
   params?: Record<string, string>;
   show_if?: Record<string, unknown>;             // render only when every page-context key matches
@@ -318,6 +319,7 @@ export async function renderView(spec: ViewSpec, context: Record<string, unknown
   section.className = 'view card';
   section.id = spec.id;
   section.innerHTML = `<header><h2>${esc(txt(spec.title))}</h2>${spec.subtitle ? `<p class="muted">${esc(txt(spec.subtitle))}</p>` : ''}</header>
+    ${spec.note ? `<aside class="view-note" role="note">ⓘ ${esc(txt(spec.note))}</aside>` : ''}
     <div class="view-body"><p class="muted">${T().loading}</p></div>
     <footer class="view-footer"></footer>`;
   const body = section.querySelector<HTMLElement>('.view-body')!;

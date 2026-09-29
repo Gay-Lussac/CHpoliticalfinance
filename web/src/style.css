@@ -190,3 +190,7 @@ td:has(.num) { text-align: right; }
 /* share (0–100 %) bars: fixed scale with a visible track */
 .share .share-track { flex: 1; max-width: calc(100% - 64px); height: 14px; background: var(--bg); border-radius: 0 4px 4px 0; display: flex; }
 .share .bar { height: 100%; }
+
+/* method / disclaimer note under a view */
+.view-note { margin: 0 0 14px; padding: 8px 12px; border-left: 3px solid var(--border); background: var(--bg);
+  border-radius: 0 6px 6px 0; font-size: .8rem; line-height: 1.45; color: var(--text-secondary); }
