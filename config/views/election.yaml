@@ -1,0 +1,27 @@
+- id: election-by-party
+  title: { fr: Recettes par parti, de: Einnahmen nach Partei, it: "Entrate per partito", en: "Revenue by party" }
+  subtitle: { fr: Parti des candidat·e·s soutenu·e·s (ou de l'organisation), de: Partei der unterstützten Kandidierenden (oder der Organisation), it: "Partito dei candidati sostenuti (o dell'organizzazione)", en: "Party of the supported candidates (or of the organisation)" }
+  query: { dataset: campaign_totals, group_by: [party_id], measure: [sum:total, count_distinct:actor_id], limit: 20 }
+  params: { financing_id: financing_id, phase: phase }
+  chart: { type: bars, label: party_id, value: sum_total, color: party_id }
+- id: election-sources-by-party
+  title: { fr: Sources de financement par parti, de: Finanzierungsquellen nach Partei, it: "Fonti di finanziamento per partito", en: "Funding sources by party" }
+  query: { dataset: campaign_totals, group_by: [party_id], measure: [sum:total, sum:monetary_allowances, sum:non_monetary_allowances, sum:events, sum:sales, sum:equity], limit: 12 }
+  params: { financing_id: financing_id, phase: phase }
+  chart: { type: stacked, label: party_id, series: [sum_monetary_allowances, sum_non_monetary_allowances, sum_events, sum_sales, sum_equity] }
+- id: election-by-canton
+  title: { fr: Recettes par canton, de: Einnahmen nach Kanton, it: "Entrate per cantone", en: "Revenue by canton" }
+  subtitle: { fr: "Canton des candidat·e·s soutenu·e·s (sinon de l'acteur)", de: "Kanton der unterstützten Kandidierenden (sonst des Akteurs)", it: "Cantone dei candidati sostenuti (altrimenti dell'attore)", en: "Canton of the supported candidates (otherwise of the actor)" }
+  query: { dataset: campaign_totals, group_by: [canton], measure: [sum:total, count_distinct:actor_id], limit: 26 }
+  params: { financing_id: financing_id, phase: phase }
+  chart: { type: bars, label: canton, value: sum_total }
+- id: election-top-actors
+  title: { fr: Principaux acteurs, de: Wichtigste Akteure, it: "Principali attori", en: "Main actors" }
+  query: { dataset: campaign_totals, group_by: [actor_id, party_id], measure: [sum:total], limit: 20 }
+  params: { financing_id: financing_id, phase: phase }
+  chart: { type: bars, label: actor_id, value: sum_total, color: party_id, link: actor }
+- id: election-top-donors
+  title: { fr: Principaux donateurs, de: Grösste Zuwendende, it: "Principali donatori", en: "Main donors" }
+  query: { dataset: flow, group_by: [donor_id], measure: [sum:value_chf, count], limit: 15 }
+  params: { financing_id: financing_id, phase: phase }
+  chart: { type: bars, label: donor_id, value: sum_value_chf, link: donor }

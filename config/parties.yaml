@@ -1,0 +1,52 @@
+# National parties. Order matters: the first party whose pattern matches wins.
+# Patterns are regexes applied to names lower-cased with accents removed
+# (e.g. "Grünliberale" -> "grunliberale", "Libéraux" -> "liberaux").
+# Used for: actor -> party (heuristic) and election candidate party labels.
+exclude:            # actor names matching these never get a party
+  - 'centre patronal'
+  - 'centre for'
+parties:
+  - code: EVP
+    color: '#F5C400'
+    names: { fr: PEV, de: EVP, it: PEV, en: EPP }
+    patterns: ['\bevp\b', '\bpev\b', 'evangelische volkspartei', 'parti evangelique', 'partito evangelico']
+  - code: EDU
+    color: '#8E6BB4'
+    names: { fr: UDF, de: EDU, it: UDF, en: FDU }
+    patterns: ['\bedu\b', '\budf\b', 'eidgenossisch-demokratische union', 'union democratique federale']
+  - code: GLP
+    color: '#A8C83C'
+    names: { fr: PVL, de: GLP, it: PVL, en: GLP }
+    patterns: ['\bglp\b', '\bjglp\b', '\bpvl\b', 'grunliberal', "vert.?liberal", "verd.?liberal"]
+  - code: SVP
+    color: '#3F7F3F'
+    names: { fr: UDC, de: SVP, it: UDC, en: SVP }
+    patterns: ['\bsvp\b', '\budc\b', '\bjsvp\b', 'volkspartei', 'union democratique du centre', 'unione democratica di centro']
+  - code: SP
+    color: '#E0312B'
+    names: { fr: PS, de: SP, it: PS, en: SP }
+    patterns: ['\bsp\b', '\bps\b', '\bpss\b', 'sozialdemokrat', 'socialiste', 'socialista', '\bjuso\b']
+  - code: FDP
+    color: '#1F5AA6'
+    names: { fr: PLR, de: FDP, it: PLR, en: FDP }
+    patterns: ['\bfdp\b', '\bplr\b', 'freisinn', 'liberal-?radica', 'die liberalen', 'les liberaux', 'jungfreisinn', 'jeunes liberaux', 'giovani liberali', 'liberal-demokratische', '\bldp\b']
+  - code: MITTE
+    color: '#F28C28'
+    names: { fr: Le Centre, de: Die Mitte, it: Alleanza del Centro, en: The Centre }
+    patterns: ['\bmitte\b', '\ble centre\b', 'alleanza del centro', '\bcvp\b', '\bpdc\b', '\bbdp\b', '\bpbd\b']
+  - code: GRUENE
+    color: '#9CC31C'
+    names: { fr: Les Vert-e-s, de: Grüne, it: I Verdi, en: Greens }
+    patterns: ['grune', '\bverts?\b', 'vert-e-s', 'vert-es', '\bverdi\b', '\bbasta\b']
+  - code: LEGA
+    color: '#2F6FB7'
+    names: { fr: Lega, de: Lega, it: Lega, en: Lega }
+    patterns: ['lega dei ticinesi', '\blega\b']
+  - code: MCG
+    color: '#E5B800'
+    names: { fr: MCG, de: MCG, it: MCG, en: MCG }
+    patterns: ['mouvement citoyens genevois', '\bmcg\b']
+  - code: LEFT
+    color: '#A3162E'
+    names: { fr: PdA/POP/solidaritéS/AL, de: PdA/Sol/AL, it: PdA/POP/Sol/AL, en: PdA/Sol/AL }
+    patterns: ['partei der arbeit', 'parti ouvrier', '\bpop\b', '\bpda\b', 'solidarites', 'alternative liste', '\bal\b', 'ensemble a gauche']

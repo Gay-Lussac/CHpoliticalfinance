@@ -2,7 +2,7 @@
 
 Target engine: **MariaDB 10.6+ / MySQL 8**, which is what Infomaniak web hosting provides. PostgreSQL would be nicer,
 but on Infomaniak it requires a Cloud Server. The schema therefore sticks to portable SQL: no arrays, and JSON only for raw payloads.
-The DDL draft is in [../db/schema.sql](../db/schema.sql).
+The tables are in [../db/schema.sql](../db/schema.sql), with changes after that in [../db/migrations/](../db/migrations/). The semantic views are in [../db/views.sql](../db/views.sql).
 
 ## Domain model
 
@@ -62,10 +62,10 @@ financing ─┬─ vote_object (1:1, kind = vote)          ← BFS vote number,
 
    | View | Grain | Typical use |
    |---|---|---|
-   | `v_flow` | one allowance: donor → actor → campaign → financing, with phase and amount | Sankey, donor pages, rankings |
+   | `v_flow` | one allowance: donor → actor → campaign → financing, with phase, amount and `is_latest` | Sankey, donor pages, rankings |
    | `v_campaign_totals` | one campaign × phase with the revenue breakdown | Yes vs No bars, budget vs final |
    | `v_financing_summary` | one financing × phase × stance | overview cards, timelines |
-   | `v_party_year` *(to write)* | one party × year with its sources | party financing page |
+   | `v_party_year` | one party × year with its sources | party financing page |
 
    Views can later become materialised tables that the ETL refreshes, if performance requires it. At this data
    volume (~10⁴ allowances) it will not.
@@ -76,3 +76,14 @@ financing ─┬─ vote_object (1:1, kind = vote)          ← BFS vote number,
 - For elections, is a campaign one per list, per candidate or per party section? It varies by actor and needs analysis of the 2023 data.
 - Non-monetary allowances: keep `service_type` + `description` only in the source language?
 - Anonymous and foreign allowances: model them as a special `donor` ("anonymous") or with a flag on `allowance`? The draft uses flags.
+
+## Findings from the first load (2026-09-29)
+
+- **Budget and final double-count.** The same donation usually appears in both the budget and the final declaration. Any view mixing
+  phases must filter `is_latest` (final if published, otherwise budget); the donor and actor pages do.
+- **Donations listed above the declared totals.** 15 budget declarations list more in allowances than their own
+  declared allowance totals. This is an upstream inconsistency, reported by `pipeline check`.
+- **Canton.** Election campaigns take the canton of their candidates (`campaign.canton`). National campaigns
+  ("dans toute la Suisse") have none and are shown as "all of Switzerland".
+- **Donor duplicates** such as "Martullo-Blocher Magdalena" vs "Martullo Blocher Magdalena Silvia", or "economiesuisse" vs its long
+  form, exist. `pipeline resolve --review` lists them for `config/donor_overrides.yaml`.

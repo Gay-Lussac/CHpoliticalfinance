@@ -1,0 +1,16 @@
+[project]
+name = "chpf-pipeline"
+version = "0.1.0"
+description = "Scraper + ETL for CHpoliticalfinance (EFK political financing data -> MariaDB)"
+requires-python = ">=3.11"
+dependencies = ["httpx>=0.27", "PyMySQL>=1.1", "PyYAML>=6"]
+
+[project.scripts]
+pipeline = "chpf.cli:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["chpf*"]

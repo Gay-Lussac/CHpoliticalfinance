@@ -22,7 +22,8 @@ CREATE TABLE raw_payload (
   checksum      CHAR(64) NOT NULL,          -- meta.data_checksum_sha256 or sha256(body)
   content_type  VARCHAR(100) NOT NULL,
   archive_path  VARCHAR(500) NOT NULL,      -- file in the raw archive (body not stored in DB)
-  fetched_at    DATETIME NOT NULL,
+  fetched_at    DATETIME NOT NULL,          -- first time this exact content was fetched
+  last_fetched_at DATETIME NOT NULL,        -- last time it was fetched unchanged
   UNIQUE KEY uq_url_checksum (url, checksum),
   FOREIGN KEY (fetch_run_id) REFERENCES fetch_run(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -108,22 +109,24 @@ CREATE TABLE campaign (
   financing_id  BIGINT UNSIGNED NOT NULL,
   actor_id      BIGINT UNSIGNED NOT NULL,
   stance        ENUM('for','against','candidates','none') NOT NULL,
-  name          VARCHAR(1000) NOT NULL,      -- raw label ("Adoption…", candidate list…)
+  party_id      SMALLINT UNSIGNED NULL,      -- elections: majority party of supported candidates
+  canton        CHAR(2) NULL,                -- elections: majority canton of supported candidates
+  name          TEXT NOT NULL,               -- raw label ("Adoption…", candidate list…)
   first_seen_run BIGINT UNSIGNED NULL,
   last_seen_run  BIGINT UNSIGNED NULL,
   KEY ix_fin_stance (financing_id, stance),
   FOREIGN KEY (financing_id) REFERENCES financing(id) ON DELETE CASCADE,
-  FOREIGN KEY (actor_id) REFERENCES actor(id)
+  FOREIGN KEY (actor_id) REFERENCES actor(id),
+  FOREIGN KEY (party_id) REFERENCES party(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE candidate (
   id            BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-  efk_person_id INT UNSIGNED NULL UNIQUE,    -- people/{id} if it turns out to be usable
-  last_name     VARCHAR(120) NOT NULL,
-  first_name    VARCHAR(120) NOT NULL,
+  full_name     VARCHAR(200) NOT NULL,       -- "Hensch Anne-Claude" (EFK order: last name first)
   canton        CHAR(2) NULL,
+  party_label   VARCHAR(200) NULL,           -- raw party label from the EFK campaign text
   party_id      SMALLINT UNSIGNED NULL,
-  political_group VARCHAR(200) NULL,         -- "Groupement politique candidat"
+  UNIQUE KEY uq_name_canton (full_name, canton),
   FOREIGN KEY (party_id) REFERENCES party(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -174,6 +177,7 @@ CREATE TABLE donor (
   display_name  VARCHAR(300) NOT NULL,       -- "Blocher Christoph" / "economiesuisse"
   city          VARCHAR(120) NULL,
   lives_abroad  BOOLEAN NULL,
+  country       VARCHAR(100) NULL,           -- foreign donors (elections "y.c. étranger")
   reviewed      BOOLEAN NOT NULL DEFAULT FALSE,  -- manually confirmed identity
   KEY ix_name (display_name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -201,6 +205,7 @@ CREATE TABLE allowance (
   granted_on    DATE NULL,
   is_anonymous  BOOLEAN NOT NULL DEFAULT FALSE,
   is_foreign    BOOLEAN NOT NULL DEFAULT FALSE,
+  country       VARCHAR(100) NULL,
   row_hash      CHAR(64) NOT NULL,           -- fallback identity when efk_id is NULL
   first_seen_run BIGINT UNSIGNED NULL,
   last_seen_run  BIGINT UNSIGNED NULL,
@@ -230,50 +235,4 @@ CREATE TABLE party_recommendation (
   FOREIGN KEY (party_id) REFERENCES party(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ---------------------------------------------------------------- semantic layer (what the API reads)
-
-CREATE VIEW v_flow AS
-SELECT a.id              AS allowance_id,
-       f.id              AS financing_id,
-       f.kind            AS financing_kind,
-       f.event_date,
-       f.year,
-       d.phase,
-       c.id              AS campaign_id,
-       c.stance,
-       ac.id             AS actor_id,
-       ac.canton         AS actor_canton,
-       ap.party_id       AS actor_party_id,
-       dn.id             AS donor_id,
-       dn.donor_type,
-       a.nature,
-       a.is_anonymous,
-       a.is_foreign,
-       a.granted_on,
-       a.value_chf
-FROM allowance a
-JOIN declaration d        ON d.id = a.declaration_id
-JOIN financing f          ON f.id = d.financing_id
-JOIN actor ac             ON ac.id = d.actor_id
-LEFT JOIN campaign c      ON c.id = d.campaign_id
-LEFT JOIN actor_party ap  ON ap.actor_id = ac.id
-LEFT JOIN donor_alias al  ON al.id = a.donor_alias_id
-LEFT JOIN donor dn        ON dn.id = al.donor_id;
-
-CREATE VIEW v_campaign_totals AS
-SELECT f.id AS financing_id, f.kind AS financing_kind, f.event_date, f.year,
-       d.phase, c.id AS campaign_id, c.stance, d.actor_id, ap.party_id AS actor_party_id,
-       t.total, t.monetary_allowances, t.non_monetary_allowances, t.events, t.sales,
-       t.equity, t.membership_fees, t.mandate_contributions
-FROM declaration_totals t
-JOIN declaration d        ON d.id = t.declaration_id
-JOIN financing f          ON f.id = d.financing_id
-LEFT JOIN campaign c      ON c.id = d.campaign_id
-LEFT JOIN actor_party ap  ON ap.actor_id = d.actor_id;
-
-CREATE VIEW v_financing_summary AS
-SELECT financing_id, financing_kind, event_date, year, phase, stance,
-       COUNT(DISTINCT actor_id) AS n_actors,
-       SUM(total)               AS total_chf
-FROM v_campaign_totals
-GROUP BY financing_id, financing_kind, event_date, year, phase, stance;
+-- Semantic views (what the API reads) live in views.sql.

@@ -1,0 +1,12 @@
+- id: actor-campaigns
+  title: { fr: Campagnes, de: Kampagnen, it: "Campagne", en: "Campaigns" }
+  subtitle: { fr: "Recettes déclarées par campagne (décompte final si disponible, sinon budget)", de: "Deklarierte Einnahmen pro Kampagne (Schlussrechnung, sonst Budget)", it: "Entrate dichiarate per campagna (conto finale se disponibile, altrimenti preventivo)", en: "Declared revenue per campaign (final accounts if available, otherwise budget)" }
+  query: { dataset: campaign_totals, group_by: [financing_id, phase], measure: [sum:total], limit: 50 }
+  params: { actor_id: actor_id }
+  chart: { type: bars, label: financing_id, value: sum_total, color: phase, link: financing }
+- id: actor-donors
+  title: { fr: Donateurs, de: Zuwendende, it: "Donatori", en: "Donors" }
+  subtitle: { fr: "Décompte final, sinon budget", de: "Schlussrechnung, sonst Budget", it: "Conto finale, altrimenti preventivo", en: "Final accounts, otherwise budget" }
+  query: { dataset: flow, group_by: [donor_id], measure: [sum:value_chf, count], limit: 25, filter: { is_latest: 'true' } }
+  params: { actor_id: actor_id }
+  chart: { type: bars, label: donor_id, value: sum_value_chf, link: donor }

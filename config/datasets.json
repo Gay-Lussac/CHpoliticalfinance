@@ -1,0 +1,125 @@
+{
+  "$comment": "Whitelist for GET /api/query (docs/04-website.md). Each dataset = one SQL view. Only the fields listed here can be filtered, grouped or aggregated. 'label' says how an id is turned into a readable name.",
+  "labels": {
+    "financing_id": "financing",
+    "actor_id": "actor",
+    "donor_id": "donor",
+    "party_id": "party",
+    "campaign_id": "campaign"
+  },
+  "datasets": {
+    "flow": {
+      "view": "v_flow",
+      "description": "One row per allowance (donation > CHF 15 000): donor → actor → campaign → financing.",
+      "fields": {
+        "allowance_id": "int",
+        "financing_id": "int",
+        "financing_kind": "enum:vote,election,party_year",
+        "event_date": "date",
+        "year": "int",
+        "phase": "enum:budget,final,annual",
+        "stance": "enum:for,against,candidates,none",
+        "actor_id": "int",
+        "canton": "str",
+        "party_id": "int",
+        "donor_id": "int",
+        "donor_type": "enum:natural,legal,anonymous",
+        "nature": "enum:monetary,non_monetary",
+        "is_anonymous": "bool",
+        "is_foreign": "bool",
+        "granted_on": "date",
+        "value_chf": "money",
+        "is_latest": "bool",
+        "campaign_id": "int"
+      },
+      "measures": {
+        "sum:value_chf": "SUM(value_chf)",
+        "count": "COUNT(*)",
+        "count_distinct:donor_id": "COUNT(DISTINCT donor_id)",
+        "count_distinct:actor_id": "COUNT(DISTINCT actor_id)",
+        "max:value_chf": "MAX(value_chf)"
+      },
+      "default_order": "-value_chf"
+    },
+    "campaign_totals": {
+      "view": "v_campaign_totals",
+      "description": "One row per declared revenue total (campaign × phase), with the breakdown by source.",
+      "fields": {
+        "financing_id": "int",
+        "financing_kind": "enum:vote,election,party_year",
+        "event_date": "date",
+        "year": "int",
+        "phase": "enum:budget,final,annual",
+        "campaign_id": "int",
+        "stance": "enum:for,against,candidates,none",
+        "actor_id": "int",
+        "canton": "str",
+        "party_id": "int",
+        "total": "money",
+        "monetary_allowances": "money",
+        "non_monetary_allowances": "money",
+        "events": "money",
+        "sales": "money",
+        "equity": "money"
+      },
+      "measures": {
+        "sum:total": "SUM(total)",
+        "sum:monetary_allowances": "SUM(monetary_allowances)",
+        "sum:non_monetary_allowances": "SUM(non_monetary_allowances)",
+        "sum:events": "SUM(events)",
+        "sum:sales": "SUM(sales)",
+        "sum:equity": "SUM(equity)",
+        "count": "COUNT(*)",
+        "count_distinct:actor_id": "COUNT(DISTINCT actor_id)"
+      },
+      "default_order": "-total"
+    },
+    "party_year": {
+      "view": "v_party_year",
+      "description": "Annual revenue of national parties (one row per party declaration and year).",
+      "fields": {
+        "financing_id": "int",
+        "year": "int",
+        "actor_id": "int",
+        "party_id": "int",
+        "total": "money",
+        "monetary_allowances": "money",
+        "non_monetary_allowances": "money",
+        "events": "money",
+        "sales": "money",
+        "membership_fees": "money",
+        "mandate_contributions": "money"
+      },
+      "measures": {
+        "sum:total": "SUM(total)",
+        "sum:monetary_allowances": "SUM(monetary_allowances)",
+        "sum:non_monetary_allowances": "SUM(non_monetary_allowances)",
+        "sum:events": "SUM(events)",
+        "sum:sales": "SUM(sales)",
+        "sum:membership_fees": "SUM(membership_fees)",
+        "sum:mandate_contributions": "SUM(mandate_contributions)"
+      },
+      "default_order": "-total"
+    },
+    "mandates": {
+      "view": "v_mandate",
+      "description": "Mandate contributions paid to parties by office holders (annual party declarations).",
+      "fields": {
+        "mandate_id": "int",
+        "financing_id": "int",
+        "year": "int",
+        "actor_id": "int",
+        "party_id": "int",
+        "last_name": "str",
+        "first_name": "str",
+        "institution": "str",
+        "amount_chf": "money"
+      },
+      "measures": {
+        "sum:amount_chf": "SUM(amount_chf)",
+        "count": "COUNT(*)"
+      },
+      "default_order": "-amount_chf"
+    }
+  }
+}

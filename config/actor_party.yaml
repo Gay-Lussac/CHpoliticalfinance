@@ -1,0 +1,5 @@
+# Manual actor -> party overrides, keyed by EFK actor id.
+# Value: a party code from parties.yaml, or null to force "no party".
+# Example:
+#   407: null
+{}

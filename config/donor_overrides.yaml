@@ -1,0 +1,5 @@
+# Manual donor merges. Keys and values are donor match keys (see `pipeline resolve --review`).
+# Every alias listed on the left is attached to the donor of the alias on the right.
+# Example:
+#   "legal|swissmem schweiz": "legal|swissmem"
+{}

@@ -1,0 +1,17 @@
+- id: donor-by-financing
+  title: { fr: "Par votation, élection ou année", de: "Nach Abstimmung, Wahl oder Jahr", it: "Per votazione, elezione o anno", en: "By vote, election or year" }
+  subtitle: { fr: "Décompte final, sinon budget", de: "Schlussrechnung, sonst Budget", it: "Conto finale, altrimenti preventivo", en: "Final accounts, otherwise budget" }
+  query: { dataset: flow, group_by: [financing_id, stance], measure: [sum:value_chf, count], limit: 50, filter: { is_latest: 'true' } }
+  params: { donor_id: donor_id }
+  chart: { type: bars, label: financing_id, value: sum_value_chf, color: stance, link: financing }
+- id: donor-by-actor
+  title: { fr: Bénéficiaires, de: Empfänger, it: "Beneficiari", en: "Recipients" }
+  subtitle: { fr: "Décompte final, sinon budget", de: "Schlussrechnung, sonst Budget", it: "Conto finale, altrimenti preventivo", en: "Final accounts, otherwise budget" }
+  query: { dataset: flow, group_by: [actor_id], measure: [sum:value_chf, count], limit: 30, filter: { is_latest: 'true' } }
+  params: { donor_id: donor_id }
+  chart: { type: bars, label: actor_id, value: sum_value_chf, link: actor }
+- id: donor-list
+  title: { fr: Toutes les libéralités, de: Alle Zuwendungen, it: "Tutte le liberalità", en: "All donations" }
+  query: { dataset: flow, columns: [granted_on, financing_id, phase, stance, actor_id, nature, value_chf], order: -granted_on, limit: 200 }
+  params: { donor_id: donor_id }
+  chart: { type: table, columns: [granted_on, financing_id, phase, stance, actor_id, nature, value_chf] }

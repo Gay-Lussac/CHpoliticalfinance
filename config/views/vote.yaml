@@ -1,0 +1,29 @@
+- id: vote-top-actors
+  title: { fr: Principaux acteurs, de: Wichtigste Akteure, it: "Principali attori", en: "Main actors" }
+  subtitle: { fr: Recettes déclarées par organisation ou personne menant campagne, de: Deklarierte Einnahmen pro Kampagnenorganisation oder -person, it: "Entrate dichiarate per organizzazione o persona che conduce la campagna", en: "Declared revenue per campaigning organisation or person" }
+  query: { dataset: campaign_totals, group_by: [actor_id, stance], measure: [sum:total], limit: 15 }
+  params: { financing_id: financing_id, phase: phase }
+  chart: { type: bars, label: actor_id, value: sum_total, color: stance, link: actor }
+- id: vote-sources
+  title: { fr: D'où vient l'argent, de: Woher das Geld kommt, it: "Da dove viene il denaro", en: "Where the money comes from" }
+  subtitle: { fr: Recettes par source et par camp, de: Einnahmen nach Quelle und Lager, it: "Entrate per fonte e per fronte", en: "Revenue by source and side" }
+  query: { dataset: campaign_totals, group_by: [stance], measure: [sum:monetary_allowances, sum:non_monetary_allowances, sum:events, sum:sales, sum:equity] }
+  params: { financing_id: financing_id, phase: phase }
+  chart: { type: stacked, label: stance, series: [sum_monetary_allowances, sum_non_monetary_allowances, sum_events, sum_sales, sum_equity] }
+- id: vote-top-donors
+  title: { fr: Principaux donateurs, de: Grösste Zuwendende, it: "Principali donatori", en: "Main donors" }
+  subtitle: { fr: Libéralités de plus de 15 000 CHF déclarées pour cette votation, de: Für diese Abstimmung deklarierte Zuwendungen über 15 000 CHF, it: "Liberalità superiori a 15 000 CHF dichiarate per questa votazione", en: "Donations above CHF 15,000 declared for this vote" }
+  query: { dataset: flow, group_by: [donor_id, stance], measure: [sum:value_chf, count], limit: 15 }
+  params: { financing_id: financing_id, phase: phase }
+  chart: { type: bars, label: donor_id, value: sum_value_chf, color: stance, link: donor }
+- id: vote-donor-types
+  title: { fr: Types de donateurs, de: Art der Zuwendenden, it: "Tipi di donatori", en: "Donor types" }
+  query: { dataset: flow, group_by: [donor_type, stance], measure: [sum:value_chf, count] }
+  params: { financing_id: financing_id, phase: phase }
+  chart: { type: bars, label: donor_type, value: sum_value_chf, color: stance }
+- id: vote-budget-vs-final
+  title: { fr: Budget annoncé et décompte final, de: Budget und Schlussrechnung, it: "Preventivo annunciato e conto finale", en: "Announced budget and final accounts" }
+  subtitle: { fr: Total des recettes par camp, de: Total der Einnahmen pro Lager, it: "Totale delle entrate per fronte", en: "Total revenue per side" }
+  query: { dataset: campaign_totals, group_by: [stance, phase], measure: [sum:total], order: stance }
+  params: { financing_id: financing_id }
+  chart: { type: bars, label: stance, value: sum_total, color: phase }

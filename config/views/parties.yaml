@@ -1,0 +1,21 @@
+- id: parties-income
+  title: { fr: Recettes annuelles des partis nationaux, de: Jährliche Einnahmen der nationalen Parteien, it: "Entrate annuali dei partiti nazionali", en: "Annual revenue of national parties" }
+  subtitle: { fr: Par source de financement, de: Nach Finanzierungsquelle, it: "Per fonte di finanziamento", en: "By funding source" }
+  query: { dataset: party_year, group_by: [actor_id, party_id], measure: [sum:total, sum:monetary_allowances, sum:non_monetary_allowances, sum:events, sum:sales, sum:membership_fees, sum:mandate_contributions], limit: 20 }
+  params: { year: year }
+  chart: { type: stacked, label: actor_id, link: actor, series: [sum_monetary_allowances, sum_non_monetary_allowances, sum_events, sum_sales, sum_membership_fees, sum_mandate_contributions] }
+- id: parties-over-time
+  title: { fr: Évolution des recettes, de: Entwicklung der Einnahmen, it: "Evoluzione delle entrate", en: "Revenue over time" }
+  query: { dataset: party_year, group_by: [year, party_id], measure: [sum:total], order: year, limit: 200 }
+  chart: { type: columns, label: year, value: sum_total, color: party_id }
+- id: parties-top-donors
+  title: { fr: Principaux donateurs des partis, de: Grösste Zuwendende an Parteien, it: "Principali donatori dei partiti", en: "Main donors to parties" }
+  query: { dataset: flow, group_by: [donor_id, party_id], measure: [sum:value_chf, count], limit: 15, filter: { financing_kind: party_year } }
+  params: { year: year }
+  chart: { type: bars, label: donor_id, value: sum_value_chf, color: party_id, link: donor }
+- id: parties-mandates
+  title: { fr: Contributions liées à un mandat, de: Mandatsbeiträge, it: "Contributi legati a un mandato", en: "Mandate contributions" }
+  subtitle: { fr: Montants reversés au parti par des élu·e·s et magistrat·e·s, de: Von Amtsträger·innen an die Partei abgeführte Beträge, it: "Importi versati al partito da eletti e magistrati", en: "Amounts paid to the party by elected officials and judges" }
+  query: { dataset: mandates, group_by: [institution], measure: [sum:amount_chf, count], limit: 15 }
+  params: { year: year }
+  chart: { type: bars, label: institution, value: sum_amount_chf }

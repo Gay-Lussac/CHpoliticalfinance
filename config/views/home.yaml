@@ -1,0 +1,11 @@
+- id: home-top-donors
+  title: { fr: Plus grands donateurs des 12 derniers mois, de: Grösste Zuwendende der letzten 12 Monate, it: "Maggiori donatori degli ultimi 12 mesi", en: "Largest donors, last 12 months" }
+  subtitle: { fr: "Libéralités de plus de 15 000 CHF, toutes campagnes (décompte final, sinon budget)", de: "Zuwendungen über 15 000 CHF, alle Kampagnen (Schlussrechnung, sonst Budget)", it: "Liberalità superiori a 15 000 CHF, tutte le campagne (conto finale, altrimenti preventivo)", en: "Donations above CHF 15,000, all campaigns (final accounts, otherwise budget)" }
+  query: { dataset: flow, group_by: [donor_id], measure: [sum:value_chf, count], limit: 10, filter: { is_anonymous: 'false', is_latest: 'true' } }
+  params: { 'granted_on:gte': since }
+  chart: { type: bars, label: donor_id, value: sum_value_chf, link: donor }
+- id: home-money-per-vote
+  title: { fr: Argent déclaré par votation, de: Deklarierte Mittel pro Abstimmung, it: "Denaro dichiarato per votazione", en: "Money declared per vote" }
+  subtitle: { fr: "Recettes du décompte final, camp du Oui et du Non", de: "Einnahmen gemäss Schlussrechnung, Ja- und Nein-Lager", it: "Entrate secondo il conto finale, fronte del Sì e del No", en: "Revenue from final accounts, Yes and No sides" }
+  query: { dataset: campaign_totals, group_by: [financing_id, stance], measure: [sum:total], limit: 200, filter: { financing_kind: vote, phase: final } }
+  chart: { type: columns, label: financing_id, value: sum_total, color: stance, link: financing }
