@@ -66,3 +66,8 @@ dataset means adding a column to a view in `db/views.sql` and whitelisting it in
 Phases 1–4 of the [ROADMAP](ROADMAP.md) run locally with the complete EFK dataset:
 29 votes, 4 elections and 3 party-years, with 393 actors, 1 406 declarations and 2 026 allowances.
 Hosting on Infomaniak and the GitHub repo are still open.
+
+## Licence
+
+Code: [MIT](LICENSE). Data: published by the Swiss Federal Audit Office (EFK/CDF) on
+politikfinanzierung.efk.admin.ch. The data is not part of this repository; the pipeline fetches it.
