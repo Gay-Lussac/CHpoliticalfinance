@@ -156,6 +156,19 @@ def run_checks(conn) -> list[tuple[str, list]]:
 
 # ----------------------------------------------------------------- run bookkeeping
 
+def fresh(conn):
+    """Return a live connection: the same one if it answers, otherwise a new one."""
+    try:
+        conn.ping(reconnect=False)
+        return conn
+    except Exception:
+        try:
+            conn.close()
+        except Exception:
+            pass
+        return connect()
+
+
 def start_run(conn, trigger: str) -> int:
     with conn.cursor() as c:
         c.execute("INSERT INTO fetch_run (started_at, trigger_kind) VALUES (NOW(), %s)", (trigger,))
@@ -210,6 +223,9 @@ def cmd_load(trigger: str, full: bool, fetch: bool) -> int:
             client.close()
         log("parsing archive")
         snap, forms, cands, parse_errors = build_snapshot(archive, cantons)
+        # The fetch phase can take minutes; hosted MariaDB drops idle connections (wait_timeout),
+        # so load on a fresh connection.
+        conn = fresh(conn)
         log(f"loading {len(snap.financings)} financings, {len(snap.declarations)} declarations")
         ld = load_snapshot(conn, run_id, snap, parties, cands)
         record_payloads(conn, run_id, archive)
@@ -227,6 +243,7 @@ def cmd_load(trigger: str, full: bool, fetch: bool) -> int:
     except Exception as e:
         status = "failed"
         report += ["", f"## FAILED: {e!r}"]
+        conn = fresh(conn)
         finish_run(conn, run_id, status, "\n".join(report))
         write_report(run_id, report)
         raise
