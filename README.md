@@ -1,45 +1,62 @@
-# CHpoliticalfinance
+# CHpoliticalfinance · [polimoney.ch](https://polimoney.ch)
 
-Successor to [CHpoliticalgraphs](https://github.com/Gay-Lussac/CHpoliticalgraphs).
-It makes Swiss political financing data understandable: who finances which
-vote, election campaign and party, and how much.
+**Who funds Swiss votes, elections and parties, and how much?** This project turns the official declarations
+published by the Swiss Federal Audit Office (EFK/CDF) into short, readable views, updated automatically every night.
+The site is available in French, German, Italian and English.
 
-Data comes from the Swiss Federal Audit Office (CDF/EFK) transparency platform,
-politikfinanzierung.efk.admin.ch. It is published under the federal transparency
-rules for political financing (LDP art. 76b ff.), which have applied since 2023.
+## What the site shows
 
-## What changes compared to CHpoliticalgraphs
+- **Votes:** money declared for the Yes and No sides (budget and final accounts, side by side), the main actors and
+  donors, where the money comes from, the **result** (accepted/rejected, % yes, cantons, turnout) and the **voting
+  recommendations** of the parties and main federations.
+- **Elections:** revenue by party, by canton, main actors and donors.
+- **Parties:** annual revenue of the national parties by source, big donors and mandate contributions.
+- **Actors and donors:** every campaign an organisation ran or funded, and for each donor the **alignment of their
+  money with each party's recommendations**. This is computed only from the declared donations and explained on the
+  page; it says nothing about anyone's opinions.
+- **Explorer:** filter, group and download any dataset as CSV; the URL keeps the selection.
 
-| Before | Now |
-|---|---|
-| xlsx downloaded by hand, processed in notebooks | Automatic, scheduled scraper of the EFK JSON API |
-| One big pre-computed graph JSON per topic (≈8 MB) | Relational database (MariaDB) as the single source of truth |
-| 3D force graphs as the only view | Short, focused 2D views (rankings, splits, flows, timelines) |
-| Every new view = a new notebook + new JSON | New views are declared as *view specs* over one query API |
-| Translations built by hand from xlsx in 3 languages | FR/DE/IT labels fetched directly from the source API |
+## Data sources
 
-## The four building blocks
+| Source | What | Licence / basis |
+|---|---|---|
+| [politikfinanzierung.efk.admin.ch](https://politikfinanzierung.efk.admin.ch) | declarations of revenue and donations above CHF 15 000 (votes, elections, party years) | published under the federal transparency rules (LDP art. 76b ff.) |
+| [Swissvotes](https://swissvotes.ch) (Année politique suisse, University of Bern) | ballot questions, results, recommendations, English titles | CC BY 4.0 |
 
-1. **Sources**: what exists upstream and how to fetch it. See [docs/01-data-sources.md](docs/01-data-sources.md).
-2. **Pipeline**: scheduled, idempotent scraping into a raw archive, then normalisation into the DB. See [docs/03-pipeline.md](docs/03-pipeline.md).
-3. **Database**: the domain model. See [docs/02-database.md](docs/02-database.md) and [db/schema.sql](db/schema.sql).
-4. **Website**: flexible views on top of one query API. See [docs/04-website.md](docs/04-website.md).
+No data is stored in this repository: the pipeline fetches it. Details: [docs/01-data-sources.md](docs/01-data-sources.md).
 
-The concept and scope are in [docs/00-concept.md](docs/00-concept.md), the hosting constraints in
-[docs/05-hosting-infomaniak.md](docs/05-hosting-infomaniak.md), and the plan in [ROADMAP.md](ROADMAP.md).
+## How it works
+
+```
+EFK JSON API ─┐                                          ┌─► Node API (read-only, whitelisted queries)
+              ├─► pipeline (Python, nightly) ─► MariaDB ─┤
+Swissvotes ───┘   raw archive · strict parsing · checks  └─► website (Vite + TypeScript, YAML view specs)
+```
+
+1. **Pipeline:** each night it fetches only what changed, keeps every payload in a raw archive (the DB can be rebuilt
+   from it), parses strictly, matches ballots to votes, loads MariaDB and runs consistency checks.
+   See [docs/03-pipeline.md](docs/03-pipeline.md).
+2. **Database:** the domain model (financings, actors, campaigns, declarations, donations, donors, ballots,
+   recommendations) plus a semantic layer of SQL views. See [docs/02-database.md](docs/02-database.md).
+3. **API:** one generic `/api/query` endpoint over those views, restricted by a whitelist
+   ([config/datasets.json](config/datasets.json)), plus a few entity endpoints. It uses a read-only DB user.
+4. **Website:** each page is a list of views declared in `config/views/<page>.yaml`. A new chart needs no backend code.
+   See [docs/04-website.md](docs/04-website.md).
+
+Concept and principles: [docs/00-concept.md](docs/00-concept.md) · hosting: [docs/05-hosting-infomaniak.md](docs/05-hosting-infomaniak.md)
+· plan: [ROADMAP.md](ROADMAP.md).
 
 ## Layout
 
 ```
-docs/          concept and design documents
-db/            schema.sql (tables) · views.sql (semantic layer read by the API) · migrations/ · scripts/
-pipeline/      scraper + ETL (Python): `pipeline sync | rebuild | check | resolve --review`
+pipeline/      scraper + ETL (Python ≥ 3.9): `pipeline sync | rebuild | check | resolve --review`
 api/           read-only query API (Node + Fastify); also serves the built site
-web/           front-end (Vite + TypeScript + Observable Plot)
-config/        datasets.json (API whitelist) · views/*.yaml (what each page shows) ·
-               parties.yaml · cantons.yaml · actor_party.yaml · donor_overrides.yaml
-data/raw/      raw archive of every fetched payload (git-ignored; the DB can be rebuilt from it)
-data/reports/  one markdown report per pipeline run (git-ignored)
+web/           front-end (Vite + TypeScript + Observable Plot), 4 languages
+db/            schema.sql · migrations/ · views.sql (semantic layer)
+config/        datasets.json (API whitelist) · views/*.yaml (what each page shows) · parties.yaml ·
+               recommenders.yaml · cantons.yaml · actor_party.yaml · donor_overrides.yaml · vote_numbers.yaml
+deploy/        server scripts: setup, DB init, pipeline wrapper, nightly cron entry, deploy
+docs/          design documents
 ```
 
 ## Run locally
@@ -47,43 +64,42 @@ data/reports/  one markdown report per pipeline run (git-ignored)
 Prerequisites (macOS): `brew install mariadb node`, then `brew services start mariadb`, plus Python ≥ 3.9.
 
 ```bash
-cp .env.example .env        # then set two passwords
-make setup                  # venv + npm installs + DB, users, schema, views
-make sync-full              # first backfill from the EFK (~10 min, ~1 400 requests)
+cp .env.example .env        # then set the two DB passwords
+make setup                  # venv + npm installs + local DB, users, schema, migrations, views
+make sync-full              # first full load from the EFK and Swissvotes (~10 min)
 make api                    # terminal 1 → http://127.0.0.1:8787/api/meta
 make web                    # terminal 2 → http://localhost:5173
 ```
 
-Day to day: `make sync` fetches what changed. `make rebuild` reloads the DB from the archive after
-a schema, config or parser change. `make test` runs the tests, and `make serve` runs site + API as one process.
+Day to day:
+- `make sync`: fetch what changed;
+- `make rebuild`: reload the DB from the archive after a schema, config or parser change;
+- `make review`: list possible duplicate donors;
+- `make test`: run the tests.
 
-**To add or change what a page shows**, edit `config/views/<page>.yaml` (see
-[config/views/README.md](config/views/README.md)). The dev server reloads automatically. A new field or
-dataset means adding a column to a view in `db/views.sql` and whitelisting it in `config/datasets.json`.
+**To change what a page shows**, edit `config/views/<page>.yaml` (format in [config/views/README.md](config/views/README.md)).
+A new field or dataset means adding a column to a view in `db/views.sql` and whitelisting it in `config/datasets.json`.
 
-## Status
-
-Phases 1–4 of the [ROADMAP](ROADMAP.md) run locally with the complete EFK dataset:
-29 votes, 4 elections and 3 party-years, with 393 actors, 1 406 declarations and 2 026 allowances.
-Hosting on Infomaniak and the GitHub repo are still open.
-
-## Branches and deployment
+## Branches and releases
 
 | Branch | Role |
 |---|---|
-| `main` | **production**: the only branch deployed to polimoney.ch. Protected: changes arrive only through a pull request, with no direct or force pushes. |
-| `dev` | **work in progress** (default branch). All changes are committed here first. |
+| `dev` | work in progress (default branch). Every change is committed here first and tested locally. |
+| `main` | **production**: what polimoney.ch runs. Protected, so changes arrive only through a pull request `dev → main`. |
 
-Workflow: commit on `dev` and test locally. When it's ready, open a pull request `dev → main` and merge it,
-then run `deploy/deploy.sh` on the server. The script only ever fast-forwards the server to `origin/main`.
+After merging a pull request:
+- **website:** rebuild the Node.js site (its build command pulls `main`), then restart it;
+- **pipeline:** run `deploy/deploy.sh` on the server;
+- **database changes:** apply `deploy/init-db.sh` as the admin user, then run one sync.
 
-```bash
-gh pr create --base main --head dev --fill      # propose dev for production
-gh pr merge --merge                             # after checking the diff
-ssh xb5xa5_SSH_Admin@xb5xa5.ftp.infomaniak.com 'cd ~/chpf && deploy/deploy.sh'
-```
+The exact order is in [docs/05-hosting-infomaniak.md](docs/05-hosting-infomaniak.md).
+
+## Status
+
+Live at **[polimoney.ch](https://polimoney.ch)** since September 2026. The data covers every federal vote since March
+2024, the 2023 federal elections and later by-elections, and national party financing since 2023. It is refreshed nightly.
+Next steps are in the [ROADMAP](ROADMAP.md).
 
 ## Licence
 
-Code: [MIT](LICENSE). Data: published by the Swiss Federal Audit Office (EFK/CDF) on
-politikfinanzierung.efk.admin.ch. The data is not part of this repository; the pipeline fetches it.
+Code: [MIT](LICENSE). Data belongs to its publishers (EFK/CDF; Swissvotes, CC BY 4.0) and is not part of this repository.
