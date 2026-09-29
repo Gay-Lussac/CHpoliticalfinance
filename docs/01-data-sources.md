@@ -116,7 +116,7 @@ and back off on 429 or 5xx. Also send the EFK a short courtesy email about the r
 - BFS election results (NR/SR 2023), and party abbreviations, colours and national parent parties.
   The legacy project hard-coded colours; move them to `config/parties.yaml`.
 
-## E. Legacy data (one-off)
+## E. Legacy data
 
-- `../Python Treatment/**.xlsx` and `../Git_copy/CHpoliticalgraphs/*/*.json`. Use them only as a **regression reference**:
-  after the first backfill, the per-vote totals in the new DB should match the old ones, unless the EFK has revised the data since.
+The previous project's Excel downloads and graph JSONs served as a one-off regression reference: per-vote totals in the
+new DB matched them exactly. They were removed on 2026-09-29.
