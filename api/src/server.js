@@ -138,6 +138,35 @@ async function withSummary(rows) {
   return rows;
 }
 
+/** Swissvotes ballots (result + recommendations) for vote financings; `detail` adds recommendations. */
+async function withBallots(rows, lang, detail) {
+  const ids = rows.filter((r) => r.kind === 'vote').map((r) => r.id);
+  for (const r of rows) r.ballots = [];
+  if (!ids.length) return rows;
+  const [ballots] = await pool.query(
+    `SELECT b.id, b.financing_id, b.anr, b.role, b.legal_form, b.yes_share, b.turnout, b.outcome, b.cantons_yes,
+            ${i18nExpr('ballot', 'b.id', 'title', lang, 'NULL')} AS title
+       FROM ballot b WHERE b.financing_id IN (?) ORDER BY b.financing_id, FIELD(b.role,'main','counter_proposal','tie_break')`,
+    [ids]);
+  let recs = [];
+  if (detail && ballots.length) {
+    [recs] = await pool.query(
+      `SELECT br.ballot_id, br.recommendation, r.code, r.kind, p.code AS party_code, p.color,
+              COALESCE(${i18nExpr('party', 'p.id', 'name', lang, 'NULL')}, ${i18nExpr('recommender', 'r.id', 'name', lang, 'r.code')}) AS label
+         FROM ballot_recommendation br JOIN recommender r ON r.id = br.recommender_id
+         LEFT JOIN party p ON p.id = r.party_id
+        WHERE br.ballot_id IN (?) ORDER BY r.sort_order`, [ballots.map((b) => b.id)]);
+  }
+  const byFin = new Map(rows.map((r) => [r.id, r]));
+  for (const b of ballots) {
+    const { id, financing_id, ...rest } = b;
+    const entry = { ...rest };
+    if (detail) entry.recommendations = recs.filter((x) => x.ballot_id === id).map(({ ballot_id, ...x }) => x);
+    byFin.get(financing_id)?.ballots.push(entry);
+  }
+  return rows;
+}
+
 app.get('/api/financings', async (req) => {
   const lang = langOf(req.query);
   const kind = ['vote', 'election', 'party_year'].includes(req.query.kind) ? req.query.kind : null;
@@ -145,7 +174,7 @@ app.get('/api/financings', async (req) => {
     const [rows] = await pool.query(
       `${FINANCING_SELECT(lang)} ${kind ? 'WHERE f.kind = ?' : ''} ORDER BY f.event_date DESC, f.year DESC, f.id`,
       kind ? [kind] : []);
-    return withSummary(rows);
+    return withBallots(await withSummary(rows), lang, false);
   });
 });
 
@@ -154,7 +183,7 @@ app.get('/api/financings/:id', async (req, reply) => {
   const id = Number(req.params.id);
   const rows = await cached(`fin1:${lang}:${id}`, async () => {
     const [r] = await pool.query(`${FINANCING_SELECT(lang)} WHERE f.id = ?`, [id]);
-    return withSummary(r);
+    return withBallots(await withSummary(r), lang, true);
   });
   return rows[0] ?? reply.code(404).send({ error: 'not found' });
 });

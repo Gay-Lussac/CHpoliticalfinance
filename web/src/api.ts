@@ -9,6 +9,15 @@ export interface Financing {
   has_budget: boolean; has_final: boolean;
   summary: Record<string, Record<string, { total: number; n_actors: number }>>;
   allowances: Record<string, { total: number; n: number }>;
+  ballots: Ballot[];
+}
+
+export interface Recommendation { code: string; kind: 'party' | 'organisation'; party_code: string | null;
+  color: string | null; label: string; recommendation: string }
+export interface Ballot {
+  anr: string; role: 'main' | 'counter_proposal' | 'tie_break'; legal_form: string; title: string | null;
+  yes_share: number | null; turnout: number | null; outcome: string | null; cantons_yes: number | null;
+  recommendations?: Recommendation[];
 }
 
 const cache = new Map<string, Promise<any>>();

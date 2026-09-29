@@ -8,6 +8,7 @@ const TEXT = {
 Depuis 2023, les partis représentés à l'Assemblée fédérale, ainsi que les personnes et organisations qui dépensent plus de 50 000 CHF pour une campagne de votation ou d'élection fédérale, doivent déclarer leurs recettes.
 Les libéralités (dons) de plus de 15 000 CHF par donateur doivent être déclarées nominativement.</p>
 <p>Ce site récupère automatiquement ces déclarations, les archive et les rassemble dans une base de données. Il ne les modifie pas : les montants sont ceux déclarés.</p>
+<p>Les résultats des votations et les recommandations des partis et associations proviennent de <a href="https://swissvotes.ch" target="_blank" rel="noopener">Swissvotes</a> (Année politique suisse, Université de Berne), sous licence CC BY 4.0.</p>
 <h2>Budget et décompte final</h2>
 <p>Pour chaque campagne, deux déclarations existent : les <strong>recettes budgétées</strong>, publiées avant le scrutin, et le <strong>décompte final</strong>, publié après. Elles sont présentées séparément et ne sont jamais additionnées.</p>
 <h2>Limites</h2>
@@ -25,6 +26,7 @@ Les libéralités (dons) de plus de 15 000 CHF par donateur doivent être décla
 Seit 2023 müssen die in der Bundesversammlung vertretenen Parteien sowie Personen und Organisationen, die mehr als 50 000 CHF für eine eidgenössische Abstimmungs- oder Wahlkampagne aufwenden, ihre Einnahmen offenlegen.
 Zuwendungen über 15 000 CHF pro Zuwender·in müssen namentlich deklariert werden.</p>
 <p>Diese Website ruft die Offenlegungen automatisch ab, archiviert sie und führt sie in einer Datenbank zusammen. Die Beträge werden nicht verändert.</p>
+<p>Abstimmungsergebnisse und Parolen der Parteien und Verbände stammen von <a href="https://swissvotes.ch" target="_blank" rel="noopener">Swissvotes</a> (Année politique suisse, Universität Bern), Lizenz CC BY 4.0.</p>
 <h2>Budget und Schlussrechnung</h2>
 <p>Für jede Kampagne gibt es zwei Offenlegungen: die <strong>budgetierten Einnahmen</strong> vor dem Urnengang und die <strong>Schlussrechnung</strong> danach. Sie werden getrennt dargestellt und nie addiert.</p>
 <h2>Grenzen</h2>
@@ -42,6 +44,7 @@ Zuwendungen über 15 000 CHF pro Zuwender·in müssen namentlich deklariert werd
 Dal 2023 i partiti rappresentati nell'Assemblea federale, nonché le persone e le organizzazioni che spendono più di 50 000 CHF per una campagna di votazione o di elezione federale, devono dichiarare le loro entrate.
 Le liberalità (donazioni) superiori a 15 000 CHF per donatore devono essere dichiarate nominativamente.</p>
 <p>Questo sito recupera automaticamente queste dichiarazioni, le archivia e le riunisce in una banca dati. Non le modifica: gli importi sono quelli dichiarati.</p>
+<p>I risultati delle votazioni e le raccomandazioni dei partiti e delle associazioni provengono da <a href="https://swissvotes.ch" target="_blank" rel="noopener">Swissvotes</a> (Année politique suisse, Università di Berna), licenza CC BY 4.0.</p>
 <h2>Preventivo e conto finale</h2>
 <p>Per ogni campagna esistono due dichiarazioni: le <strong>entrate preventivate</strong>, pubblicate prima del voto, e il <strong>conto finale</strong>, pubblicato dopo. Sono presentate separatamente e non vengono mai sommate.</p>
 <h2>Limiti</h2>
@@ -61,6 +64,7 @@ Since 2023, parties represented in the Federal Assembly, as well as people and o
 Donations above CHF 15,000 per donor must be declared by name.</p>
 <p>This site collects these declarations automatically, archives them and brings them together in a database. It does not alter them: amounts are as declared.</p>
 <p>The SFAO publishes in French, German and Italian only. Titles of votes and other official labels are shown in French on the English version.</p>
+<p>Vote results and the recommendations of parties and federations come from <a href="https://swissvotes.ch" target="_blank" rel="noopener">Swissvotes</a> (Année politique suisse, University of Bern), licensed CC BY 4.0.</p>
 <h2>Budget and final accounts</h2>
 <p>Each campaign files two declarations: <strong>budgeted revenue</strong>, published before the vote, and the <strong>final accounts</strong>, published afterwards. They are shown separately and never added together.</p>
 <h2>Limitations</h2>

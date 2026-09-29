@@ -19,6 +19,7 @@ from . import settings
 from .archive import Archive
 from .efk import EfkClient, EfkError
 from .load import Snapshot, connect, load_snapshot
+from . import swissvotes
 from .parse import Cantons, Parties, ParseError, classify_form, parse_candidates, parse_detail, parse_trees
 
 TREES = ["campaign_financings", "party_financings"]
@@ -68,6 +69,36 @@ def select_details(archive: Archive, forms, financings, full: bool) -> list:
         if full or recent or archive.latest("fr", ref.detail_path) is None or old.get(skey) != new.get(skey):
             wanted.append(ref)
     return wanted, (state_file, new)
+
+
+def fetch_swissvotes(archive: Archive) -> str:
+    """Fetch the Swissvotes CSV; returns a one-line status for the report (never raises)."""
+    try:
+        body, checksum = swissvotes.fetch()
+        _, is_new = archive.store(swissvotes.ARCHIVE_LANG, swissvotes.ARCHIVE_PATH, checksum, body, ext="csv")
+        return "changed" if is_new else "unchanged"
+    except Exception as e:   # Swissvotes is enrichment: an outage must not block the EFK sync
+        return f"FAILED ({e}) – previous version kept"
+
+
+def build_ballots(archive: Archive, financings) -> tuple[list | None, dict, list[str]]:
+    body = archive.load_bytes(swissvotes.ARCHIVE_LANG, swissvotes.ARCHIVE_PATH)
+    if body is None:
+        return None, {}, ["swissvotes: not fetched yet"]
+    votes = [(f.efk_id, f.event_date, f.name) for f in financings.values() if f.kind == "vote" and f.event_date]
+    if not votes:
+        return [], {}, []
+    import yaml
+    codes = [r["code"] for r in yaml.safe_load((settings.CONFIG_DIR / "recommenders.yaml").read_text())["recommenders"]]
+    try:
+        ballots = swissvotes.parse(body, min(d for _, d, _ in votes), codes)
+    except ParseError as e:
+        return None, {}, [str(e)]
+    mapping, problems = swissvotes.match(ballots, votes)
+    matched_votes = set(mapping.values())
+    problems += [f"EFK vote {efk_id} ({d}) has no Swissvotes ballot yet" for efk_id, d, _ in votes
+                 if efk_id not in matched_votes]
+    return ballots, mapping, problems
 
 
 def fetch_details(client: EfkClient, archive: Archive, refs) -> tuple[int, list[str]]:
@@ -214,6 +245,8 @@ def cmd_load(trigger: str, full: bool, fetch: bool) -> int:
             log("fetching trees (fr/de/it)")
             changed_trees = fetch_trees(client, archive)
             report.append(f"- changed trees: {', '.join(changed_trees) or 'none'}")
+            log("fetching Swissvotes dataset")
+            report.append(f"- Swissvotes dataset: {fetch_swissvotes(archive)}")
             snap, forms, _, _ = build_snapshot(archive, cantons)
             refs, (state_file, new_state) = select_details(archive, forms, snap.financings, full)
             log(f"fetching {len(refs)} of {len(forms)} declaration details")
@@ -223,6 +256,7 @@ def cmd_load(trigger: str, full: bool, fetch: bool) -> int:
             client.close()
         log("parsing archive")
         snap, forms, cands, parse_errors = build_snapshot(archive, cantons)
+        snap.ballots, snap.ballot_map, sv_problems = build_ballots(archive, snap.financings)
         # The fetch phase can take minutes; hosted MariaDB drops idle connections (wait_timeout),
         # so load on a fresh connection.
         conn = fresh(conn)
@@ -231,6 +265,8 @@ def cmd_load(trigger: str, full: bool, fetch: bool) -> int:
         record_payloads(conn, run_id, archive)
         report += ["", "## Loaded", *[f"- {k}: {v}" for k, v in sorted(ld.stats.items())],
                    f"- new donors: {len(ld.new_donor_keys)}"]
+        report += ["", f"## Swissvotes: {len(snap.ballot_map)} ballots matched to EFK votes",
+                   *[f"- {p}" for p in sv_problems]]
         errors = fetch_errors + parse_errors
         if errors:
             status = "partial"

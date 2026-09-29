@@ -15,6 +15,7 @@
   --series-5: #e87ba4; --series-6: #008300; --series-7: #4a3aa7;
   --phase-budget: #86b6ef; --phase-final: #256abf;
   --radius: 10px;
+  --ok: #1e7b45; --ko: #b3261e;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
@@ -25,6 +26,7 @@
     --series-1: #3987e5; --series-2: #d95926; --series-3: #199e70; --series-4: #c98500;
     --series-5: #d55181; --series-6: #008300; --series-7: #9085e9;
     --phase-budget: #1c5cab; --phase-final: #6da7ec;
+    --ok: #5cc98a; --ko: #f08a80;
   }
 }
 :root[data-theme="dark"] {
@@ -35,6 +37,7 @@
   --series-1: #3987e5; --series-2: #d95926; --series-3: #199e70; --series-4: #c98500;
   --series-5: #d55181; --series-6: #008300; --series-7: #9085e9;
   --phase-budget: #1c5cab; --phase-final: #6da7ec;
+  --ok: #5cc98a; --ko: #f08a80;
 }
 
 * { box-sizing: border-box; }
@@ -169,3 +172,17 @@ td:has(.num) { text-align: right; }
   .main-nav { order: 3; flex-basis: 100%; }
   .card { padding: 14px; }
 }
+
+/* ballots: result + recommendations (Swissvotes) */
+.ballots { margin-bottom: 16px; }
+.ballots h2 { margin-bottom: 8px; }
+.ballot + .ballot { border-top: 1px solid var(--border); margin-top: 12px; padding-top: 12px; }
+.ballot-title { font-size: .95rem; }
+.result { margin: .2em 0 .6em; }
+.result.ok strong, .result.ok { color: var(--ok); }
+.result.ko strong, .result.ko { color: var(--ko); }
+.rec-groups { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.rec-group h3 { font-size: .75rem; text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted); margin: 0 0 6px; }
+.chips { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; border: 1px solid var(--border); border-radius: 99px; font-size: .85rem; background: var(--bg); }
+.source { margin: 12px 0 0; }

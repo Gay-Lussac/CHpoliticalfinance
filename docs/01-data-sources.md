@@ -88,18 +88,28 @@ About 1 400 forms × 3 languages is ~4 000 small requests for a full backfill. I
 thanks to the checksums. Throttle to about 2 req/s, send an identifying `User-Agent` with a contact email,
 and back off on 429 or 5xx. Also send the EFK a short courtesy email about the reuse; they may offer a supported feed.
 
-## B. Party voting recommendations (BFS)
+## B. Ballots, results and recommendations: Swissvotes (implemented)
 
-- The legacy project used the BFS table `je-f-17.03.01.04.xlsx` ("Recommandations des partis pour les votations fédérales").
-  It has one sheet per year (1970–2024), rows = parties, columns = vote numbers (`no 6650`) grouped by date, and values Oui/Non/free…
-- The file needs messy header parsing, and newer years may lag. Check opendata.swiss and the BFS API for a machine-readable version.
-- Join key: the **BFS vote number** (e.g. 6650). EFK financings do not carry it, so a mapping `financing ↔ vote_number`
-  is needed. Match on date and title, with manual overrides.
+- **Swissvotes** is run by Année politique suisse at the University of Bern. The whole dataset is **one CSV**
+  (`https://swissvotes.ch/page/dataset/swissvotes_dataset.csv`, ~3 MB, ~700 votes since 1848) under **CC BY 4.0**,
+  so the site credits it wherever its data appears. The codebook is `https://swissvotes.ch/page/dataset/codebook-de.pdf`.
+- Used columns:
+  - `anr` (official vote number), `datum`, `rechtsform` (legal form);
+  - `titel_off_f` (for matching), `titel_kurz_d/f/e` (short titles; **EN** titles also serve as the English vote titles);
+  - `annahme`, `volkja-proz`, `bet`, `kt-ja` (outcome, % yes, turnout, cantons in favour);
+  - `p-<org>` recommendations. The organisations shown are listed in `config/recommenders.yaml` (11 parties + 6 federations).
+    Codes: 1 yes · 2 no · 3 none · 4 blank · 5 free · 8/9 tie-break preference · 9999 organisation did not exist.
+- **One EFK vote can cover several ballots.** An initiative with a direct counter-proposal is one EFK campaign but three
+  Swissvotes ballots (initiative, counter-proposal, tie-break). Ballots are matched to EFK votes by date and by title similarity
+  or containment. Unclear matches are reported, never guessed, and can be forced in `config/vote_numbers.yaml`.
+- **Updates:** fetched on every nightly sync and archived only when changed. Recommendations appear in the weeks before a vote,
+  and results on the evening of voting day. If Swissvotes is down, the EFK sync still runs and keeps the previous data.
+- The BFS table `je-f-17.03.01.04.xlsx` used by the legacy project is no longer needed.
 
-## C. Vote results (enrichment, later)
+## C. Municipal vote results (optional, later)
 
-- opendata.swiss publishes the federal vote results (BFS "Eidgenössische Abstimmungen", JSON per vote date), keyed by vote number.
-  They give yes %, turnout and cantonal results, so "money vs result" views become possible.
+- Per-municipality results (BFS/opendata.swiss) would allow "money vs result by region" views. Not needed yet:
+  Swissvotes already provides the national and cantonal results.
 
 ## D. Election results and party metadata (enrichment, later)
 

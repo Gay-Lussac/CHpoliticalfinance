@@ -57,7 +57,8 @@ function shell(page: string) {
     </header>
     <main class="wrap" id="main"></main>
     <footer class="site-footer wrap">
-      <p>${esc(t.source_efk)} — <a href="https://politikfinanzierung.efk.admin.ch/app/${route.lang}" target="_blank" rel="noopener">politikfinanzierung.efk.admin.ch</a>
+      <p>${esc(t.source_efk)} — <a href="https://politikfinanzierung.efk.admin.ch/app/${route.lang === 'en' ? 'de' : route.lang}" target="_blank" rel="noopener">politikfinanzierung.efk.admin.ch</a>
+      · ${esc(t.source_swissvotes)} — <a href="https://swissvotes.ch" target="_blank" rel="noopener">swissvotes.ch</a>
       · <span id="updated"></span></p>
     </footer>`;
   wireSearch();

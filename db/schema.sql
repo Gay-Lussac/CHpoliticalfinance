@@ -225,14 +225,6 @@ CREATE TABLE mandate_contribution (
   FOREIGN KEY (declaration_id) REFERENCES declaration(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE party_recommendation (
-  financing_id  BIGINT UNSIGNED NOT NULL,    -- vote_object financing
-  party_id      SMALLINT UNSIGNED NOT NULL,
-  recommendation ENUM('yes','no','free','blank','none') NOT NULL,
-  source        VARCHAR(100) NOT NULL DEFAULT 'BFS je-f-17.03.01.04',
-  PRIMARY KEY (financing_id, party_id),
-  FOREIGN KEY (financing_id) REFERENCES vote_object(financing_id) ON DELETE CASCADE,
-  FOREIGN KEY (party_id) REFERENCES party(id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+-- Ballots, results and recommendations (Swissvotes): see migrations/002_ballots.sql
 
 -- Semantic views (what the API reads) live in views.sql.

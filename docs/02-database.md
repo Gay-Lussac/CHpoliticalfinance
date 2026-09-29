@@ -37,7 +37,9 @@ financing ─┬─ vote_object (1:1, kind = vote)          ← BFS vote number,
 | `donor_alias` | raw spelling seen upstream → donor | normalised name + city |
 | `allowance` | one donation (> CHF 15 000) | `allowance.id` |
 | `mandate_contribution` | mandate levies paid to a party | — |
-| `party_recommendation` | party × vote object → yes/no/free/blank | BFS |
+| `ballot` | one ballot question (N per EFK vote: initiative, counter-proposal, tie-break) with its result | Swissvotes `anr` |
+| `recommender` | party or federation whose recommendation is shown (`config/recommenders.yaml`) | Swissvotes column `p-<code>` |
+| `ballot_recommendation` | recommender × ballot → yes/no/none/blank/free/tie-break preference | Swissvotes |
 | `i18n_label` | FR/DE/IT(/EN) labels for any entity | — |
 | `fetch_run`, `raw_payload` | provenance: what we fetched, when, with which checksum | — |
 

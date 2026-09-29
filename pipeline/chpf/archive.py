@@ -1,7 +1,7 @@
 """Append-only raw archive of fetched payloads.
 
 Layout:
-  data/raw/payloads/<lang>/<path>/<checksum>.json   body, never modified
+  data/raw/payloads/<lang>/<path>/<checksum>.<ext>  body (json, or csv for Swissvotes), never modified
   data/raw/index.jsonl                              one line per fetch: url, lang, path, checksum, file, fetched_at
 
 The index (not the DB) is the source of truth for `pipeline rebuild`.
@@ -45,10 +45,10 @@ class Archive:
     def latest(self, lang: str, path: str) -> Entry | None:
         return self._latest.get((lang, path))
 
-    def store(self, lang: str, path: str, checksum: str, body: bytes) -> tuple[Entry, bool]:
+    def store(self, lang: str, path: str, checksum: str, body: bytes, ext: str = "json") -> tuple[Entry, bool]:
         """Store a body; returns (entry, changed) where changed = content differs from the latest one."""
         prev = self.latest(lang, path)
-        rel = Path("payloads") / lang / _safe(path) / f"{checksum}.json"
+        rel = Path("payloads") / lang / _safe(path) / f"{checksum}.{ext}"
         target = self.root / rel
         if not target.exists():
             target.parent.mkdir(parents=True, exist_ok=True)
@@ -65,6 +65,10 @@ class Archive:
         if e is None:
             return None
         return json.loads((self.root / e.file).read_text())
+
+    def load_bytes(self, lang: str, path: str) -> bytes | None:
+        e = self.latest(lang, path)
+        return None if e is None else (self.root / e.file).read_bytes()
 
     def entries(self):
         return self._latest.values()

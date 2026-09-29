@@ -1,0 +1,5 @@
+# Manual Swissvotes ballot → EFK vote matching, when the automatic title match is wrong or missing.
+# Key: Swissvotes/BFS number (anr, as text). Value: EFK campaign_financing id (financing efk_id), or null to ignore.
+# Example:
+#   "682.3": 9
+{}

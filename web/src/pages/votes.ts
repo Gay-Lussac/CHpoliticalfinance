@@ -2,7 +2,7 @@ import { get, type Financing } from '../api';
 import { chf, date, esc, num } from '../format';
 import { T, tr } from '../i18n';
 import { PAGES, renderViews } from '../views';
-import { defaultPhase, phaseToggle, sideTotals, splitBar, statTiles, viewsGrid, voteCard, voteSentence } from './common';
+import { ballotsCard, defaultPhase, phaseToggle, sideTotals, splitBar, statTiles, viewsGrid, voteCard, voteSentence } from './common';
 
 export async function votesPage(main: HTMLElement) {
   const t = T();
@@ -27,10 +27,11 @@ export async function votePage(main: HTMLElement, id: string | undefined, params
   const al = f.allowances[phase];
   const hasData = f.has_budget || f.has_final;
   main.innerHTML = `<header class="page-head">
-      <div class="card-meta"><span>${t.vote} · ${date(f.event_date)}</span>${f.object_type ? `<span class="badge">${tr(f.object_type === 'popular_initiative' ? 'initiative' : f.object_type)}</span>` : ''}</div>
+      <div class="card-meta"><span>${t.vote} · ${date(f.event_date)}</span>${f.object_type && f.object_type !== 'other' ? `<span class="badge">${tr(f.object_type)}</span>` : ''}</div>
       <h1>${esc(f.title)}</h1>
       ${hasData ? `<p class="lead">${esc(voteSentence(f, phase))}</p>${phaseToggle(f, phase, `vote/${f.id}`)}` : `<p class="lead">${t.no_data_yet}</p>`}
     </header>`;
+  main.insertAdjacentHTML('beforeend', ballotsCard(f));
   if (!hasData) return;
   main.insertAdjacentHTML('beforeend', `<div class="card">${splitBar(yes, no)}</div>` + statTiles([
     { label: t.for, value: chf(yes), sub: `${nYes} ${t.actors}` },
