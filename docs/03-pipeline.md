@@ -1,6 +1,6 @@
 # 03 · Pipeline (scrape → archive → load)
 
-Language: **Python 3.11+**. Dependencies are kept minimal: `httpx`, `PyMySQL`, `PyYAML`. Responses are validated by
+Language: **Python 3.9+** (Infomaniak ships 3.9; tested there). Dependencies are kept minimal: `httpx`, `PyMySQL`, `PyYAML`. Responses are validated by
 hand-written strict parsers in `chpf/parse.py` (unknown shapes raise `ParseError`).
 
 **Implemented choice (phase 1 spike):** the JSON detail endpoints are the only content source. The xlsx exports are

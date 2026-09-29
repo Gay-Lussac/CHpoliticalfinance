@@ -44,7 +44,7 @@ data/reports/  one markdown report per pipeline run (git-ignored)
 
 ## Run locally
 
-Prerequisites (macOS): `brew install mariadb node`, then `brew services start mariadb`, plus Python ≥ 3.11.
+Prerequisites (macOS): `brew install mariadb node`, then `brew services start mariadb`, plus Python ≥ 3.9.
 
 ```bash
 cp .env.example .env        # then set two passwords
