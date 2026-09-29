@@ -67,6 +67,22 @@ Phases 1–4 of the [ROADMAP](ROADMAP.md) run locally with the complete EFK data
 29 votes, 4 elections and 3 party-years, with 393 actors, 1 406 declarations and 2 026 allowances.
 Hosting on Infomaniak and the GitHub repo are still open.
 
+## Branches and deployment
+
+| Branch | Role |
+|---|---|
+| `main` | **production**: the only branch deployed to polimoney.ch. Protected: changes arrive only through a pull request, with no direct or force pushes. |
+| `dev` | **work in progress** (default branch). All changes are committed here first. |
+
+Workflow: commit on `dev` and test locally. When it's ready, open a pull request `dev → main` and merge it,
+then run `deploy/deploy.sh` on the server. The script only ever fast-forwards the server to `origin/main`.
+
+```bash
+gh pr create --base main --head dev --fill      # propose dev for production
+gh pr merge --merge                             # after checking the diff
+ssh xb5xa5_SSH_Admin@xb5xa5.ftp.infomaniak.com 'cd ~/chpf && deploy/deploy.sh'
+```
+
 ## Licence
 
 Code: [MIT](LICENSE). Data: published by the Swiss Federal Audit Office (EFK/CDF) on
