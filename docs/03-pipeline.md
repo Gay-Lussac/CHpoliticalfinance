@@ -64,7 +64,6 @@ pipeline sync                # discover + fetch + load (cron entry point)
 pipeline rebuild             # from archive only
 pipeline resolve --review    # list unreviewed donor aliases / unmapped actors
 pipeline check               # run invariants on the current DB
-pipeline import-legacy       # one-off: compare with the old JSONs
 ```
 
 ## Where it runs

@@ -78,13 +78,14 @@ Setup order on Infomaniak:
 
 ## Production setup (as deployed, 2026-09-29)
 
-Infomaniak Managed Cloud Server. Two **isolated** hosting spaces share one MariaDB (10.11):
+Infomaniak Managed Cloud Server. Two **isolated** hosting spaces share one MariaDB (10.11).
+Account-specific names are shown as `<account>` / `<prefix>`; the real values are kept outside the repository.
 
 | Part | Where | Code | Runs |
 |---|---|---|---|
 | Website + API | Node.js site `polimoney.ch` (container, `/srv/customer/sites/polimoney.ch`) | git clone of GitHub `main`, updated **by the build command** | build: `git fetch origin main && git reset --hard origin/main && npm --prefix api ci --omit=dev && npm --prefix web ci && npm --prefix web run build && rm -rf web/node_modules` · run: `API_HOST=0.0.0.0 … node api/src/server.js` · port 8787 |
-| Pipeline | SSH space `xb5xa5_SSH_Admin@xb5xa5.ftp.infomaniak.com`, `~/chpf` | `git clone` of `main`, updated with `deploy/deploy.sh` | Python 3.9 with `pip --user` (no venv available); crontab `15 3 * * *` → `deploy/cron-sync.sh`, emails only on failure |
-| Database | `xb5xa5.myd.infomaniak.com` · `xb5xa5_chpf` | schema via `deploy/init-db.sh` (admin) | users `xb5xa5_admin` (schema), `xb5xa5_etl` (pipeline), `xb5xa5_api` (site) |
+| Pipeline | SSH space `<ssh-user>@<account>.ftp.infomaniak.com`, `~/chpf` | `git clone` of `main`, updated with `deploy/deploy.sh` | Python 3.9 with `pip --user` (no venv available); crontab `15 3 * * *` → `deploy/cron-sync.sh`, emails only on failure |
+| Database | `<account>.myd.infomaniak.com` · `<prefix>_chpf` | schema via `deploy/init-db.sh` (admin) | users `<prefix>_admin` (schema), `<prefix>_etl` (pipeline), `<prefix>_api` (site) |
 
 Keeping each side minimal:
 - **Website:** the whole repo is pulled, but only `web/dist` and the API are served. Every other path returns the SPA page
@@ -103,5 +104,5 @@ Things learned while deploying:
 Releasing: merge a PR `dev → main`, then **(1)** in the Manager, Node.js site: **Build** (the build command pulls `main`),
 then **Restart**, if `api/`, `web/` or `config/` changed. The Manager has no separate "pull" button, and Restart alone
 reruns the old code. Then
-and **(2)** run `ssh xb5xa5_SSH_Admin@xb5xa5.ftp.infomaniak.com 'cd ~/chpf && deploy/deploy.sh'` if `pipeline/`, `config/` or `db/` changed.
+and **(2)** run `ssh <ssh-user>@<account>.ftp.infomaniak.com 'cd ~/chpf && deploy/deploy.sh'` if `pipeline/`, `config/` or `db/` changed.
 Schema changes (`db/migrations`, `db/views.sql`) are applied with `deploy/init-db.sh` (asks for the admin password).

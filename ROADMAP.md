@@ -31,7 +31,7 @@ The phases run in order, but the design docs for later phases are refined while 
 - [x] `config/parties.yaml` (codes, colours and name patterns) and the actor → party mapping
 - [x] Donor resolution v1 (normalised key) and the review workflow (`resolve --review`, `donor_overrides.yaml`)
 - [x] Invariant checks and the run report
-- [ ] `import-legacy`: compare totals against the old CHpoliticalgraphs JSONs and explain every difference
+- [x] Compare totals against the old CHpoliticalgraphs JSONs (spot checks matched exactly; legacy project removed 2026-09-29)
 - [x] `pipeline rebuild` (from the archive)
 - [x] Update the schema from what the spike taught us (migrations from here on)
 
@@ -93,12 +93,7 @@ The phases run in order, but the design docs for later phases are refined while 
 - Public read-only data dump (CSV/SQLite) under an open licence
 - Alerts: "notify me when a new donor above CHF 100 k appears"
 
-## Carried over from the legacy project
+## Legacy project
 
-| Item | Where it was | What to do |
-|---|---|---|
-| BFS recommendations file | `Votations/Recommendations/je-f-17.03.01.04.xlsx` (downloaded, never parsed) | superseded by Swissvotes |
-| Colour palette (per node *type*, e.g. Yes `#32CD32`, No `#FF4500`) | notebooks | optional starting point; party colours still to define in `config/parties.yaml` |
-| Translation dictionary | `Dictionary builder/` | **drop**: the API serves FR/DE/IT labels |
-| Intro and explanatory texts (FR/DE/EN) | `index*.html` | starting point for the About page |
-| Old graph JSONs | `Git_copy/CHpoliticalgraphs/*/*.json` | regression reference only (phase 2) |
+The previous project (CHpoliticalgraphs: notebooks, Excel downloads, 3D graph site) was removed on 2026-09-29, after the
+new pipeline reproduced its totals exactly. Everything it used is now fetched automatically (EFK API, Swissvotes).
