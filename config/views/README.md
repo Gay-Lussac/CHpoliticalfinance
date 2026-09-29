@@ -7,6 +7,8 @@ Adding a view = adding an entry here (no backend change). See docs/04-website.md
 - id: unique-id
   title:    { fr: …, de: …, it: …, en: … }
   subtitle: { fr: …, de: …, it: …, en: … }                # optional
+  note:     { fr: …, de: …, it: …, en: … }                # optional method/disclaimer box above the chart
+  show_if:  { donor_type: legal }                         # optional: only when the page context matches
   query:                                       # → GET /api/query (whitelist: config/datasets.json)
     dataset: flow | campaign_totals | party_year | mandates
     group_by: [field, …]                       # omit for raw rows

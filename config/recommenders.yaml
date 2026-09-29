@@ -1,0 +1,33 @@
+# Who we show voting recommendations for (source: Swissvotes columns p-<code>).
+# Parties link to parties.yaml codes; organisations are the main economic and labour federations.
+# Order = display order.
+recommenders:
+  - { code: sps,   kind: party, party: SP }
+  - { code: gps,   kind: party, party: GRUENE }
+  - { code: glp,   kind: party, party: GLP }
+  - { code: evp,   kind: party, party: EVP }
+  - { code: mitte, kind: party, party: MITTE }
+  - { code: fdp,   kind: party, party: FDP }
+  - { code: svp,   kind: party, party: SVP }
+  - { code: edu,   kind: party, party: EDU }
+  - { code: lega,  kind: party, party: LEGA }
+  - { code: mcg,   kind: party, party: MCG }
+  - { code: pda,   kind: party, party: LEFT }
+  - code: sgb
+    kind: organisation
+    names: { fr: Union syndicale suisse (USS), de: Schweizerischer Gewerkschaftsbund (SGB), it: Unione sindacale svizzera (USS), en: Swiss Trade Union Federation (SGB) }
+  - code: travs
+    kind: organisation
+    names: { fr: Travail.Suisse, de: Travail.Suisse, it: Travail.Suisse, en: Travail.Suisse }
+  - code: sbv
+    kind: organisation
+    names: { fr: Union suisse des paysans (USP), de: Schweizer Bauernverband (SBV), it: Unione svizzera dei contadini (USC), en: Swiss Farmers' Union (SBV) }
+  - code: sgv
+    kind: organisation
+    names: { fr: Union suisse des arts et métiers (USAM), de: Schweizerischer Gewerbeverband (SGV), it: Unione svizzera delle arti e mestieri (USAM), en: Swiss Trade Association (SGV) }
+  - code: sav
+    kind: organisation
+    names: { fr: Union patronale suisse (UPS), de: Schweizerischer Arbeitgeberverband (SAV), it: Unione svizzera degli imprenditori (USI), en: Swiss Employers' Association (SAV) }
+  - code: eco
+    kind: organisation
+    names: { fr: economiesuisse, de: economiesuisse, it: economiesuisse, en: economiesuisse }

@@ -21,6 +21,10 @@ const RESOLVERS = {
   party: (lang) => `SELECT p.id, ${i18nExpr('party', 'p.id', 'name', lang, 'p.code')} AS label, p.code, p.color
                       FROM party p WHERE p.id IN (?)`,
   campaign: () => 'SELECT id, LEFT(name, 120) AS label FROM campaign WHERE id IN (?)',
+  recommender: (lang) => `SELECT r.id, COALESCE(${i18nExpr('party', 'p.id', 'name', lang, 'NULL')},
+                            ${i18nExpr('recommender', 'r.id', 'name', lang, 'r.code')}) AS label,
+                            r.kind, p.code, COALESCE(p.color, NULL) AS color
+                          FROM recommender r LEFT JOIN party p ON p.id = r.party_id WHERE r.id IN (?)`,
 };
 
 /** Adds `<col>_label` (and extra info under `<col>_info`) for every id column that has a label type. */

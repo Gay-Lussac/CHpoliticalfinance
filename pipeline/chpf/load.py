@@ -27,6 +27,8 @@ class Snapshot:
     campaigns: dict
     declarations: list                                   # parsed Declaration objects
     kept_forms: list = field(default_factory=list)       # FormRefs that failed: keep previous DB rows
+    ballots: list | None = None                          # Swissvotes ballots (None = no Swissvotes data: leave DB as is)
+    ballot_map: dict = field(default_factory=dict)       # ballot anr -> EFK vote efk_id
 
 
 class Loader:
@@ -206,6 +208,54 @@ class Loader:
                     "donor_alias_id=VALUES(donor_alias_id), last_seen_run=VALUES(last_seen_run)", rows)
                 self.stats["allowances"] += len(rows)
 
+    def ballots_(self, snap: Snapshot, fin_ids: dict, party_ids: dict) -> None:
+        """Swissvotes ballots, results and recommendations (docs/01-data-sources.md › B)."""
+        if snap.ballots is None:
+            return
+        cfg = yaml.safe_load((settings.CONFIG_DIR / "recommenders.yaml").read_text())["recommenders"]
+        rec_ids = {}
+        for i, r in enumerate(cfg):
+            rid = self._upsert_id(
+                "INSERT INTO recommender (code, kind, party_id, sort_order) VALUES (%s,%s,%s,%s) "
+                "ON DUPLICATE KEY UPDATE id=LAST_INSERT_ID(id), kind=VALUES(kind), party_id=VALUES(party_id), "
+                "sort_order=VALUES(sort_order)",
+                (r["code"], r["kind"], party_ids.get(r.get("party")), (i + 1) * 10))
+            rec_ids[r["code"]] = rid
+            for lang, name in (r.get("names") or {}).items():
+                self._label("recommender", rid, "name", lang, name, official=False)
+        for b in snap.ballots:
+            efk_id = snap.ballot_map.get(b.anr)
+            fin_id = fin_ids.get(("vote", efk_id)) if efk_id is not None else None
+            if fin_id is None:
+                continue
+            bid = self._upsert_id(
+                "INSERT INTO ballot (anr, financing_id, vote_date, role, legal_form, yes_share, turnout, outcome, "
+                "cantons_yes, last_seen_run) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) ON DUPLICATE KEY UPDATE "
+                "id=LAST_INSERT_ID(id), financing_id=VALUES(financing_id), vote_date=VALUES(vote_date), "
+                "role=VALUES(role), legal_form=VALUES(legal_form), yes_share=VALUES(yes_share), "
+                "turnout=VALUES(turnout), outcome=VALUES(outcome), cantons_yes=VALUES(cantons_yes), "
+                "last_seen_run=VALUES(last_seen_run)",
+                (b.anr, fin_id, b.vote_date, b.role, b.legal_form, b.yes_share, b.turnout, b.outcome,
+                 b.cantons_yes, self.run))
+            for lang, title in b.titles.items():
+                self._label("ballot", bid, "title", lang, title, official=False)
+            self.c.execute("DELETE FROM ballot_recommendation WHERE ballot_id=%s", (bid,))
+            rows = [(bid, rec_ids[code], rec) for code, rec in b.recommendations.items() if code in rec_ids]
+            if rows:
+                self.c.executemany("INSERT INTO ballot_recommendation VALUES (%s,%s,%s)", rows)
+            if b.role == "main":
+                self.c.execute("UPDATE vote_object SET object_type=%s WHERE financing_id=%s",
+                               ({"popular_initiative": "popular_initiative", "mandatory_referendum": "mandatory_referendum",
+                                 "optional_referendum": "optional_referendum"}.get(b.legal_form, "other"), fin_id))
+                if b.titles.get("en"):   # the EFK has no English: use Swissvotes' short title
+                    self._label("financing", fin_id, "title", "en", b.titles["en"], official=False)
+            self.stats["ballots"] += 1
+            self.stats["recommendations"] += len(rows)
+        n = self.c.execute("DELETE FROM ballot WHERE last_seen_run IS NULL OR last_seen_run < %s", (self.run,))
+        if n:
+            self.stats["deleted_ballot"] += n
+        self.c.execute("DELETE FROM i18n_label WHERE entity='ballot' AND entity_id NOT IN (SELECT id FROM ballot)")
+
     def keep_(self, snap: Snapshot) -> None:
         for r in snap.kept_forms:
             self.c.execute("UPDATE declaration SET last_seen_run=%s WHERE efk_campaign_id=%s AND efk_form_id=%s",
@@ -233,6 +283,7 @@ def load_snapshot(conn, run_id: int, snap: Snapshot, parties: Parties, candidate
         actor_ids, actor_party = ld.actors_(snap, party_ids)
         camp_ids = ld.campaigns_(snap, fin_ids, actor_ids, actor_party, party_ids, candidates_by_campaign)
         ld.declarations_(snap, fin_ids, actor_ids, camp_ids)
+        ld.ballots_(snap, fin_ids, party_ids)
         ld.keep_(snap)
         ld.prune_()
         conn.commit()

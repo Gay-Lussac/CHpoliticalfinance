@@ -72,3 +72,18 @@ FROM mandate_contribution m
 JOIN declaration d        ON d.id = m.declaration_id
 JOIN financing f          ON f.id = d.financing_id
 LEFT JOIN actor_party ap  ON ap.actor_id = d.actor_id;
+
+-- Donor ↔ recommender alignment: one row per (donation to a vote side) × (recommender with a Yes/No recommendation
+-- on that vote's main ballot). aligned = the donation went to the side the recommender recommended.
+-- Only the latest version of each donation (final, else budget) is used, so nothing is counted twice.
+CREATE OR REPLACE VIEW v_donor_alignment AS
+SELECT fl.donor_id, fl.donor_type, fl.financing_id, fl.year, fl.stance,
+       r.id AS recommender_id, r.kind AS recommender_kind, r.party_id,
+       br.recommendation,
+       ((fl.stance = 'for' AND br.recommendation = 'yes') OR (fl.stance = 'against' AND br.recommendation = 'no')) AS aligned,
+       fl.value_chf
+FROM v_flow fl
+JOIN ballot b                 ON b.financing_id = fl.financing_id AND b.role = 'main'
+JOIN ballot_recommendation br ON br.ballot_id = b.id AND br.recommendation IN ('yes', 'no')
+JOIN recommender r            ON r.id = br.recommender_id
+WHERE fl.financing_kind = 'vote' AND fl.is_latest AND fl.stance IN ('for', 'against') AND fl.donor_id IS NOT NULL;

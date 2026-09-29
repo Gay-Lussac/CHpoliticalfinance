@@ -54,11 +54,11 @@ The phases run in order, but the design docs for later phases are refined while 
 - [x] Views: Home, Vote page, Explorer, Methodology/About
 - [x] SEO basics and `noindex` on donor pages (see [docs/00](docs/00-concept.md), personal data)
 
-**Done when:** the site is deployed on Infomaniak with real data for every vote since 2024. *(Runs locally; deployment pending.)*
+**Done when:** the site is deployed on Infomaniak with real data for every vote since 2024. *(Live at https://polimoney.ch since 2026-09-29.)*
 
 ## Phase 5 · Automation and operations
 
-- [ ] Daily cron (or GitHub Action) for `pipeline sync`
+- [x] Daily cron for `pipeline sync` (03:15, Infomaniak SSH space)
 - [ ] Notifications: failure, new data published, unreviewed donor aliases
 - [ ] Off-host backup of the raw archive, plus a check that DB backups can be restored
 - [ ] Simple status page or footer ("data updated on …")
@@ -76,8 +76,12 @@ The phases run in order, but the design docs for later phases are refined while 
 
 ## Phase 7 · Enrichment (v2)
 
-- [ ] Map each financing to its BFS vote number; import party recommendations (BFS table, or better a machine-readable source)
-- [ ] Vote results (opendata.swiss): "money vs result" view
+- [x] Match each vote to its Swissvotes/BFS ballots; import results, party + federation recommendations and English titles (nightly)
+- [x] Vote results (Swissvotes) on vote pages and cards
+- [x] Donor alignment with party/federation recommendations (all named donors; can be restricted in config/datasets.json)
+- [ ] "Money vs result" and "money by recommending camp" views
+- [ ] Positioning on economic/social axes: deferred. Not expected from the EFK (neutral mandate). It would need party positions
+  (e.g. CHES) and should cover organisations only, never private donors (political opinions = sensitive personal data)
 - [ ] Timeline and compare views; topic tagging of votes
 - [ ] Flow view (2D Sankey, top N)
 - [ ] Embeddable widgets for media
@@ -93,7 +97,7 @@ The phases run in order, but the design docs for later phases are refined while 
 
 | Item | Where it was | What to do |
 |---|---|---|
-| BFS recommendations file | `Votations/Recommendations/je-f-17.03.01.04.xlsx` (downloaded, never parsed) | input for the phase 7 importer |
+| BFS recommendations file | `Votations/Recommendations/je-f-17.03.01.04.xlsx` (downloaded, never parsed) | superseded by Swissvotes |
 | Colour palette (per node *type*, e.g. Yes `#32CD32`, No `#FF4500`) | notebooks | optional starting point; party colours still to define in `config/parties.yaml` |
 | Translation dictionary | `Dictionary builder/` | **drop**: the API serves FR/DE/IT labels |
 | Intro and explanatory texts (FR/DE/EN) | `index*.html` | starting point for the About page |

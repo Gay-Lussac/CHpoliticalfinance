@@ -24,5 +24,5 @@ export async function donorPage(main: HTMLElement, id: string | undefined) {
     { label: t.recipients, value: String(d.actors), sub: `${d.financings} ${t.nav_votes.toLowerCase()} / ${t.nav_elections.toLowerCase()}` },
     { label: t.first_last, value: `${date(d.first_date)}`, sub: date(d.last_date) },
   ]);
-  renderViews(viewsGrid(main), PAGES.donor ?? [], { donor_id: d.id });
+  renderViews(viewsGrid(main), PAGES.donor ?? [], { donor_id: d.id, donor_type: d.donor_type });
 }

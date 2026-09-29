@@ -75,3 +75,31 @@ Setup order on Infomaniak:
    read/write and don't give it structure (DDL) rights if the Manager lets you separate them.
 3. Over SSH, as `chpf_admin`: apply `db/schema.sql`, `db/migrations/*.sql`, then `db/views.sql`.
 4. Put the etl and api credentials in the server `.env`, then run `pipeline sync --full --trigger backfill` once.
+
+## Production setup (as deployed, 2026-09-29)
+
+Infomaniak Managed Cloud Server. Two **isolated** hosting spaces share one MariaDB (10.11):
+
+| Part | Where | Code | Runs |
+|---|---|---|---|
+| Website + API | Node.js site `polimoney.ch` (container, `/srv/customer/sites/polimoney.ch`) | pulled by Infomaniak from GitHub, branch `main` | build: `npm --prefix api ci --omit=dev && npm --prefix web ci && npm --prefix web run build && rm -rf web/node_modules` · run: `API_HOST=0.0.0.0 … node api/src/server.js` · port 8787 |
+| Pipeline | SSH space `xb5xa5_SSH_Admin@xb5xa5.ftp.infomaniak.com`, `~/chpf` | `git clone` of `main`, updated with `deploy/deploy.sh` | Python 3.9 with `pip --user` (no venv available); crontab `15 3 * * *` → `deploy/cron-sync.sh`, emails only on failure |
+| Database | `xb5xa5.myd.infomaniak.com` · `xb5xa5_chpf` | schema via `deploy/init-db.sh` (admin) | users `xb5xa5_admin` (schema), `xb5xa5_etl` (pipeline), `xb5xa5_api` (site) |
+
+Keeping each side minimal:
+- **Website:** the whole repo is pulled, but only `web/dist` and the API are served. Every other path returns the SPA page
+  (checked: `/.env`, `/.git/config`, `/pipeline/…` do not leak). After the build, `web/node_modules` (build tools, ~54 MB)
+  is removed. Only `api/node_modules` (production dependencies) stays.
+- **Pipeline space:** `git sparse-checkout set pipeline config db deploy`, so only what the pipeline uses is checked out
+  (plus root files). `deploy/deploy.sh` keeps working as usual. `cron-sync.sh` prunes logs after 12 months and reports
+  after 6 months. `data/raw` is never pruned.
+
+Things learned while deploying:
+- The Node site runs in a container and must listen on `0.0.0.0` (`API_HOST`), or the proxy shows "Website under maintenance".
+- The site has no `.env`; DB settings are given as environment variables in the site configuration.
+- Hosted MariaDB closes idle connections, so the pipeline loads on a fresh connection after its download phase.
+- `.env` files are read literally (`deploy/lib-env.sh`), because passwords may contain `$`, quotes or spaces.
+
+Releasing: merge a PR `dev → main`, then **(1)** redeploy the Node.js site in the Manager if `api/` or `web/` changed,
+and **(2)** run `ssh xb5xa5_SSH_Admin@xb5xa5.ftp.infomaniak.com 'cd ~/chpf && deploy/deploy.sh'` if `pipeline/`, `config/` or `db/` changed.
+Schema changes (`db/migrations`, `db/views.sql`) are applied with `deploy/init-db.sh` (asks for the admin password).
