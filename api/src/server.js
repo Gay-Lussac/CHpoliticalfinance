@@ -235,4 +235,4 @@ if (existsSync(dist)) {
 }
 
 const port = Number(process.env.API_PORT ?? 8787);
-await app.listen({ port, host: '127.0.0.1' });
+await app.listen({ port, host: process.env.API_HOST ?? '127.0.0.1' });
