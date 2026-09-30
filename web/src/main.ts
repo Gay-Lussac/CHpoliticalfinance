@@ -13,6 +13,7 @@ import { electionPage, electionsPage } from './pages/elections';
 import { explorePage } from './pages/explore';
 import { homePage } from './pages/home';
 import { partiesPage } from './pages/parties';
+import { statsPage } from './pages/stats';
 import { votePage, votesPage } from './pages/votes';
 
 export type Page = (main: HTMLElement, id: string | undefined, params: URLSearchParams) => void | Promise<void>;
@@ -28,6 +29,7 @@ const PAGES: Record<string, Page> = {
   donor: donorPage,
   explore: explorePage,
   about: aboutPage,
+  stats: statsPage,   // private, not in the navigation
 };
 
 const app = document.getElementById('app')!;
@@ -93,6 +95,17 @@ function wireSearch() {
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') box.hidden = true; });
 }
 
+// Anonymous page-view count (docs/05 › Visit statistics): path + external referrer on entry only, no cookies.
+let firstView = true;
+function countVisit() {
+  const body = JSON.stringify({ p: location.pathname + location.search, r: firstView ? document.referrer : '' });
+  firstView = false;
+  try {
+    const blob = new Blob([body], { type: 'application/json' });
+    if (!navigator.sendBeacon?.('/api/hit', blob)) fetch('/api/hit', { method: 'POST', body, keepalive: true, headers: { 'Content-Type': 'application/json' } }).catch(() => {});
+  } catch { /* never let counting break the page */ }
+}
+
 let currentShell = '';
 async function render() {
   const route = parseLocation();
@@ -112,6 +125,7 @@ async function render() {
   if (!page) { main.innerHTML = `<p>${T().not_found}</p>`; return; }
   main.innerHTML = '';
   document.querySelector('meta[name=robots]')?.remove(); // donor pages re-add noindex
+  if (route.page !== 'stats') countVisit();
   await page(main, route.id, route.params);
 }
 

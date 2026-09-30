@@ -61,7 +61,8 @@ The phases run in order, but the design docs for later phases are refined while 
 - [x] Daily cron for `pipeline sync` (03:15, Infomaniak SSH space)
 - [ ] Notifications: failure, new data published, unreviewed donor aliases
 - [ ] Off-host backup of the raw archive, plus a check that DB backups can be restored
-- [ ] Simple status page or footer ("data updated on …")
+- [x] Footer shows "data updated on …"
+- [x] Built-in, cookie-free visit statistics (private /stats page)
 
 **Done when:** a new EFK publication appears on the site without manual action.
 

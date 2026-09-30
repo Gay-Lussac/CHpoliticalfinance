@@ -194,3 +194,10 @@ td:has(.num) { text-align: right; }
 /* method / disclaimer note under a view */
 .view-note { margin: 0 0 14px; padding: 8px 12px; border-left: 3px solid var(--border); background: var(--bg);
   border-radius: 0 6px 6px 0; font-size: .8rem; line-height: 1.45; color: var(--text-secondary); }
+
+/* stats key form */
+.stats-key { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; max-width: 520px; }
+.stats-key label { display: flex; flex-direction: column; gap: 4px; font-size: .85rem; color: var(--text-muted); flex: 1; min-width: 220px; }
+.stats-key input { font: inherit; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text-primary); }
+.stats-key button { font: inherit; padding: 8px 16px; border: 0; border-radius: 8px; background: var(--text-primary); color: var(--surface); cursor: pointer; }
+.stats-key .error { flex-basis: 100%; margin: 0; }
