@@ -106,3 +106,24 @@ then **Restart**, if `api/`, `web/` or `config/` changed. The Manager has no sep
 reruns the old code. Then
 and **(2)** run `ssh <ssh-user>@<account>.ftp.infomaniak.com 'cd ~/chpf && deploy/deploy.sh'` if `pipeline/`, `config/` or `db/` changed.
 Schema changes (`db/migrations`, `db/views.sql`) are applied with `deploy/init-db.sh` (asks for the admin password).
+
+## Visit statistics (built in, no third party)
+
+- **What is stored:** daily totals per page, per language, and per external referring site, in a **separate database**
+  (`<prefix>_chpf_stats`, tables in `db/stats.sql`). Never stored: IP addresses, user agents, cookies.
+- **Unique visitors:** a hash of IP + user agent with a random salt that changes every day. It exists **in memory only**,
+  and only the daily count is saved. Bots and browsers sending `DNT: 1` are not counted. More than 60 page views per
+  minute from one client are ignored.
+- **Least privilege:** the website's DB user has read+write on the stats database only; the main database stays read-only.
+  If the stats DB is missing, counting switches itself off and the site keeps working.
+- **Viewing:** `https://polimoney.ch/<lang>/stats` (not linked anywhere) asks for the `STATS_TOKEN` key. The browser
+  remembers it locally until you click "forget". Without `STATS_TOKEN` the stats endpoint is disabled.
+
+Setup on Infomaniak (once):
+1. Manager → Databases: create a database `chpf_stats` (it becomes `<prefix>_chpf_stats`). Give the **api** user
+   **read + write on this database only**, and the **admin** user full rights.
+2. Add `STATS_DB_NAME=<prefix>_chpf_stats` to `~/chpf/.env` in the SSH space, then run `deploy/init-stats-db.sh`
+   (asks for the admin password).
+3. Node.js site, run command: add `STATS_DB_NAME=<prefix>_chpf_stats STATS_TOKEN='<long random key>'` before `node …`.
+   Generate the key with `openssl rand -hex 24` and keep it in your password manager.
+4. Build → Restart. Then open `/fr/stats` and enter the key.

@@ -9,6 +9,7 @@ import mysql from 'mysql2/promise';
 
 import { buildQuery, QueryError } from './query.js';
 import { attachLabels, i18nExpr, LANGS } from './labels.js';
+import { Stats, tokenOk } from './stats.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
@@ -67,11 +68,12 @@ async function cached(key, fn) {
 const langOf = (q) => (LANGS.includes(q.lang) ? q.lang : 'fr');
 
 // ------------------------------------------------------------------ app
-const app = Fastify({ logger: { level: process.env.LOG_LEVEL ?? 'info' } });
+// trustProxy: behind Infomaniak's proxy the client IP is in X-Forwarded-For (used only for the in-memory visitor hash)
+const app = Fastify({ logger: { level: process.env.LOG_LEVEL ?? 'info' }, trustProxy: true });
 
 app.addHook('onSend', async (req, reply, payload) => {
   if (req.url.startsWith('/api/')) {
-    reply.header('Cache-Control', 'public, max-age=60'); // data changes at most daily; server cache does the heavy lifting
+    if (!reply.getHeader('Cache-Control')) reply.header('Cache-Control', 'public, max-age=60'); // data changes at most daily; server cache does the heavy lifting
     reply.header('Access-Control-Allow-Origin', '*');
   }
   return payload;
@@ -258,6 +260,39 @@ app.get('/api/search', async (req) => {
       [like]);
     return { financings, actors, donors };
   });
+});
+
+// ------------------------------------------------------------------ visit statistics (docs/05 › Visit statistics)
+const stats = new Stats(pool, process.env.STATS_DB_NAME, app.log);
+
+app.post('/api/hit', async (req, reply) => {
+  const body = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body ?? {});
+  await stats.record({ path: body.p, ref: body.r, ip: req.ip, ua: req.headers['user-agent'],
+    dnt: req.headers.dnt, host: req.headers.host });
+  return reply.code(204).header('Cache-Control', 'no-store').send();
+});
+
+async function resolvePages(pages, lang) {
+  const ids = { vote: [], election: [], actor: [], donor: [] };
+  for (const p of pages) { const [k, id] = p.page.split('/'); if (id && ids[k]) ids[k].push(Number(id)); }
+  const names = new Map();
+  const fin = [...ids.vote, ...ids.election];
+  if (fin.length) {
+    const [r] = await pool.query(`SELECT f.id, ${i18nExpr('financing', 'f.id', 'title', lang, 'f.name')} AS t FROM financing f WHERE f.id IN (?)`, [fin]);
+    for (const x of r) { names.set(`vote/${x.id}`, x.t); names.set(`election/${x.id}`, x.t); }
+  }
+  if (ids.actor.length) for (const x of (await pool.query('SELECT id, name AS t FROM actor WHERE id IN (?)', [ids.actor]))[0]) names.set(`actor/${x.id}`, x.t);
+  if (ids.donor.length) for (const x of (await pool.query('SELECT id, display_name AS t FROM donor WHERE id IN (?)', [ids.donor]))[0]) names.set(`donor/${x.id}`, x.t);
+  return pages.map((p) => ({ ...p, label: names.get(p.page) ?? null }));
+}
+
+app.get('/api/stats', async (req, reply) => {
+  const given = String(req.headers.authorization ?? '').replace(/^Bearer\s+/i, '');
+  if (!tokenOk(given, process.env.STATS_TOKEN)) return reply.code(401).header('Cache-Control', 'no-store').send({ error: 'key required' });
+  if (!stats.enabled) return reply.code(503).header('Cache-Control', 'no-store').send({ error: 'statistics not configured' });
+  const days = Math.min(Math.max(Number.parseInt(req.query.days ?? '30', 10) || 30, 1), 730);
+  const data = await stats.summary(days, langOf(req.query), resolvePages);
+  return reply.header('Cache-Control', 'no-store').send(data);
 });
 
 app.get('/api/*', async (req, reply) => reply.code(404).send({ error: 'unknown endpoint' }));
