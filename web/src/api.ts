@@ -20,7 +20,9 @@ export interface Ballot {
   recommendations?: Recommendation[];
 }
 
-const cache = new Map<string, Promise<any>>();
+// In-page cache of API responses. Entries expire so a tab left open for days picks up new nightly data.
+const TTL_MS = 5 * 60_000;
+const cache = new Map<string, { at: number; value: Promise<any> }>();
 
 export async function get<T = any>(path: string, params: Record<string, unknown> = {}): Promise<T> {
   const qs = new URLSearchParams();
@@ -30,16 +32,17 @@ export async function get<T = any>(path: string, params: Record<string, unknown>
   }
   qs.set('lang', lang());
   const url = `/api/${path}?${qs}`;
-  if (!cache.has(url)) {
-    cache.set(url, fetch(url).then(async (r) => {
+  const hit = cache.get(url);
+  if (!hit || Date.now() - hit.at > TTL_MS) {
+    cache.set(url, { at: Date.now(), value: fetch(url).then(async (r) => {
       if (!r.ok) {
         cache.delete(url);
         throw new Error(`${r.status} ${(await r.json().catch(() => ({}))).error ?? ''}`);
       }
       return r.json();
-    }));
+    }) });
   }
-  return cache.get(url)!;
+  return cache.get(url)!.value;
 }
 
 export interface QuerySpec {

@@ -24,5 +24,14 @@ else
   echo "schema already present (use --reset to recreate)"
 fi
 for m in db/migrations/*.sql; do $ROOT "$DB_NAME" < "$m"; done   # migrations are idempotent
+# Visit statistics: separate database, the API user may write there and only there
+STATS_DB="${STATS_DB_NAME:-${DB_NAME}_stats}"
+$ROOT <<SQL
+CREATE DATABASE IF NOT EXISTS \`$STATS_DB\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+GRANT SELECT, INSERT, UPDATE ON \`$STATS_DB\`.* TO '$DB_API_USER'@'localhost', '$DB_API_USER'@'127.0.0.1';
+FLUSH PRIVILEGES;
+SQL
+$ROOT "$STATS_DB" < db/stats.sql
+echo "stats database $STATS_DB ready"
 $ROOT "$DB_NAME" < db/views.sql
 echo "views applied"

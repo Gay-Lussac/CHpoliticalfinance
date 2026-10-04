@@ -21,7 +21,8 @@ Les libéralités (dons) de plus de 15 000 CHF par donateur doivent être décla
 <h2>Alignement avec les recommandations de vote</h2>
 <p>Pour chaque donateur, le site calcule la part de leur argent versée au camp (Oui ou Non) que chaque parti ou association avait recommandé, sur les votations où celui-ci a recommandé Oui ou Non. C’est un simple constat sur l’argent déclaré, pas un positionnement politique. Il repose uniquement sur les dons publiés par le CDF.</p>
 <h2>Données personnelles</h2>
-<p>Les noms des donateurs sont publiés par le CDF en vertu de la loi. Ce site n'ajoute aucune information provenant d'autres sources et n'indexe pas les pages des donateurs dans les moteurs de recherche. Toute correction publiée par le CDF est reprise automatiquement.</p>`,
+<p>Les noms des donateurs sont publiés par le CDF en vertu de la loi. Ce site n'ajoute aucune information provenant d'autres sources et n'indexe pas les pages des donateurs dans les moteurs de recherche. Toute correction publiée par le CDF est reprise automatiquement.</p>
+<p>Les visites sont comptées de manière anonyme sur notre propre serveur, en Suisse : pas de cookies, pas de services tiers, aucune adresse IP ni donnée de navigateur enregistrée ; seuls des totaux quotidiens par page sont conservés. Les navigateurs qui envoient « Do Not Track » ne sont pas comptés.</p>`,
   de: `
 <h2>Woher stammen die Daten?</h2>
 <p>Alle Daten stammen von der Transparenzplattform der <a href="https://politikfinanzierung.efk.admin.ch/app/de" target="_blank" rel="noopener">Eidgenössischen Finanzkontrolle (EFK)</a>.
@@ -41,7 +42,8 @@ Zuwendungen über 15 000 CHF pro Zuwender·in müssen namentlich deklariert werd
 <h2>Übereinstimmung mit den Abstimmungsparolen</h2>
 <p>Für alle Zuwendenden berechnet die Website den Anteil ihres Geldes, der an das von einer Partei oder einem Verband empfohlene Lager (Ja oder Nein) ging, bei Abstimmungen mit Ja- oder Nein-Parole. Das ist eine reine Feststellung zum deklarierten Geld, keine politische Einordnung. Sie beruht ausschliesslich auf den von der EFK veröffentlichten Zuwendungen.</p>
 <h2>Personendaten</h2>
-<p>Die Namen der Zuwendenden werden von der EFK gestützt auf das Gesetz veröffentlicht. Diese Website ergänzt sie nicht mit anderen Quellen und lässt die Seiten der Zuwendenden nicht von Suchmaschinen indexieren. Korrekturen der EFK werden automatisch übernommen.</p>`,
+<p>Die Namen der Zuwendenden werden von der EFK gestützt auf das Gesetz veröffentlicht. Diese Website ergänzt sie nicht mit anderen Quellen und lässt die Seiten der Zuwendenden nicht von Suchmaschinen indexieren. Korrekturen der EFK werden automatisch übernommen.</p>
+<p>Besuche werden anonym auf unserem eigenen Server in der Schweiz gezählt: keine Cookies, keine Drittdienste, keine gespeicherten IP-Adressen oder Browserdaten; nur Tagestotale pro Seite werden aufbewahrt. Browser mit «Do Not Track» werden nicht gezählt.</p>`,
   it: `
 <h2>Da dove provengono i dati?</h2>
 <p>Tutti i dati provengono dalla piattaforma di trasparenza del <a href="https://politikfinanzierung.efk.admin.ch/app/it" target="_blank" rel="noopener">Controllo federale delle finanze (CDF)</a>.
@@ -62,7 +64,8 @@ Le liberalità (donazioni) superiori a 15 000 CHF per donatore devono essere dic
 <h2>Allineamento con le raccomandazioni di voto</h2>
 <p>Per ogni donatore, il sito calcola la quota del loro denaro versata al fronte (Sì o No) raccomandato da ciascun partito o associazione, nelle votazioni in cui questo ha raccomandato Sì o No. È una semplice constatazione sul denaro dichiarato, non un posizionamento politico. Si basa unicamente sulle liberalità pubblicate dal CDF.</p>
 <h2>Dati personali</h2>
-<p>I nomi dei donatori sono pubblicati dal CDF in virtù della legge. Questo sito non aggiunge informazioni provenienti da altre fonti e non fa indicizzare le pagine dei donatori dai motori di ricerca. Ogni correzione pubblicata dal CDF viene ripresa automaticamente.</p>`,
+<p>I nomi dei donatori sono pubblicati dal CDF in virtù della legge. Questo sito non aggiunge informazioni provenienti da altre fonti e non fa indicizzare le pagine dei donatori dai motori di ricerca. Ogni correzione pubblicata dal CDF viene ripresa automaticamente.</p>
+<p>Le visite sono contate in modo anonimo sul nostro server in Svizzera: nessun cookie, nessun servizio di terzi, nessun indirizzo IP né dato del browser salvato; si conservano solo totali giornalieri per pagina. I browser che inviano «Do Not Track» non vengono contati.</p>`,
   en: `
 <h2>Where does the data come from?</h2>
 <p>All data comes from the transparency platform of the <a href="https://politikfinanzierung.efk.admin.ch/app/de" target="_blank" rel="noopener">Swiss Federal Audit Office (SFAO)</a>.
@@ -83,7 +86,8 @@ Donations above CHF 15,000 per donor must be declared by name.</p>
 <h2>Alignment with voting recommendations</h2>
 <p>For every donor, the site computes the share of their money that went to the side (Yes or No) each party or federation recommended, on votes where it recommended Yes or No. It is a plain observation about declared money, not a political positioning. It relies only on the donations published by the SFAO.</p>
 <h2>Personal data</h2>
-<p>Donor names are published by the SFAO as required by law. This site adds no information from other sources and keeps donor pages out of search engines. Any correction published by the SFAO is picked up automatically.</p>`,
+<p>Donor names are published by the SFAO as required by law. This site adds no information from other sources and keeps donor pages out of search engines. Any correction published by the SFAO is picked up automatically.</p>
+<p>Visits are counted anonymously on our own server in Switzerland: no cookies, no third-party services, no IP addresses or browser data stored; only daily totals per page are kept. Browsers sending "Do Not Track" are not counted.</p>`,
 };
 
 export function aboutPage(main: HTMLElement) {
