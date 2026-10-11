@@ -1,3 +1,4 @@
+import '@fontsource-variable/inter';   // self-hosted font: no request to Google or any third party
 import './style.css';
 
 import { get } from './api';
@@ -13,6 +14,7 @@ import { electionPage, electionsPage } from './pages/elections';
 import { explorePage } from './pages/explore';
 import { homePage } from './pages/home';
 import { partiesPage } from './pages/parties';
+import { legalPage, legalTitle, privacyPage, privacyTitle } from './pages/legal';
 import { statsPage } from './pages/stats';
 import { votePage, votesPage } from './pages/votes';
 
@@ -30,6 +32,8 @@ const PAGES: Record<string, Page> = {
   explore: explorePage,
   about: aboutPage,
   stats: statsPage,   // private, not in the navigation
+  privacy: privacyPage,
+  legal: legalPage,
 };
 
 const app = document.getElementById('app')!;
@@ -46,22 +50,24 @@ function shell(page: string) {
     return `<a href="${path}" class="${l === route.lang ? 'active' : ''}" hreflang="${l}" data-lang="${l}">${l.toUpperCase()}</a>`;
   }).join('');
   app.innerHTML = `
+    <a class="skip-link" href="#main">${esc(t.skip_to_content)}</a>
     <header class="site-header">
       <div class="wrap header-row">
-        <a class="brand" href="${href('')}"><span class="flag" aria-hidden="true"></span>${esc(t.site_title)}</a>
-        <nav class="main-nav">${nav.map(([p, l]) => `<a href="${href(p)}" class="${page === p || (page === p.slice(0, -1)) ? 'active' : ''}">${esc(l)}</a>`).join('')}</nav>
+        <a class="brand" href="${href('')}"><span class="logo" aria-hidden="true"></span>${esc(t.site_title)}</a>
+        <nav class="main-nav" aria-label="${esc(t.site_title)}">${nav.map(([p, l]) => `<a href="${href(p)}" class="${page === p || (page === p.slice(0, -1)) ? 'active' : ''}">${esc(l)}</a>`).join('')}</nav>
         <div class="lang-switch">${otherLangs}</div>
       </div>
       <div class="wrap search-row">
         <input type="search" id="search" placeholder="${esc(t.search_placeholder)}" autocomplete="off" aria-label="${esc(t.search_placeholder)}" />
-        <div id="search-results" class="search-results" hidden></div>
+        <div id="search-results" class="search-results" hidden aria-live="polite"></div>
       </div>
     </header>
-    <main class="wrap" id="main"></main>
+    <main class="wrap" id="main" tabindex="-1"></main>
     <footer class="site-footer wrap">
       <p>${esc(t.source_efk)} — <a href="https://politikfinanzierung.efk.admin.ch/app/${route.lang === 'en' ? 'de' : route.lang}" target="_blank" rel="noopener">politikfinanzierung.efk.admin.ch</a>
       · ${esc(t.source_swissvotes)} — <a href="https://swissvotes.ch" target="_blank" rel="noopener">swissvotes.ch</a>
       · <span id="updated"></span></p>
+      <p>${esc(t.independent_note)} · <a href="${href('privacy')}">${esc(privacyTitle())}</a> · <a href="${href('legal')}">${esc(legalTitle())}</a></p>
     </footer>`;
   wireSearch();
   get('meta').then((m) => {

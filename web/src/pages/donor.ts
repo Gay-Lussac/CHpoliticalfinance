@@ -8,6 +8,11 @@ export async function donorPage(main: HTMLElement, id: string | undefined) {
   const t = T();
   const d = await get(`donors/${Number(id)}`).catch(() => null);
   if (!d) { main.innerHTML = `<p>${t.not_found}</p>`; return; }
+  if (d.suppressed) {
+    main.innerHTML = `<header class="page-head"><div class="card-meta"><span>${t.donor}</span></div><h1>${esc(t.masked_donor)}</h1>
+      <p class="lead">${esc(t.masked_page)}</p></header>`;
+    return;
+  }
   // Donor pages name private individuals: keep them out of search engines (docs/00-concept.md).
   let robots = document.querySelector('meta[name=robots]');
   if (!robots) { robots = Object.assign(document.createElement('meta'), { name: 'robots' }); document.head.append(robots); }
@@ -18,6 +23,7 @@ export async function donorPage(main: HTMLElement, id: string | undefined) {
       <div class="card-meta"><span>${t.donor}</span><span class="badge">${tr(d.donor_type)}</span>${d.lives_abroad ? `<span class="badge">${t.lives_abroad}</span>` : ''}</div>
       <h1>${esc(d.display_name)}</h1>
       <p class="muted">${esc([d.city, d.country].filter(Boolean).join(', '))}</p>
+      <p class="muted small">${esc(t.homonym_note)}</p>
       ${aliases.length ? `<p class="muted small">${t.known_as}: ${aliases.map((x) => esc([x.raw_name, x.raw_first_name, x.raw_city && `(${x.raw_city})`].filter(Boolean).join(' '))).join(' · ')}</p>` : ''}
     </header>` + statTiles([
     { label: t.donations_total, value: chf(d.total), sub: `${num(d.n)} ${t.allowances}` },

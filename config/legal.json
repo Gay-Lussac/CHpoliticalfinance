@@ -1,0 +1,7 @@
+{
+  "$comment": "Operator identity shown in the privacy statement and legal notice (required by the nFADP: identity and contact of the controller). Leave a field empty to hide it; without an email, the pages point to GitHub issues as contact channel.",
+  "operator_name": "",
+  "operator_address": "",
+  "contact_email": "",
+  "contact_url": "https://github.com/Gay-Lussac/CHpoliticalfinance/issues"
+}

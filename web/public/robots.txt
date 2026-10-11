@@ -1,0 +1,11 @@
+# polimoney.ch – donor pages, the API and the private stats page are not for search engines.
+User-agent: *
+Disallow: /api/
+Disallow: /fr/donor/
+Disallow: /de/donor/
+Disallow: /it/donor/
+Disallow: /en/donor/
+Disallow: /fr/stats
+Disallow: /de/stats
+Disallow: /it/stats
+Disallow: /en/stats
