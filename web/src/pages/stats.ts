@@ -5,10 +5,11 @@ import { esc, num } from '../format';
 import { lang, T } from '../i18n';
 import { href } from '../router';
 
-const KEY = 'chpf-stats-key';
+// Session token from the two-factor login, kept for this browser tab only (sessionStorage), never the key itself.
+const KEY = 'chpf-stats-session';
 const storage = {
-  get: () => { try { return localStorage.getItem(KEY) ?? ''; } catch { return ''; } },
-  set: (v: string) => { try { v ? localStorage.setItem(KEY, v) : localStorage.removeItem(KEY); } catch { /* private mode */ } },
+  get: () => { try { return sessionStorage.getItem(KEY) ?? ''; } catch { return ''; } },
+  set: (v: string) => { try { v ? sessionStorage.setItem(KEY, v) : sessionStorage.removeItem(KEY); } catch { /* private mode */ } },
 };
 
 const css = (name: string) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
@@ -22,12 +23,18 @@ export async function statsPage(main: HTMLElement, _id: string | undefined, para
     main.innerHTML = `<header class="page-head"><h1>${esc(t.stats_title)}</h1><p class="lead">${esc(t.stats_intro)}</p></header>
       <form class="card stats-key" id="key-form">
         <label>${esc(t.stats_key)} <input type="password" name="key" autocomplete="current-password" required /></label>
+        <label>${esc(t.stats_code)} <input type="text" name="code" inputmode="numeric" pattern="[0-9 ]{6,7}" maxlength="7"
+          autocomplete="one-time-code" required /></label>
         <button type="submit">${esc(t.stats_open)}</button>
-        ${message ? `<p class="error">${esc(message)}</p>` : ''}
+        ${message ? `<p class="error" role="alert">${esc(message)}</p>` : ''}
       </form>`;
-    main.querySelector('form')!.addEventListener('submit', (e) => {
+    main.querySelector('form')!.addEventListener('submit', async (e) => {
       e.preventDefault();
-      storage.set(String(new FormData(e.target as HTMLFormElement).get('key') ?? '').trim());
+      const fd = new FormData(e.target as HTMLFormElement);
+      const r = await fetch('/api/stats/login', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: String(fd.get('key') ?? '').trim(), code: String(fd.get('code') ?? '') }) });
+      if (!r.ok) return renderKeyForm(r.status === 429 ? t.stats_locked : r.status === 503 ? t.stats_2fa_missing : t.stats_bad_key);
+      storage.set((await r.json()).token);
       statsPage(main, _id, params);
     });
   };

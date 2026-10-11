@@ -24,7 +24,7 @@ test('rejects unknown fields, measures and bad values', () => {
 });
 
 test('limit is capped', () => {
-  assert.equal(buildQuery(config, { dataset: 'flow', limit: '999999' }).limit, 5000);
+  assert.equal(buildQuery(config, { dataset: 'flow', limit: '999999' }).limit, 1000);
 });
 
 test('fixed_filter from config is always applied and cannot be bypassed', () => {

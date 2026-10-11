@@ -51,3 +51,20 @@ transparency, accuracy, and a working correction/objection channel.
 4. Keep the site **neutral** during campaigns (no editorial positions), and keep the method notes up to date.
 5. Have a **lawyer or the FDPIC** look at items 3, 6 and 7 before promoting the site widely.
 6. Re-run this audit when adding data sources, features that touch individuals, or third-party services.
+
+## Attack resilience (added 11 October 2026)
+
+| Threat | Protection |
+|---|---|
+| Flooding / scraping the API | global 300 req/min per client; `/api/search` and `/api/hit` 60/min; login 5 per 15 min. Proxy-aware (per real client IP), so visitors never share a counter |
+| Oversized or slow requests | body limit 16 KB, connection timeout 10 s, request timeout 15 s, keep-alive 5 s |
+| Expensive queries | whitelisted queries only, answers capped at 1 000 rows, MariaDB `max_statement_time = 5 s` on every API session, DB pool of 8 with a queue limit of 50 |
+| SQL injection / XSS | bound parameters and whitelisted identifiers; HTML escaping; strict CSP (`'self'` only) |
+| Login brute force / stolen key | **two-factor** stats login (key + TOTP, RFC 6238), single-use codes, constant-time comparisons, 5 attempts per 15 min per client, global lockout after 10 failures, 8-hour signed session in `sessionStorage` (never the key) |
+| Leaked secrets | no secrets in the repository or its history (scanned); `.env` git-ignored; GitHub secret scanning and push protection enabled; all keys come from the environment only |
+| Database tampering through the site | the site's DB user is read-only on the main DB, write-only to the stats DB |
+| Compromised dependency | `npm audit` at 0; recommended: enable Dependabot alerts |
+
+**Operator accounts (outside the code):** turn on 2FA for the **Infomaniak Manager** and **GitHub** accounts. They control
+the server, the run command (which holds the DB password) and the production branch. Keep SSH key-only if the Manager allows
+disabling password login for the SSH user, otherwise use a long unique password.

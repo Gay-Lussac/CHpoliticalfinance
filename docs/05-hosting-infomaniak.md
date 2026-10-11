@@ -116,14 +116,17 @@ Schema changes (`db/migrations`, `db/views.sql`) are applied with `deploy/init-d
   minute from one client are ignored.
 - **Least privilege:** the website's DB user has read+write on the stats database only; the main database stays read-only.
   If the stats DB is missing, counting switches itself off and the site keeps working.
-- **Viewing:** `https://polimoney.ch/<lang>/stats` (not linked anywhere) asks for the `STATS_TOKEN` key. The browser
-  remembers it locally until you click "forget". Without `STATS_TOKEN` the stats endpoint is disabled.
+- **Viewing:** `https://polimoney.ch/<lang>/stats` (not linked anywhere). Two-factor login: the `STATS_TOKEN` key **and**
+  a 6-digit code from an authenticator app (`STATS_TOTP_SECRET`). It gives an 8-hour session token, kept for the browser
+  tab only. Codes can't be reused; 5 attempts per 15 min per client, then a global lockout after 10 failures.
+  Without both secrets, login is refused (fail closed).
 
 Setup on Infomaniak (once):
 1. Manager → Databases: create a database `chpf_stats` (it becomes `<prefix>_chpf_stats`). Give the **api** user
    **read + write on this database only**, and the **admin** user full rights.
 2. Add `STATS_DB_NAME=<prefix>_chpf_stats` to `~/chpf/.env` in the SSH space, then run `deploy/init-stats-db.sh`
    (asks for the admin password).
-3. Node.js site, run command: add `STATS_DB_NAME=<prefix>_chpf_stats STATS_TOKEN='<long random key>'` before `node …`.
-   Generate the key with `openssl rand -hex 24` and keep it in your password manager.
+3. Node.js site, run command: add `STATS_DB_NAME=<prefix>_chpf_stats STATS_TOKEN='<long random key>' STATS_TOTP_SECRET=<secret>`
+   before `node …`. Key: `openssl rand -hex 24`. Secret: `node api/scripts/new-totp-secret.mjs` (add it to your authenticator
+   app, then keep both in your password manager).
 4. Build → Restart. Then open `/fr/stats` and enter the key.
