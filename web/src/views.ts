@@ -50,6 +50,7 @@ function labelOf(col: string, row: Row): string {
   const v = row[col];
   if (row[`${col}_label`] != null) return String(row[`${col}_label`]);
   if (col === 'party_id' && v == null) return T().unknown_party;
+  if (col === 'donor_id' && row.donor_id_info?.suppressed) return T().masked_donor;
   if (col === 'canton' && v == null) return T().national;
   if (col.endsWith('_date') || col === 'granted_on') return fmtDate(v);
   return tr(v);
@@ -58,6 +59,7 @@ function labelOf(col: string, row: Row): string {
 function linkOf(entity: string | undefined, col: string, row: Row): string | null {
   const id = row[col];
   if (!entity || id == null) return null;
+  if (row[`${col}_info`]?.suppressed) return null;
   if (entity === 'financing') {
     const kind = row[`${col}_info`]?.kind;
     if (kind === 'party_year') return href(`parties?year=${row[`${col}_info`]?.year}`);

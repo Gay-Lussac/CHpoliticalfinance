@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 
 import Fastify from 'fastify';
 import fastifyStatic from '@fastify/static';
+import rateLimit from '@fastify/rate-limit';
 import mysql from 'mysql2/promise';
 
 import { buildQuery, QueryError } from './query.js';
@@ -24,6 +25,9 @@ function loadEnv() {
 loadEnv();
 
 const config = JSON.parse(readFileSync(join(ROOT, 'config', 'datasets.json'), 'utf8'));
+// Donors masked after an objection (config/donor_suppressed.json); resolved to donor ids at startup.
+const suppressedKeys = JSON.parse(readFileSync(join(ROOT, 'config', 'donor_suppressed.json'), 'utf8')).match_keys ?? [];
+let suppressed = new Set();
 
 const pool = mysql.createPool({
   host: process.env.DB_HOST ?? '127.0.0.1',
@@ -67,12 +71,62 @@ async function cached(key, fn) {
 
 const langOf = (q) => (LANGS.includes(q.lang) ? q.lang : 'fr');
 
+async function loadSuppressed() {
+  if (!suppressedKeys.length) return;
+  const [rows] = await pool.query('SELECT DISTINCT donor_id FROM donor_alias WHERE match_key IN (?)', [suppressedKeys]);
+  suppressed = new Set(rows.map((r) => r.donor_id));
+}
+loadSuppressed().catch((err) => app.log.error(err));
+
+/** Mask suppressed donors in query rows: no name, no link. */
+function maskRows(rows) {
+  if (!suppressed.size) return rows;
+  for (const r of rows) {
+    if (suppressed.has(r.donor_id)) { r.donor_id_label = null; r.donor_id_info = { suppressed: true }; }
+  }
+  return rows;
+}
+
 // ------------------------------------------------------------------ app
 // trustProxy: behind Infomaniak's proxy the client IP is in X-Forwarded-For (used only for the in-memory visitor hash)
-const app = Fastify({ logger: { level: process.env.LOG_LEVEL ?? 'info' }, trustProxy: true });
+// Logging: per-request logs are OFF (they contained visitor IP addresses). Errors are logged with method + URL only.
+const app = Fastify({
+  trustProxy: true,
+  disableRequestLogging: true,
+  logger: {
+    level: process.env.LOG_LEVEL ?? 'info',
+    serializers: { req: (r) => ({ method: r.method, url: r.url }), res: (r) => ({ statusCode: r.statusCode }) },
+  },
+});
+
+// Rate limiting (per client, in memory): protects the API from abuse and bulk scraping.
+await app.register(rateLimit, {
+  global: true, max: 300, timeWindow: '1 minute',
+  // Static files are not limited. Behind a proxy, limit only when the real client IP is known (X-Forwarded-For):
+  // otherwise all visitors would share the proxy's IP and one counter.
+  allowList: (req) => !req.url.startsWith('/api/') || (!req.headers['x-forwarded-for'] && req.socket.remoteAddress !== '127.0.0.1'),
+  errorResponseBuilder: () => Object.assign(new Error('too many requests, please slow down'), { statusCode: 429 }),
+});
+
+// Security headers on every response.
+const CSP = [
+  "default-src 'self'", "script-src 'self'", "style-src 'self' 'unsafe-inline'", "img-src 'self' data:",
+  "font-src 'self'", "connect-src 'self'", "object-src 'none'", "base-uri 'self'", "form-action 'self'",
+  "frame-ancestors 'none'",
+].join('; ');
+app.addHook('onSend', async (req, reply, payload) => {
+  reply.header('Content-Security-Policy', CSP);
+  reply.header('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  reply.header('X-Content-Type-Options', 'nosniff');
+  reply.header('X-Frame-Options', 'DENY');
+  reply.header('Referrer-Policy', 'strict-origin-when-cross-origin');
+  reply.header('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), interest-cohort=()');
+  return payload;
+});
 
 app.addHook('onSend', async (req, reply, payload) => {
   if (req.url.startsWith('/api/')) {
+    reply.header('X-Robots-Tag', 'noindex');
     if (!reply.getHeader('Cache-Control')) reply.header('Cache-Control', 'public, max-age=60'); // data changes at most daily; server cache does the heavy lifting
     reply.header('Access-Control-Allow-Origin', '*');
   }
@@ -81,6 +135,8 @@ app.addHook('onSend', async (req, reply, payload) => {
 
 app.setErrorHandler((err, req, reply) => {
   if (err instanceof QueryError) return reply.code(400).send({ error: err.message });
+  const status = err.statusCode ?? err.status;
+  if (status >= 400 && status < 500) return reply.code(status).send({ error: err.message || err.error || 'bad request' });
   req.log.error(err);
   return reply.code(500).send({ error: 'internal error' });
 });
@@ -104,10 +160,14 @@ app.get('/api/query', async (req) => {
   const lang = langOf(req.query);
   return cached(`q:${lang}:${new URLSearchParams(req.query).toString()}`, async () => {
     const q = buildQuery(config, req.query);
+    const asked = String(req.query['filter[donor_id]'] ?? '').split(',').map(Number);
+    if (req.query.dataset === 'alignment' && asked.some((id) => suppressed.has(id))) {
+      return { columns: q.columns, total: 0, limit: q.limit, offset: q.offset, rows: [] };
+    }
     const [rows] = await pool.query(q.sql, q.args);
     const [[{ n }]] = await pool.query(q.countSql, q.args);
     await attachLabels(pool, config, q.columns, rows, lang);
-    return { columns: q.columns, total: n, limit: q.limit, offset: q.offset, rows };
+    return { columns: q.columns, total: n, limit: q.limit, offset: q.offset, rows: maskRows(rows) };
   });
 });
 
@@ -217,6 +277,7 @@ app.get('/api/actors/:id', async (req, reply) => {
 
 app.get('/api/donors/:id', async (req, reply) => {
   const id = Number(req.params.id);
+  if (suppressed.has(id)) return { id, suppressed: true };
   const row = await cached(`donor:${id}`, async () => {
     const [[d]] = await pool.query(
       'SELECT id, donor_type, display_name, city, lives_abroad, country FROM donor WHERE id = ?', [id]);
@@ -258,7 +319,7 @@ app.get('/api/search', async (req) => {
     const [donors] = await pool.query(
       'SELECT id, display_name AS label, city, donor_type FROM donor WHERE display_name LIKE ? ORDER BY display_name LIMIT 8',
       [like]);
-    return { financings, actors, donors };
+    return { financings, actors, donors: donors.filter((d) => !suppressed.has(d.id)) };
   });
 });
 
@@ -282,7 +343,7 @@ async function resolvePages(pages, lang) {
     for (const x of r) { names.set(`vote/${x.id}`, x.t); names.set(`election/${x.id}`, x.t); }
   }
   if (ids.actor.length) for (const x of (await pool.query('SELECT id, name AS t FROM actor WHERE id IN (?)', [ids.actor]))[0]) names.set(`actor/${x.id}`, x.t);
-  if (ids.donor.length) for (const x of (await pool.query('SELECT id, display_name AS t FROM donor WHERE id IN (?)', [ids.donor]))[0]) names.set(`donor/${x.id}`, x.t);
+  if (ids.donor.length) for (const x of (await pool.query('SELECT id, display_name AS t FROM donor WHERE id IN (?)', [ids.donor]))[0]) names.set(`donor/${x.id}`, suppressed.has(x.id) ? '—' : x.t);
   return pages.map((p) => ({ ...p, label: names.get(p.page) ?? null }));
 }
 

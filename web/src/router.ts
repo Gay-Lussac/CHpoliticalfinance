@@ -19,6 +19,7 @@ export function startRouter(handler: Handler) {
   document.addEventListener('click', (e) => {
     const a = (e.target as HTMLElement).closest('a');
     if (!a || a.target || e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+    if (a.getAttribute('href')?.startsWith('#')) return;   // in-page anchors (e.g. skip link) keep native behaviour
     const url = new URL(a.href, location.href);
     if (url.origin !== location.origin || url.pathname.startsWith('/api/')) return;
     e.preventDefault();

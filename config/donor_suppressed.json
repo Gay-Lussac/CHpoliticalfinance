@@ -1,0 +1,4 @@
+{
+  "$comment": "Donors whose name is masked on the site after an objection (nFADP art. 30 para. 2 lit. b / art. 32). List donor match keys as shown by `pipeline resolve --review` (e.g. 'natural|doe|jane|bern'). Their amounts stay in vote totals; the name, donor page, search entry and alignment are hidden. Restart the site after editing.",
+  "match_keys": []
+}
