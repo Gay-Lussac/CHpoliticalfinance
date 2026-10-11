@@ -4,7 +4,7 @@
 export class QueryError extends Error {}
 
 const FILTER_KEY = /^filter\[(\w+)\](?:\[(gte|lte|ne)\])?$/;
-const MAX_LIMIT = 5000;
+const MAX_LIMIT = 1000;   // caps the size of any single answer (memory / scraping)
 
 function coerce(type, raw, field) {
   if (type === 'int') {

@@ -10,7 +10,8 @@ import mysql from 'mysql2/promise';
 
 import { buildQuery, QueryError } from './query.js';
 import { attachLabels, i18nExpr, LANGS } from './labels.js';
-import { Stats, tokenOk } from './stats.js';
+import { Stats } from './stats.js';
+import { StatsAuth } from './auth.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
@@ -36,10 +37,15 @@ const pool = mysql.createPool({
   user: process.env.DB_API_USER,
   password: process.env.DB_API_PASSWORD,
   connectionLimit: 8,
+  queueLimit: 50,                       // don't pile up unbounded requests when the DB is slow
+  connectTimeout: 10_000,
   decimalNumbers: true,
   dateStrings: true,
   charset: 'utf8mb4',
 });
+
+// Every DB session gets a statement timeout (MariaDB): one slow query can't block the server.
+pool.pool.on('connection', (conn) => conn.query('SET SESSION max_statement_time = 5'));
 
 // ------------------------------------------------------------------ cache (invalidated by new pipeline runs)
 const cache = new Map();
@@ -93,6 +99,10 @@ function maskRows(rows) {
 const app = Fastify({
   trustProxy: true,
   disableRequestLogging: true,
+  bodyLimit: 16 * 1024,                 // the API only accepts tiny JSON bodies
+  connectionTimeout: 10_000,            // slow-loris protection
+  requestTimeout: 15_000,
+  keepAliveTimeout: 5_000,
   logger: {
     level: process.env.LOG_LEVEL ?? 'info',
     serializers: { req: (r) => ({ method: r.method, url: r.url }), res: (r) => ({ statusCode: r.statusCode }) },
@@ -303,7 +313,7 @@ app.get('/api/parties', async (req) => {
   });
 });
 
-app.get('/api/search', async (req) => {
+app.get('/api/search', { config: { rateLimit: { max: 60, timeWindow: '1 minute' } } }, async (req) => {
   const lang = langOf(req.query);
   const q = String(req.query.q ?? '').trim();
   if (q.length < 2) return { financings: [], actors: [], donors: [] };
@@ -326,7 +336,7 @@ app.get('/api/search', async (req) => {
 // ------------------------------------------------------------------ visit statistics (docs/05 › Visit statistics)
 const stats = new Stats(pool, process.env.STATS_DB_NAME, app.log);
 
-app.post('/api/hit', async (req, reply) => {
+app.post('/api/hit', { config: { rateLimit: { max: 60, timeWindow: '1 minute' } } }, async (req, reply) => {
   const body = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body ?? {});
   await stats.record({ path: body.p, ref: body.r, ip: req.ip, ua: req.headers['user-agent'],
     dnt: req.headers.dnt, host: req.headers.host });
@@ -347,9 +357,19 @@ async function resolvePages(pages, lang) {
   return pages.map((p) => ({ ...p, label: names.get(p.page) ?? null }));
 }
 
+// Two-factor login (key + authenticator code) → short-lived session token. Secrets only in the environment.
+const statsAuth = new StatsAuth({ key: process.env.STATS_TOKEN, totpSecret: process.env.STATS_TOTP_SECRET });
+
+app.post('/api/stats/login', { config: { rateLimit: { max: 5, timeWindow: '15 minutes' } } }, async (req, reply) => {
+  const body = req.body ?? {};
+  const r = statsAuth.login(body.key, String(body.code ?? '').replace(/\s/g, ''));
+  reply.header('Cache-Control', 'no-store');
+  return r.token ? { token: r.token, expires: r.expires } : reply.code(r.status).send({ error: r.error });
+});
+
 app.get('/api/stats', async (req, reply) => {
   const given = String(req.headers.authorization ?? '').replace(/^Bearer\s+/i, '');
-  if (!tokenOk(given, process.env.STATS_TOKEN)) return reply.code(401).header('Cache-Control', 'no-store').send({ error: 'key required' });
+  if (!statsAuth.verify(given)) return reply.code(401).header('Cache-Control', 'no-store').send({ error: 'login required' });
   if (!stats.enabled) return reply.code(503).header('Cache-Control', 'no-store').send({ error: 'statistics not configured' });
   const days = Math.min(Math.max(Number.parseInt(req.query.days ?? '30', 10) || 30, 1), 730);
   const data = await stats.summary(days, langOf(req.query), resolvePages);
