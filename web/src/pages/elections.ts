@@ -1,6 +1,6 @@
 import { get, type Financing } from '../api';
-import { chf, chfShort, date, esc, num } from '../format';
-import { T, tr } from '../i18n';
+import { chf, chfShort, date, esc, num, typo } from '../format';
+import { setPageTitle, T, tr } from '../i18n';
 import { href } from '../router';
 import { PAGES, renderViews } from '../views';
 import { defaultPhase, phaseToggle, statTiles, viewsGrid } from './common';
@@ -12,6 +12,7 @@ const electionTotal = (f: Financing, phase: string) => {
 
 export async function electionsPage(main: HTMLElement) {
   const t = T();
+  setPageTitle(t.all_elections);
   main.innerHTML = `<h1>${esc(t.all_elections)}</h1><div class="cards" id="list"><p class="muted">${t.loading}</p></div>`;
   const list = await get<Financing[]>('financings', { kind: 'election' });
   document.getElementById('list')!.innerHTML = list.map((f) => {
@@ -19,7 +20,7 @@ export async function electionsPage(main: HTMLElement) {
     const { total, n } = electionTotal(f, phase);
     return `<a class="card vote-card" href="${href(`election/${f.id}`)}">
       <div class="card-meta"><span>${date(f.event_date)}</span><span class="badge ${phase}">${tr(phase)}</span></div>
-      <h3>${esc(f.title)}</h3>
+      <h3>${esc(typo(f.title))}</h3>
       <p class="big">${chfShort(total)}</p><p class="muted small">${n} ${t.actors}</p></a>`;
   }).join('');
 }
@@ -28,12 +29,13 @@ export async function electionPage(main: HTMLElement, id: string | undefined, pa
   const t = T();
   const f = await get<Financing>(`financings/${Number(id)}`).catch(() => null);
   if (!f || f.kind !== 'election') { main.innerHTML = `<p>${t.not_found}</p>`; return; }
+  setPageTitle(f.title);
   const phase = ['budget', 'final'].includes(params.get('phase') ?? '') ? params.get('phase')! : defaultPhase(f);
   const { total, n } = electionTotal(f, phase);
   const al = f.allowances[phase];
   main.innerHTML = `<header class="page-head">
       <div class="card-meta"><span>${t.election} · ${date(f.event_date)}</span>${f.council ? `<span class="badge">${tr(f.council)}</span>` : ''}</div>
-      <h1>${esc(f.title)}</h1>
+      <h1>${esc(typo(f.title))}</h1>
       <p class="lead">${esc(t.election_summary(chfShort(total), n))}</p>
       ${phaseToggle(f, phase, `election/${f.id}`)}
     </header>` + statTiles([

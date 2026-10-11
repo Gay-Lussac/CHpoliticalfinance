@@ -16,6 +16,10 @@ export function chfShort(v: number | null | undefined): string {
 
 export const num = (v: number) => new Intl.NumberFormat(locale()).format(v);
 
+/** Keep French punctuation with its word: non-breaking space before ! ? : ; » and after « (titles come with plain spaces). */
+export const typo = (s: string | null | undefined) =>
+  String(s ?? '').replace(/ ([!?:;»])/g, '\u00a0$1').replace(/« /g, '«\u00a0');
+
 export function date(iso: string | null | undefined): string {
   if (!iso) return '—';
   const [y, m, d] = iso.slice(0, 10).split('-').map(Number);

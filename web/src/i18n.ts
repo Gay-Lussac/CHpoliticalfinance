@@ -4,7 +4,7 @@ export const LANGS: Lang[] = ['fr', 'de', 'it', 'en'];
 
 const fr = {
   site_title: 'Argent politique suisse',
-  tagline: 'Qui finance les votations, les élections et les partis en Suisse — données officielles du Contrôle fédéral des finances.',
+  tagline: 'Qui finance les votations, les élections et les partis en Suisse. Données officielles du Contrôle fédéral des finances.',
   nav_votes: 'Votations',
   nav_elections: 'Élections',
   nav_parties: 'Partis',
@@ -23,7 +23,7 @@ const fr = {
   for: 'Oui',
   against: 'Non',
   candidates: 'Candidat·e·s',
-  none: '—',
+  none: '-',
   budget: 'Budget',
   final: 'Décompte final',
   annual: 'Annuel',
@@ -33,7 +33,7 @@ const fr = {
   no_rows: 'Aucune donnée pour cette sélection.',
   vote_summary: (yes: string, no: string, ratio: string) =>
     `Le camp du Oui a déclaré ${yes}, le camp du Non ${no}${ratio}.`,
-  ratio_more: (side: string, r: string) => ` — ${r} fois plus pour le ${side}`,
+  ratio_more: (side: string, r: string) => `, soit ${r} fois plus pour le ${side}`,
   election_summary: (total: string, n: number) => `${n} acteurs ont déclaré au total ${total} de recettes.`,
   actors: 'acteurs',
   allowances: 'libéralités',
@@ -104,6 +104,13 @@ const fr = {
   loading: 'Chargement…',
   error: 'Impossible de charger les données.',
   about_title: 'À propos et méthodologie',
+  hero_title: "Qui finance la politique suisse\u00a0?",
+  hero_lead: "Les recettes et les dons déclarés pour chaque votation, élection et parti, d'après les données officielles, mis à jour chaque nuit.",
+  fig_donations: "de dons déclarés",
+  fig_votes: "votations suivies",
+  fig_donors: "donateurs",
+  upcoming_title: "À venir, sans déclaration publiée pour l'instant",
+  not_found_hint: "Cette page n'existe pas ou a été déplacée. Essayez la recherche ou l'une de ces pages :",
   stats_code: "Code de l'application d'authentification",
   stats_locked: "Trop de tentatives. Réessayez dans 15 minutes.",
   stats_2fa_missing: "La connexion à deux facteurs n'est pas configurée sur ce serveur.",
@@ -145,7 +152,7 @@ const fr = {
   yes_pct: 'de oui',
   turnout_word: 'participation',
   cantons_word: 'cantons',
-  not_voted_yet: 'Scrutin pas encore passé — recommandations connues à ce jour.',
+  not_voted_yet: 'Scrutin à venir. Recommandations connues à ce jour.',
   rec_yes: 'Recommandent le Oui',
   rec_no: 'Recommandent le Non',
   rec_other: 'Liberté de vote / pas de recommandation',
@@ -163,7 +170,7 @@ type Dict = typeof fr;
 
 const de: Dict = {
   site_title: 'Politfinanzierung Schweiz',
-  tagline: 'Wer finanziert Abstimmungen, Wahlen und Parteien in der Schweiz — offizielle Daten der Eidgenössischen Finanzkontrolle.',
+  tagline: 'Wer finanziert Abstimmungen, Wahlen und Parteien in der Schweiz. Offizielle Daten der Eidgenössischen Finanzkontrolle.',
   nav_votes: 'Abstimmungen',
   nav_elections: 'Wahlen',
   nav_parties: 'Parteien',
@@ -182,7 +189,7 @@ const de: Dict = {
   for: 'Ja',
   against: 'Nein',
   candidates: 'Kandidierende',
-  none: '—',
+  none: '-',
   budget: 'Budget',
   final: 'Schlussrechnung',
   annual: 'Jährlich',
@@ -192,7 +199,7 @@ const de: Dict = {
   no_rows: 'Keine Daten für diese Auswahl.',
   vote_summary: (yes: string, no: string, ratio: string) =>
     `Das Ja-Lager deklarierte ${yes}, das Nein-Lager ${no}${ratio}.`,
-  ratio_more: (side: string, r: string) => ` — ${r}-mal mehr für das ${side}-Lager`,
+  ratio_more: (side: string, r: string) => `, also ${r}-mal mehr für das ${side}-Lager`,
   election_summary: (total: string, n: number) => `${n} Akteure deklarierten insgesamt ${total} Einnahmen.`,
   actors: 'Akteure',
   allowances: 'Zuwendungen',
@@ -263,6 +270,13 @@ const de: Dict = {
   loading: 'Wird geladen…',
   error: 'Daten konnten nicht geladen werden.',
   about_title: 'Über das Projekt und Methodik',
+  hero_title: "Wer finanziert die Schweizer Politik?",
+  hero_lead: "Deklarierte Einnahmen und Zuwendungen für jede Abstimmung, Wahl und Partei, nach offiziellen Daten, jede Nacht aktualisiert.",
+  fig_donations: "deklarierte Zuwendungen",
+  fig_votes: "erfasste Abstimmungen",
+  fig_donors: "Zuwendende",
+  upcoming_title: "Demnächst, noch ohne publizierte Offenlegungen",
+  not_found_hint: "Diese Seite existiert nicht oder wurde verschoben. Versuchen Sie die Suche oder eine dieser Seiten:",
   stats_code: "Code aus der Authenticator-App",
   stats_locked: "Zu viele Versuche. Bitte in 15 Minuten erneut versuchen.",
   stats_2fa_missing: "Die Zwei-Faktor-Anmeldung ist auf diesem Server nicht eingerichtet.",
@@ -304,7 +318,7 @@ const de: Dict = {
   yes_pct: 'Ja',
   turnout_word: 'Stimmbeteiligung',
   cantons_word: 'Stände',
-  not_voted_yet: 'Abstimmung noch nicht erfolgt — bisher bekannte Parolen.',
+  not_voted_yet: 'Abstimmung steht noch bevor. Bisher bekannte Parolen.',
   rec_yes: 'Ja-Parole',
   rec_no: 'Nein-Parole',
   rec_other: 'Stimmfreigabe / keine Parole',
@@ -320,7 +334,7 @@ const de: Dict = {
 
 const it: Dict = {
   site_title: 'Finanziamento della politica svizzera',
-  tagline: 'Chi finanzia le votazioni, le elezioni e i partiti in Svizzera — dati ufficiali del Controllo federale delle finanze.',
+  tagline: 'Chi finanzia le votazioni, le elezioni e i partiti in Svizzera. Dati ufficiali del Controllo federale delle finanze.',
   nav_votes: 'Votazioni',
   nav_elections: 'Elezioni',
   nav_parties: 'Partiti',
@@ -339,7 +353,7 @@ const it: Dict = {
   for: 'Sì',
   against: 'No',
   candidates: 'Candidati/e',
-  none: '—',
+  none: '-',
   budget: 'Preventivo',
   final: 'Conto finale',
   annual: 'Annuale',
@@ -349,7 +363,7 @@ const it: Dict = {
   no_rows: 'Nessun dato per questa selezione.',
   vote_summary: (yes: string, no: string, ratio: string) =>
     `Il fronte del Sì ha dichiarato ${yes}, il fronte del No ${no}${ratio}.`,
-  ratio_more: (side: string, r: string) => ` — ${r} volte di più per il ${side}`,
+  ratio_more: (side: string, r: string) => `, ossia ${r} volte di più per il ${side}`,
   election_summary: (total: string, n: number) => `${n} attori hanno dichiarato in totale ${total} di entrate.`,
   actors: 'attori',
   allowances: 'liberalità',
@@ -420,6 +434,13 @@ const it: Dict = {
   loading: 'Caricamento…',
   error: 'Impossibile caricare i dati.',
   about_title: 'Informazioni e metodologia',
+  hero_title: "Chi finanzia la politica svizzera?",
+  hero_lead: "Entrate e liberalità dichiarate per ogni votazione, elezione e partito, secondo i dati ufficiali, aggiornati ogni notte.",
+  fig_donations: "di liberalità dichiarate",
+  fig_votes: "votazioni seguite",
+  fig_donors: "donatori",
+  upcoming_title: "Prossimamente, ancora senza dichiarazioni pubblicate",
+  not_found_hint: "Questa pagina non esiste o è stata spostata. Provate la ricerca o una di queste pagine:",
   stats_code: "Codice dell'app di autenticazione",
   stats_locked: "Troppi tentativi. Riprovate fra 15 minuti.",
   stats_2fa_missing: "L'accesso a due fattori non è configurato su questo server.",
@@ -461,7 +482,7 @@ const it: Dict = {
   yes_pct: 'di sì',
   turnout_word: 'partecipazione',
   cantons_word: 'cantoni',
-  not_voted_yet: 'Votazione non ancora avvenuta — raccomandazioni note finora.',
+  not_voted_yet: 'Votazione imminente. Raccomandazioni note finora.',
   rec_yes: 'Raccomandano il Sì',
   rec_no: 'Raccomandano il No',
   rec_other: 'Libertà di voto / nessuna raccomandazione',
@@ -477,7 +498,7 @@ const it: Dict = {
 
 const en: Dict = {
   site_title: 'Swiss Political Money',
-  tagline: 'Who funds votes, elections and parties in Switzerland — official data from the Swiss Federal Audit Office.',
+  tagline: 'Who funds votes, elections and parties in Switzerland. Official data from the Swiss Federal Audit Office.',
   nav_votes: 'Votes',
   nav_elections: 'Elections',
   nav_parties: 'Parties',
@@ -496,7 +517,7 @@ const en: Dict = {
   for: 'Yes',
   against: 'No',
   candidates: 'Candidates',
-  none: '—',
+  none: '-',
   budget: 'Budget',
   final: 'Final accounts',
   annual: 'Annual',
@@ -506,7 +527,7 @@ const en: Dict = {
   no_rows: 'No data for this selection.',
   vote_summary: (yes: string, no: string, ratio: string) =>
     `The Yes side declared ${yes}, the No side ${no}${ratio}.`,
-  ratio_more: (side: string, r: string) => ` — ${r} times more for the ${side} side`,
+  ratio_more: (side: string, r: string) => `, ${r} times more for the ${side} side`,
   election_summary: (total: string, n: number) => `${n} actors declared a total of ${total} in revenue.`,
   actors: 'actors',
   allowances: 'donations',
@@ -577,6 +598,13 @@ const en: Dict = {
   loading: 'Loading…',
   error: 'Could not load the data.',
   about_title: 'About and methodology',
+  hero_title: "Who funds Swiss politics?",
+  hero_lead: "Declared revenue and donations for every vote, election and party, from official data, updated every night.",
+  fig_donations: "in declared donations",
+  fig_votes: "votes covered",
+  fig_donors: "donors",
+  upcoming_title: "Upcoming, no declarations published yet",
+  not_found_hint: "This page doesn't exist or has moved. Try the search or one of these pages:",
   stats_code: "Code from your authenticator app",
   stats_locked: "Too many attempts. Try again in 15 minutes.",
   stats_2fa_missing: "Two-factor login is not configured on this server.",
@@ -618,7 +646,7 @@ const en: Dict = {
   yes_pct: 'yes',
   turnout_word: 'turnout',
   cantons_word: 'cantons',
-  not_voted_yet: 'Not voted yet — recommendations known so far.',
+  not_voted_yet: 'Vote still to come. Recommendations known so far.',
   rec_yes: 'Recommend Yes',
   rec_no: 'Recommend No',
   rec_other: 'Free vote / no recommendation',
@@ -641,10 +669,12 @@ let current: Lang = 'fr';
 export const setLang = (l: Lang) => { current = l; document.documentElement.lang = l; };
 export const lang = () => current;
 export const T = () => dicts[current];
+/** Browser-tab title: "<page> · <site>" (or just the site name). */
+export const setPageTitle = (page?: string) => { document.title = page ? `${page} · ${dicts[current].site_title}` : dicts[current].site_title; };
 
 /** Translate a data code (stance, phase, source column, …) if we know it, else return it unchanged. */
 export function tr(code: unknown): string {
-  if (code == null) return '—';
+  if (code == null) return '-';
   const key = String(code).replace(/^sum_/, '') as keyof Dict;
   const v = dicts[current][key];
   return typeof v === 'string' ? v : String(code);

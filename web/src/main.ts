@@ -55,17 +55,17 @@ function shell(page: string) {
       <div class="wrap header-row">
         <a class="brand" href="${href('')}"><span class="logo" aria-hidden="true"></span>${esc(t.site_title)}</a>
         <nav class="main-nav" aria-label="${esc(t.site_title)}">${nav.map(([p, l]) => `<a href="${href(p)}" class="${page === p || (page === p.slice(0, -1)) ? 'active' : ''}">${esc(l)}</a>`).join('')}</nav>
+        <div class="search-box" role="search">
+          <input type="search" id="search" placeholder="${esc(t.search_placeholder)}" autocomplete="off" aria-label="${esc(t.search_placeholder)}" />
+          <div id="search-results" class="search-results" hidden aria-live="polite"></div>
+        </div>
         <div class="lang-switch">${otherLangs}</div>
-      </div>
-      <div class="wrap search-row">
-        <input type="search" id="search" placeholder="${esc(t.search_placeholder)}" autocomplete="off" aria-label="${esc(t.search_placeholder)}" />
-        <div id="search-results" class="search-results" hidden aria-live="polite"></div>
       </div>
     </header>
     <main class="wrap" id="main" tabindex="-1"></main>
     <footer class="site-footer wrap">
-      <p>${esc(t.source_efk)} — <a href="https://politikfinanzierung.efk.admin.ch/app/${route.lang === 'en' ? 'de' : route.lang}" target="_blank" rel="noopener">politikfinanzierung.efk.admin.ch</a>
-      · ${esc(t.source_swissvotes)} — <a href="https://swissvotes.ch" target="_blank" rel="noopener">swissvotes.ch</a>
+      <p>${esc(t.source_efk)}: <a href="https://politikfinanzierung.efk.admin.ch/app/${route.lang === 'en' ? 'de' : route.lang}" target="_blank" rel="noopener">politikfinanzierung.efk.admin.ch</a>
+      · ${esc(t.source_swissvotes)}: <a href="https://swissvotes.ch" target="_blank" rel="noopener">swissvotes.ch</a>
       · <span id="updated"></span></p>
       <p>${esc(t.independent_note)} · <a href="${href('privacy')}">${esc(privacyTitle())}</a> · <a href="${href('legal')}">${esc(legalTitle())}</a></p>
     </footer>`;
@@ -128,7 +128,14 @@ async function render() {
   currentShell = shellKey;
   const main = document.getElementById('main')!;
   const page = PAGES[route.page];
-  if (!page) { main.innerHTML = `<p>${T().not_found}</p>`; return; }
+  if (!page) {
+    const t = T();
+    main.innerHTML = `<section class="not-found"><h1>${esc(t.not_found)}</h1><p class="lead">${esc(t.not_found_hint)}</p>
+      <ul><li><a href="${href('')}">${esc(t.site_title)}</a></li><li><a href="${href('votes')}">${esc(t.all_votes)}</a></li>
+      <li><a href="${href('elections')}">${esc(t.nav_elections)}</a></li><li><a href="${href('explore')}">${esc(t.nav_explore)}</a></li></ul></section>`;
+    document.querySelector<HTMLInputElement>('#search')?.focus();
+    return;
+  }
   main.innerHTML = '';
   document.querySelector('meta[name=robots]')?.remove(); // donor pages re-add noindex
   if (route.page !== 'stats') countVisit();

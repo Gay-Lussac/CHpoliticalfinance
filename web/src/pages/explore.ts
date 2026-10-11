@@ -31,7 +31,7 @@ export async function explorePage(main: HTMLElement, _id: string | undefined, pa
   ];
   if (fields.financing_id) {
     controls.push(select('fin', t.financing, financings.filter((f) => ds === 'party_year' || ds === 'mandates' ? f.kind === 'party_year' : true)
-      .map((f) => [String(f.id), `${f.event_date ? date(f.event_date) : f.year} — ${f.title}`.slice(0, 110)]), params.get('fin')));
+      .map((f) => [String(f.id), `${f.event_date ? date(f.event_date) : f.year} · ${f.title}`.slice(0, 110)]), params.get('fin')));
   }
   if (fields.financing_kind) controls.push(select('kind', t.kind, enumOpts('financing_kind'), params.get('kind')));
   if (fields.phase) controls.push(select('phase', t.phase, enumOpts('phase'), params.get('phase')));

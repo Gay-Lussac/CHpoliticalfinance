@@ -160,7 +160,8 @@ app.get('/api/meta', async () => cached('meta', async () => {
       (SELECT COUNT(*) FROM financing WHERE kind='party_year') AS party_years,
       (SELECT COUNT(*) FROM actor) AS actors,
       (SELECT COUNT(*) FROM donor) AS donors,
-      (SELECT COUNT(*) FROM allowance) AS allowances`);
+      (SELECT COUNT(*) FROM allowance) AS allowances,
+      (SELECT COALESCE(SUM(value_chf), 0) FROM v_flow WHERE is_latest) AS donations_chf`);
   return { last_run: run ?? null, counts, datasets: Object.fromEntries(
     Object.entries(config.datasets).map(([k, d]) => [k, { description: d.description, fields: d.fields,
       measures: Object.keys(d.measures) }])) };

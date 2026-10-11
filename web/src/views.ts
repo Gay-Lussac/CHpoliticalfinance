@@ -70,7 +70,7 @@ function linkOf(entity: string | undefined, col: string, row: Row): string | nul
 
 function cell(col: string, row: Row, entityLinks = true): string {
   const v = row[col];
-  if (v == null) return '—';
+  if (v == null) return '-';
   if (/(^value_chf$|^total$|allowances$|^events$|^sales$|^equity$|fees$|contributions$|^amount_chf$|^sum_|^max_)/.test(col)) {
     return `<span class="num">${chf(v)}</span>`;
   }
@@ -126,7 +126,7 @@ function renderBars(spec: ViewSpec, rows: Row[]): string {
       const v = Number(r[value]) || 0;
       const w = Math.max(0.004, v / max); // fraction of (row width − room for the value label)
       const extra = r.count != null ? ` · ${r.count} ${T().allowances}` : '';
-      const tip = `${labelOf(label, r)}${showSub ? ` — ${labelOf(color!, r)}` : ''}: ${chf(v)}${extra}`;
+      const tip = `${labelOf(label, r)}${showSub ? ` · ${labelOf(color!, r)}` : ''}: ${chf(v)}${extra}`;
       return `<div class="bar-row" data-tip="${esc(tip)}" tabindex="0">
         <span class="bar" style="width:calc((100% - var(--label-room)) * ${w.toFixed(4)});background:${colorOf(color, r)}"></span>
         <span class="bar-value">${chfShort(v)}</span></div>`;
@@ -144,7 +144,7 @@ function renderShare(spec: ViewSpec, rows: Row[]): string {
     const pctTxt = `${new Intl.NumberFormat(locale(), { maximumFractionDigits: 0 }).format(v)} %`;
     const base = r.sum_value_chf != null ? chf(r.sum_value_chf) : '';
     const n = r.count_distinct_financing_id;
-    const tipText = `${labelOf(label, r)}: ${pctTxt}${base ? ` — ${T().alignment_of} ${base}` : ''}${n ? ` · ${T().votes_n(n)}` : ''}`;
+    const tipText = `${labelOf(label, r)}: ${pctTxt}${base ? ` (${T().alignment_of} ${base})` : ''}${n ? ` · ${T().votes_n(n)}` : ''}`;
     return `<li><div class="bar-label">${esc(labelOf(label, r))}${n ? ` <span class="muted small">· ${esc(T().votes_n(n))}</span>` : ''}</div>
       <div class="bar-row" data-tip="${esc(tipText)}" tabindex="0">
         <span class="share-track"><span class="bar" style="width:${v}%;background:${colorOf(color, r)}"></span></span>
@@ -167,7 +167,7 @@ function renderStacked(spec: ViewSpec, rows: Row[]): string {
       const v = Number(r[s]) || 0;
       if (v <= 0) return '';
       return `<span class="seg" tabindex="0" style="flex:${v} 1 0;background:${seriesColor(i)}"
-        data-tip="${esc(`${labelOf(label, r)} — ${tr(s)}: ${chf(v)}`)}"></span>`;
+        data-tip="${esc(`${labelOf(label, r)} · ${tr(s)}: ${chf(v)}`)}"></span>`;
     }).join('');
     return `<li><div class="bar-label">${url ? `<a href="${url}" data-link>${name}</a>` : name}</div>
       <div class="bar-row"><span class="stack" style="width:calc((100% - var(--label-room)) * ${(totals[idx] / max).toFixed(4)})">${segs}</span>
@@ -194,7 +194,7 @@ function renderColumns(spec: ViewSpec, rows: Row[], el: HTMLElement) {
     _v: Number(r[value]) || 0,
     _c: color ? labelOf(color, r) : '',
     _fill: colorOf(color, r),
-    _tip: `${labelOf(label, r)}${color ? ` — ${labelOf(color, r)}` : ''}\n${chf(Number(r[value]))}`,
+    _tip: `${labelOf(label, r)}${color ? ` · ${labelOf(color, r)}` : ''}\n${chf(Number(r[value]))}`,
   }));
   const xs = [...new Set(data.map((d) => d._x))].sort();
   const width = el.clientWidth || 640;
@@ -322,7 +322,7 @@ export async function renderView(spec: ViewSpec, context: Record<string, unknown
   section.id = spec.id;
   section.innerHTML = `<header><h2>${esc(txt(spec.title))}</h2>${spec.subtitle ? `<p class="muted">${esc(txt(spec.subtitle))}</p>` : ''}</header>
     ${spec.note ? `<aside class="view-note" role="note">ⓘ ${esc(txt(spec.note))}</aside>` : ''}
-    <div class="view-body"><p class="muted">${T().loading}</p></div>
+    <div class="view-body" aria-busy="true"><div class="skeleton" aria-hidden="true"><span></span><span></span><span></span><span></span></div><span class="sr-only">${T().loading}</span></div>
     <footer class="view-footer"></footer>`;
   const body = section.querySelector<HTMLElement>('.view-body')!;
   const footer = section.querySelector<HTMLElement>('.view-footer')!;
@@ -332,6 +332,7 @@ export async function renderView(spec: ViewSpec, context: Record<string, unknown
     const rows = res.rows;
     if (!rows.length) {
       body.innerHTML = `<p class="muted">${T().no_rows}</p>`;
+      body.removeAttribute('aria-busy');
       return section;
     }
     const draw = () => {
@@ -345,6 +346,7 @@ export async function renderView(spec: ViewSpec, context: Record<string, unknown
       }
     };
     draw();
+    body.removeAttribute('aria-busy');
     if (spec.chart.type === 'columns' || spec.chart.type === 'dots') {
       let w = 0;
       new ResizeObserver(() => { if (Math.abs(body.clientWidth - w) > 40) { w = body.clientWidth; draw(); } }).observe(body);
@@ -363,6 +365,7 @@ export async function renderView(spec: ViewSpec, context: Record<string, unknown
     footer.querySelector('[data-csv]')!.addEventListener('click', () => downloadCsv(spec.id, tableCols, rows));
   } catch (e) {
     body.innerHTML = `<p class="error">${T().error} (${esc((e as Error).message)})</p>`;
+    body.removeAttribute('aria-busy');
   }
   return section;
 }

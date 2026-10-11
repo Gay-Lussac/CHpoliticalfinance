@@ -1,6 +1,6 @@
 import { get } from '../api';
 import { chf, date, esc, num } from '../format';
-import { T, tr } from '../i18n';
+import { setPageTitle, T, tr } from '../i18n';
 import { PAGES, renderViews } from '../views';
 import { statTiles, viewsGrid } from './common';
 
@@ -8,6 +8,7 @@ export async function donorPage(main: HTMLElement, id: string | undefined) {
   const t = T();
   const d = await get(`donors/${Number(id)}`).catch(() => null);
   if (!d) { main.innerHTML = `<p>${t.not_found}</p>`; return; }
+  setPageTitle(d.suppressed ? t.masked_donor : d.display_name);
   if (d.suppressed) {
     main.innerHTML = `<header class="page-head"><div class="card-meta"><span>${t.donor}</span></div><h1>${esc(t.masked_donor)}</h1>
       <p class="lead">${esc(t.masked_page)}</p></header>`;
