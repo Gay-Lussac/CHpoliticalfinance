@@ -127,6 +127,6 @@ Setup on Infomaniak (once):
 2. Add `STATS_DB_NAME=<prefix>_chpf_stats` to `~/chpf/.env` in the SSH space, then run `deploy/init-stats-db.sh`
    (asks for the admin password).
 3. Node.js site, run command: add `STATS_DB_NAME=<prefix>_chpf_stats STATS_TOKEN='<long random key>' STATS_TOTP_SECRET=<secret>`
-   before `node …`. Key: `openssl rand -hex 24`. Secret: `node api/scripts/new-totp-secret.mjs` (add it to your authenticator
-   app, then keep both in your password manager).
+   before `node …`. Generate both with `node api/scripts/new-stats-secrets.mjs`: it writes them to a private file in your home folder,
+   prints nothing secret, and explains the steps. Keep both in your password manager, then delete the file.
 4. Build → Restart. Then open `/fr/stats` and enter the key.

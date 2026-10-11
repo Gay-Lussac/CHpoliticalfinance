@@ -387,3 +387,9 @@ if (existsSync(dist)) {
 
 const port = Number(process.env.API_PORT ?? 8787);
 await app.listen({ port, host: process.env.API_HOST ?? '127.0.0.1' });
+
+// Startup diagnostics: which optional settings were received (never their values).
+const has = (v) => (process.env[v] ? 'set' : 'MISSING');
+app.log.info(`config: DB_NAME ${has('DB_NAME')} · STATS_DB_NAME ${has('STATS_DB_NAME')} · STATS_TOKEN ${has('STATS_TOKEN')}`
+  + ` · STATS_TOTP_SECRET ${has('STATS_TOTP_SECRET')} → visit statistics ${stats.enabled ? 'ON' : 'OFF'},`
+  + ` two-factor login ${statsAuth.configured ? 'READY' : 'NOT CONFIGURED'}`);

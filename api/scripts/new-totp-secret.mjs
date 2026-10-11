@@ -1,4 +1,5 @@
-// Generates a secret for the two-factor stats login. Run: node api/scripts/new-totp-secret.mjs
+// Prints a TOTP secret (shown in the terminal!). Prefer new-stats-secrets.mjs, which writes to a private file instead.
+// Run: node api/scripts/new-totp-secret.mjs
 // Add the secret to your authenticator app (manual entry, or paste the otpauth link), then set it as
 // STATS_TOTP_SECRET in the environment (local .env / Node.js run command). Never commit it.
 import { randomBytes } from 'node:crypto';
