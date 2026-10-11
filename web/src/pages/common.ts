@@ -1,5 +1,5 @@
 import type { Ballot, Financing } from '../api';
-import { chf, chfShort, date, esc } from '../format';
+import { chf, chfShort, date, esc, typo } from '../format';
 import { locale, T, tr } from '../i18n';
 import { href } from '../router';
 
@@ -74,7 +74,7 @@ export function ballotsCard(f: Financing): string {
   const blocks = f.ballots.map((b) => {
     const recs = b.recommendations ?? [];
     const line = resultLine(b);
-    const head = many ? `<h3 class="ballot-title">${esc(b.role === 'main' ? tr(b.legal_form) : tr(b.role))}${b.title ? ` — ${esc(b.title)}` : ''}</h3>` : '';
+    const head = many ? `<h3 class="ballot-title">${esc(b.role === 'main' ? tr(b.legal_form) : tr(b.role))}${b.title ? `: ${esc(b.title)}` : ''}</h3>` : '';
     const result = line
       ? `<p class="result ${outcomeClass(b.outcome)}"><strong>${esc(line.split(' · ')[0])}</strong>${line.includes(' · ') ? ` · ${esc(line.split(' · ').slice(1).join(' · '))}` : ''}</p>`
       : `<p class="muted small">${esc(t.not_voted_yet)}</p>`;
@@ -90,7 +90,7 @@ export function ballotsCard(f: Financing): string {
     return `<div class="ballot">${head}${result}<div class="rec-groups">${groups}</div></div>`;
   }).join('');
   return `<section class="card ballots"><h2>${esc(t.result_title)}</h2>${blocks}
-    <p class="muted small source">${esc(t.source_swissvotes)} — <a href="https://swissvotes.ch" target="_blank" rel="noopener">swissvotes.ch</a></p></section>`;
+    <p class="muted small source">${esc(t.source_swissvotes)}: <a href="https://swissvotes.ch" target="_blank" rel="noopener">swissvotes.ch</a></p></section>`;
 }
 
 export function voteCard(f: Financing): string {
@@ -99,7 +99,7 @@ export function voteCard(f: Financing): string {
   const hasData = f.has_budget || f.has_final;
   return `<a class="card vote-card" href="${href(`vote/${f.id}`)}">
       <div class="card-meta"><span>${date(f.event_date)}</span>${hasData ? `<span class="badge ${phase}">${tr(phase)}</span>` : ''}</div>
-      <h3>${esc(f.title)}</h3>
+      <h3>${esc(typo(f.title))}</h3>
       ${hasData ? splitBar(yes, no) : `<p class="muted small">${T().no_data_yet}</p>`}
       ${(() => { const m = f.ballots?.find((b) => b.role === 'main'); const l = m && resultLine(m, false);
         return l ? `<p class="small result ${outcomeClass(m!.outcome)}">${esc(l)}</p>` : ''; })()}
