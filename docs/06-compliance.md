@@ -68,3 +68,31 @@ transparency, accuracy, and a working correction/objection channel.
 **Operator accounts (outside the code):** turn on 2FA for the **Infomaniak Manager** and **GitHub** accounts. They control
 the server, the run command (which holds the DB password) and the production branch. Keep SSH key-only if the Manager allows
 disabling password login for the SSH user, otherwise use a long unique password.
+
+## Security review and penetration test (18 October 2026)
+
+Code review plus live tests against https://polimoney.ch (light volume, no flooding).
+
+| Test | Result |
+|---|---|
+| SQL injection in the search bar (`' OR 1=1 --`, `UNION SELECT`, `DROP TABLE`, stacked queries, `\'` escapes) | **not injectable**: all values are bound parameters; empty results, no DB error leaked |
+| Time-based blind SQL injection (`SLEEP(5)`) | **not injectable**: answered in ~0.05 s |
+| LIKE wildcard injection (`%`, `_`) | treated as literal characters |
+| Injection via data API (`filter`, `group_by`, `order`, `columns`, `dataset`, `lang`) | rejected by the whitelist (400) or ignored (`lang` falls back to `fr`); no leaks |
+| Injection via path ids (`/donors/1 OR 1=1`) | not injectable; was a 500, **now 404** |
+| Cross-site scripting | all data HTML-escaped before display; strict CSP (`script-src 'self'`) as second line |
+| Private files (`/.env`, `/.git/config`, server code, config) | not reachable (SPA page or 404) |
+| Security headers | CSP, HSTS, X-Frame-Options, nosniff, Referrer-/Permissions-Policy present |
+| Per-client rate limiting behind the Infomaniak proxy | **works**: 429 with `Retry-After` at the limit |
+
+**Denial-of-service hardening added after the review:**
+- the response cache is bounded by total size (64 MB) and never stores answers above 2 MB (before: 1 000 entries of any size, about 300 MB possible);
+- the visit counter caps distinct rows per day (5 000; the rest folds into "other"), accepts ids of up to 6 digits and plain host names only;
+- search text is capped at 100 characters;
+- invalid path ids give 404 instead of an internal error.
+
+**Layered DDoS protection:** Infomaniak's network-level protection (Arbor Networks, included in Cloud Servers) absorbs volumetric
+floods. The application limits what any single client or request pattern can cost: per-client and per-route rate limits,
+timeouts, body limit, 5 s DB statement timeout, 1 000-row answers, and the size-bounded cache.
+Residual: a large distributed application-layer attack (many IPs, each under the limits) could still slow the site.
+Answer: Infomaniak support or a temporary stricter limit (`max` in `api/src/server.js`). Read-only data means no data at risk.

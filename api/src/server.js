@@ -12,6 +12,7 @@ import { buildQuery, QueryError } from './query.js';
 import { attachLabels, i18nExpr, LANGS } from './labels.js';
 import { Stats } from './stats.js';
 import { StatsAuth } from './auth.js';
+import { SizedCache } from './cache.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
@@ -48,7 +49,7 @@ const pool = mysql.createPool({
 pool.pool.on('connection', (conn) => conn.query('SET SESSION max_statement_time = 5'));
 
 // ------------------------------------------------------------------ cache (invalidated by new pipeline runs)
-const cache = new Map();
+const cache = new SizedCache({ maxBytes: 64 * 1024 * 1024, maxEntryBytes: 2 * 1024 * 1024 });   // bounded by size (DoS)
 let dataVersion = null;
 let versionCheckedAt = 0;
 
@@ -70,12 +71,13 @@ async function cached(key, fn) {
   await currentVersion();
   if (cache.has(key)) return cache.get(key);
   const value = await fn();
-  if (cache.size > 1000) cache.delete(cache.keys().next().value);
   cache.set(key, value);
   return value;
 }
 
 const langOf = (q) => (LANGS.includes(q.lang) ? q.lang : 'fr');
+/** Path ids must be plain positive integers; anything else is simply 'not found'. */
+const idOf = (raw) => (/^\d{1,9}$/.test(String(raw)) ? Number(raw) : null);
 
 async function loadSuppressed() {
   if (!suppressedKeys.length) return;
@@ -259,7 +261,8 @@ app.get('/api/financings', async (req) => {
 
 app.get('/api/financings/:id', async (req, reply) => {
   const lang = langOf(req.query);
-  const id = Number(req.params.id);
+  const id = idOf(req.params.id);
+  if (id === null) return reply.code(404).send({ error: 'not found' });
   const rows = await cached(`fin1:${lang}:${id}`, async () => {
     const [r] = await pool.query(`${FINANCING_SELECT(lang)} WHERE f.id = ?`, [id]);
     return withBallots(await withSummary(r), lang, true);
@@ -269,7 +272,8 @@ app.get('/api/financings/:id', async (req, reply) => {
 
 app.get('/api/actors/:id', async (req, reply) => {
   const lang = langOf(req.query);
-  const id = Number(req.params.id);
+  const id = idOf(req.params.id);
+  if (id === null) return reply.code(404).send({ error: 'not found' });
   const row = await cached(`actor:${lang}:${id}`, async () => {
     const [[a]] = await pool.query(
       `SELECT a.id, a.efk_id, a.name, a.city, a.canton, a.actor_type, ap.level AS party_level,
@@ -287,7 +291,8 @@ app.get('/api/actors/:id', async (req, reply) => {
 });
 
 app.get('/api/donors/:id', async (req, reply) => {
-  const id = Number(req.params.id);
+  const id = idOf(req.params.id);
+  if (id === null) return reply.code(404).send({ error: 'not found' });
   if (suppressed.has(id)) return { id, suppressed: true };
   const row = await cached(`donor:${id}`, async () => {
     const [[d]] = await pool.query(
@@ -316,7 +321,7 @@ app.get('/api/parties', async (req) => {
 
 app.get('/api/search', { config: { rateLimit: { max: 60, timeWindow: '1 minute' } } }, async (req) => {
   const lang = langOf(req.query);
-  const q = String(req.query.q ?? '').trim();
+  const q = String(req.query.q ?? '').trim().slice(0, 100);     // longer queries are pointless and cost work
   if (q.length < 2) return { financings: [], actors: [], donors: [] };
   const like = `%${q.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
   return cached(`search:${lang}:${q.toLowerCase()}`, async () => {

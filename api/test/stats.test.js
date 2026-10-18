@@ -32,3 +32,21 @@ test('stats key check', () => {
   assert.ok(!tokenOk('abc123', undefined));
   assert.ok(!tokenOk('', ''));
 });
+
+test('page ids and referrer hosts are bounded', () => {
+  assert.deepEqual(normalisePath('/fr/vote/1234567'), { lang: 'fr', page: 'other' });
+  assert.equal(referrerHost('https://exa mple.com/', 'polimoney.ch'), '');
+});
+
+test('distinct rows per day are capped (table cannot explode)', async () => {
+  const { Stats } = await import('../src/stats.js');
+  const written = new Set();
+  const pool = { query: async (sql, args) => { if (sql.includes('page_view_daily')) written.add(`${args[1]}|${args[2]}|${args[3]}`); return [[]]; } };
+  const s = new Stats(pool, 'stats_db', { warn() {}, error() {} });
+  s.maxKeysPerDay = 3;
+  for (let i = 1; i <= 10; i++) {
+    await s.record({ path: `/fr/vote/${i}`, ref: '', ip: `10.0.0.${i}`, ua: 'Mozilla/5.0 Safari', host: 'polimoney.ch' });
+  }
+  assert.equal(written.size, 4, '3 real pages + 1 folded "other" row');
+  assert.ok(written.has('other|fr|'));
+});

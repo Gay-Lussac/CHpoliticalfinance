@@ -15,7 +15,7 @@ export function normalisePath(raw) {
   const [lang, page = '', id] = path.split('/').filter(Boolean);
   const l = LANGS.includes(lang) ? lang : 'xx';
   if (!PAGES.has(page)) return { lang: l, page: 'other' };
-  if (PAGES_WITH_ID.has(page)) return { lang: l, page: /^\d{1,9}$/.test(id ?? '') ? `${page}/${id}` : 'other' };
+  if (PAGES_WITH_ID.has(page)) return { lang: l, page: /^\d{1,6}$/.test(id ?? '') ? `${page}/${id}` : 'other' };
   return { lang: l, page: page || 'home' };
 }
 
@@ -23,6 +23,7 @@ export function normalisePath(raw) {
 export function referrerHost(raw, ownHost) {
   try {
     const h = new URL(String(raw)).hostname.toLowerCase().replace(/^www\./, '');
+    if (!/^[a-z0-9.-]{1,100}$/.test(h)) return '';            // only plain host names
     const own = String(ownHost ?? '').toLowerCase().split(':')[0].replace(/^www\./, '');
     return h && h !== own ? h.slice(0, 100) : '';
   } catch {
@@ -42,6 +43,8 @@ export class Stats {
     this.salt = null;
     this.seen = new Set();
     this.rate = new Map();        // hashed client → hits this minute (anti-spam)
+    this.keys = new Set();        // distinct (page, lang, referrer) rows written today
+    this.maxKeysPerDay = 5000;    // beyond this, new combinations are folded into 'other' (caps table growth)
   }
 
   #today() {
@@ -50,6 +53,7 @@ export class Stats {
       this.day = day;
       this.salt = randomBytes(16);
       this.seen.clear();
+      this.keys.clear();
     }
     return day;
   }
@@ -64,8 +68,13 @@ export class Stats {
     this.rate.set(fp, { minute, count });
     if (this.rate.size > 50_000) this.rate.clear();
     if (count > 60) return;                                   // >60 page views/minute from one client: ignore
-    const { lang, page } = normalisePath(path);
-    const referrer = referrerHost(ref, host);
+    let { lang, page } = normalisePath(path);
+    let referrer = referrerHost(ref, host);
+    const key = `${page}|${lang}|${referrer}`;
+    if (!this.keys.has(key)) {
+      if (this.keys.size >= this.maxKeysPerDay) { page = 'other'; referrer = ''; }
+      else this.keys.add(key);
+    }
     const t = (name) => `\`${this.db}\`.\`${name}\``;
     try {
       await this.pool.query(
