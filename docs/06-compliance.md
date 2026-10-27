@@ -96,3 +96,23 @@ floods. The application limits what any single client or request pattern can cos
 timeouts, body limit, 5 s DB statement timeout, 1 000-row answers, and the size-bounded cache.
 Residual: a large distributed application-layer attack (many IPs, each under the limits) could still slow the site.
 Answer: Infomaniak support or a temporary stricter limit (`max` in `api/src/server.js`). Read-only data means no data at risk.
+
+## Second security review (27 October 2026)
+Live tests against https://polimoney.ch plus code and dependency review.
+
+| Test | Result |
+|---|---|
+| TLS | Let's Encrypt certificate valid until 28 Dec 2026 (auto-renewed); TLS 1.0/1.1 refused; HTTP → HTTPS 301 |
+| Private files, path traversal (`/.env`, `/.git`, `OPERATIONS.local.md`, `/backup.sql`, `..%2f`) | all return the public SPA page, byte-identical; nothing leaks |
+| Source maps | not published |
+| SQL injection (search, data API, path ids, `SLEEP`) | not injectable |
+| Stats dashboard without login / wrong key or code | 401; login limited to 5 tries / 15 min plus lockout |
+| Oversized body | 413 |
+| Search rate limit | 429 after 60 / min |
+| Built-in names as dataset / field (`constructor`, `__proto__`, `toString`) | was a 500 (no data access); **now 400** |
+| Negative `limit` or huge `offset` | was a 500; **now clamped** (1 … 1 000 rows, offset ≤ 10 M) |
+| CORS | `*` stays on public data; **removed from `/api/stats`** |
+| Dependencies | fastify (low), fast-uri (moderate), vite / source-map-js (build-time only, high): **updated, 0 known vulnerabilities** |
+
+Operator duties found: Dependabot alerts are switched off on GitHub (turn on in Settings → Code security); keep 2FA on the
+Infomaniak and GitHub accounts, since either one gives full control of the site.

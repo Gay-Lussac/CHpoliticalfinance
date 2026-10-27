@@ -140,7 +140,8 @@ app.addHook('onSend', async (req, reply, payload) => {
   if (req.url.startsWith('/api/')) {
     reply.header('X-Robots-Tag', 'noindex');
     if (!reply.getHeader('Cache-Control')) reply.header('Cache-Control', 'public, max-age=60'); // data changes at most daily; server cache does the heavy lifting
-    reply.header('Access-Control-Allow-Origin', '*');
+    // Public data may be read from other sites; the stats endpoints may not.
+    if (!req.url.startsWith('/api/stats')) reply.header('Access-Control-Allow-Origin', '*');
   }
   return payload;
 });
