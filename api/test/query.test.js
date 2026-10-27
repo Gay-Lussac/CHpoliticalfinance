@@ -34,3 +34,19 @@ test('fixed_filter from config is always applied and cannot be bypassed', () => 
     'filter[donor_id]': '1' });
   assert.match(q.sql, /WHERE \(donor_type = 'legal'\) AND `donor_id` IN \(\?\)/);
 });
+
+test('built-in object names are not accepted as datasets, fields, measures or columns', () => {
+  for (const name of ['constructor', '__proto__', 'toString', 'hasOwnProperty']) {
+    assert.throws(() => buildQuery(config, { dataset: name }), QueryError);
+    assert.throws(() => buildQuery(config, { dataset: 'flow', group_by: name }), QueryError);
+    assert.throws(() => buildQuery(config, { dataset: 'flow', columns: name }), QueryError);
+    assert.throws(() => buildQuery(config, { dataset: 'flow', group_by: 'stance', measure: name }), QueryError);
+    assert.throws(() => buildQuery(config, { dataset: 'flow', [`filter[${name}]`]: '1' }), QueryError);
+  }
+});
+
+test('limit and offset stay within bounds', () => {
+  assert.equal(buildQuery(config, { dataset: 'flow', limit: '-1' }).limit, 1);
+  assert.equal(buildQuery(config, { dataset: 'flow', offset: '-5' }).offset, 0);
+  assert.equal(buildQuery(config, { dataset: 'flow', offset: '99999999999999999999' }).offset, 10_000_000);
+});

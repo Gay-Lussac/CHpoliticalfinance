@@ -5,6 +5,9 @@ export class QueryError extends Error {}
 
 const FILTER_KEY = /^filter\[(\w+)\](?:\[(gte|lte|ne)\])?$/;
 const MAX_LIMIT = 1000;   // caps the size of any single answer (memory / scraping)
+const MAX_OFFSET = 10_000_000;
+// Own keys only: names like 'constructor' or '__proto__' must not match inherited object properties.
+const has = (obj, key) => obj != null && Object.hasOwn(obj, key);
 
 function coerce(type, raw, field) {
   if (type === 'int') {
@@ -41,7 +44,7 @@ const alias = (measure) => measure.replace(/[:]/g, '_');
  * Common         : filter[f]=v1,v2 · filter[f][gte|lte|ne]=v · order=-field|-sum:x · limit · offset
  */
 export function buildQuery(config, params) {
-  const ds = config.datasets[params.dataset];
+  const ds = has(config.datasets, params.dataset) ? config.datasets[params.dataset] : null;
   if (!ds) throw new QueryError(`unknown dataset; one of ${Object.keys(config.datasets).join(', ')}`);
   const fields = ds.fields;
   // fixed_filter comes from the trusted config file (e.g. the privacy guard on 'alignment'), never from the request
@@ -52,7 +55,7 @@ export function buildQuery(config, params) {
     const m = FILTER_KEY.exec(key);
     if (!m) continue;
     const [, field, op] = m;
-    if (!fields[field]) throw new QueryError(`cannot filter on ${field}`);
+    if (!has(fields, field)) throw new QueryError(`cannot filter on ${field}`);
     const type = fields[field];
     const raw = Array.isArray(value) ? value.join(',') : String(value);
     if (op) {
@@ -69,19 +72,19 @@ export function buildQuery(config, params) {
   }
 
   const groupBy = params.group_by ? String(params.group_by).split(',').filter(Boolean) : [];
-  for (const g of groupBy) if (!fields[g]) throw new QueryError(`cannot group by ${g}`);
+  for (const g of groupBy) if (!has(fields, g)) throw new QueryError(`cannot group by ${g}`);
 
   let select;
   let columns;
   let measures = [];
   if (groupBy.length) {
     measures = (params.measure ? String(params.measure).split(',') : [Object.keys(ds.measures)[0]]);
-    for (const ms of measures) if (!ds.measures[ms]) throw new QueryError(`unknown measure ${ms}`);
+    for (const ms of measures) if (!has(ds.measures, ms)) throw new QueryError(`unknown measure ${ms}`);
     columns = [...groupBy, ...measures.map(alias)];
     select = [...groupBy.map((g) => `\`${g}\``), ...measures.map((ms) => `${ds.measures[ms]} AS \`${alias(ms)}\``)];
   } else {
     columns = params.columns ? String(params.columns).split(',') : Object.keys(fields);
-    for (const c of columns) if (!fields[c]) throw new QueryError(`unknown column ${c}`);
+    for (const c of columns) if (!has(fields, c)) throw new QueryError(`unknown column ${c}`);
     select = columns.map((c) => `\`${c}\``);
   }
 
@@ -90,8 +93,8 @@ export function buildQuery(config, params) {
   order = alias(desc ? order.slice(1) : order);
   if (!columns.includes(order)) throw new QueryError(`cannot order by ${order}`);
 
-  const limit = Math.min(Number.parseInt(params.limit ?? '100', 10) || 100, MAX_LIMIT);
-  const offset = Math.max(Number.parseInt(params.offset ?? '0', 10) || 0, 0);
+  const limit = Math.min(Math.max(Number.parseInt(params.limit ?? '100', 10) || 100, 1), MAX_LIMIT);
+  const offset = Math.min(Math.max(Number.parseInt(params.offset ?? '0', 10) || 0, 0), MAX_OFFSET);
 
   const whereSql = where.length ? ` WHERE ${where.join(' AND ')}` : '';
   const groupSql = groupBy.length ? ` GROUP BY ${groupBy.map((g) => `\`${g}\``).join(', ')}` : '';
