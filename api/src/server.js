@@ -124,6 +124,12 @@ await app.register(rateLimit, {
   errorResponseBuilder: () => Object.assign(new Error('too many requests, please slow down'), { statusCode: 429 }),
 });
 
+// www.polimoney.ch (once connected in the Manager) → polimoney.ch, so search engines see one address per page.
+app.addHook('onRequest', async (req, reply) => {
+  const host = String(req.headers.host ?? '').toLowerCase();
+  if (host.startsWith('www.')) return reply.code(301).redirect(`https://${host.slice(4).split(':')[0]}${req.url}`);
+});
+
 // Security headers on every response.
 const CSP = [
   "default-src 'self'", "script-src 'self'", "style-src 'self' 'unsafe-inline'", "img-src 'self' data:",
