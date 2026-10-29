@@ -9,6 +9,7 @@ import rateLimit from '@fastify/rate-limit';
 import mysql from 'mysql2/promise';
 
 import { buildQuery, QueryError } from './query.js';
+import { notFoundMeta, pageMeta, parsePath, renderHead } from './seo.js';
 import { buildSitemap, STATIC_PAGES } from './sitemap.js';
 import { attachLabels, i18nExpr, LANGS } from './labels.js';
 import { Stats } from './stats.js';
@@ -115,9 +116,11 @@ const app = Fastify({
 // Rate limiting (per client, in memory): protects the API from abuse and bulk scraping.
 await app.register(rateLimit, {
   global: true, max: 300, timeWindow: '1 minute',
-  // Static files are not limited. Behind a proxy, limit only when the real client IP is known (X-Forwarded-For):
+  // Static files (paths with a file extension) are not limited; API calls and pages are (pages look up the DB for
+  // their title). Behind a proxy, limit only when the real client IP is known (X-Forwarded-For):
   // otherwise all visitors would share the proxy's IP and one counter.
-  allowList: (req) => !req.url.startsWith('/api/') || (!req.headers['x-forwarded-for'] && req.socket.remoteAddress !== '127.0.0.1'),
+  allowList: (req) => /\.[a-z0-9]{1,8}$/i.test(req.url.split('?')[0])
+    || (!req.headers['x-forwarded-for'] && req.socket.remoteAddress !== '127.0.0.1'),
   errorResponseBuilder: () => Object.assign(new Error('too many requests, please slow down'), { statusCode: 429 }),
 });
 
@@ -265,18 +268,26 @@ app.get('/api/financings/:id', async (req, reply) => {
   const lang = langOf(req.query);
   const id = idOf(req.params.id);
   if (id === null) return reply.code(404).send({ error: 'not found' });
+  return (await financingById(lang, id)) ?? reply.code(404).send({ error: 'not found' });
+});
+
+async function financingById(lang, id) {
   const rows = await cached(`fin1:${lang}:${id}`, async () => {
     const [r] = await pool.query(`${FINANCING_SELECT(lang)} WHERE f.id = ?`, [id]);
     return withBallots(await withSummary(r), lang, true);
   });
-  return rows[0] ?? reply.code(404).send({ error: 'not found' });
-});
+  return rows[0] ?? null;
+}
 
 app.get('/api/actors/:id', async (req, reply) => {
   const lang = langOf(req.query);
   const id = idOf(req.params.id);
   if (id === null) return reply.code(404).send({ error: 'not found' });
-  const row = await cached(`actor:${lang}:${id}`, async () => {
+  return (await actorById(lang, id)) ?? reply.code(404).send({ error: 'not found' });
+});
+
+async function actorById(lang, id) {
+  return cached(`actor:${lang}:${id}`, async () => {
     const [[a]] = await pool.query(
       `SELECT a.id, a.efk_id, a.name, a.city, a.canton, a.actor_type, ap.level AS party_level,
               p.id AS party_id, p.code AS party_code, p.color AS party_color,
@@ -289,8 +300,7 @@ app.get('/api/actors/:id', async (req, reply) => {
          FROM declaration WHERE actor_id = ?`, [id]);
     return { ...a, ...t };
   });
-  return row ?? reply.code(404).send({ error: 'not found' });
-});
+}
 
 app.get('/api/donors/:id', async (req, reply) => {
   const id = idOf(req.params.id);
@@ -401,8 +411,29 @@ app.get('/sitemap.xml', async (req, reply) => {
 // Serve the built front-end (web/dist) with SPA fallback, if present.
 const dist = join(ROOT, 'web', 'dist');
 if (existsSync(dist)) {
-  await app.register(fastifyStatic, { root: dist, wildcard: false });
-  app.setNotFoundHandler((req, reply) => reply.sendFile('index.html'));
+  // index: false so that '/' also goes through the page handler below and gets its metadata.
+  await app.register(fastifyStatic, { root: dist, wildcard: false, index: false });
+  const template = readFileSync(join(dist, 'index.html'), 'utf8');
+
+  // Every other path is a page of the single-page app: answer with index.html, its title, description and preview
+  // tags filled in for that page and language, and a real 404 status when the page or id does not exist.
+  app.setNotFoundHandler(async (req, reply) => {
+    const path = req.url.split('?')[0];
+    if ((req.method !== 'GET' && req.method !== 'HEAD') || /\.[a-z0-9]{1,8}$/i.test(path)) {
+      return reply.code(404).type('text/plain; charset=utf-8').send('Not found');   // missing files, other methods
+    }
+    const route = parsePath(path);
+    let meta = null;
+    if (route) {
+      const id = route.id === undefined ? null : idOf(route.id);
+      const data = route.page === 'vote' || route.page === 'election' ? await financingById(route.lang, id)
+        : route.page === 'actor' ? await actorById(route.lang, id) : true;
+      if (data && (data === true || route.page === 'actor' || data.kind === route.page)) meta = pageMeta(route, data);
+    }
+    const lang = route?.lang ?? path.split('/')[1];
+    return reply.code(meta ? 200 : 404).type('text/html; charset=utf-8').header('Cache-Control', 'no-cache')
+      .send(renderHead(template, meta ?? notFoundMeta(lang), SITE_URL));
+  });
 }
 
 const port = Number(process.env.API_PORT ?? 8787);
