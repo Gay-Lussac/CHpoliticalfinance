@@ -9,3 +9,5 @@ Disallow: /fr/stats
 Disallow: /de/stats
 Disallow: /it/stats
 Disallow: /en/stats
+
+Sitemap: https://polimoney.ch/sitemap.xml
