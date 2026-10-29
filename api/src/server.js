@@ -9,6 +9,7 @@ import rateLimit from '@fastify/rate-limit';
 import mysql from 'mysql2/promise';
 
 import { buildQuery, QueryError } from './query.js';
+import { buildSitemap, STATIC_PAGES } from './sitemap.js';
 import { attachLabels, i18nExpr, LANGS } from './labels.js';
 import { Stats } from './stats.js';
 import { StatsAuth } from './auth.js';
@@ -384,6 +385,18 @@ app.get('/api/stats', async (req, reply) => {
 });
 
 app.get('/api/*', async (req, reply) => reply.code(404).send({ error: 'unknown endpoint' }));
+
+// Search engines: all public pages in every language (rebuilt after each data sync via the cache).
+const SITE_URL = process.env.SITE_URL ?? 'https://polimoney.ch';
+app.get('/sitemap.xml', async (req, reply) => {
+  const xml = await cached('sitemap', async () => {
+    const [fins] = await pool.query(`SELECT id, kind FROM financing WHERE kind IN ('vote', 'election') ORDER BY id`);
+    const [actors] = await pool.query('SELECT DISTINCT actor_id AS id FROM declaration ORDER BY actor_id');
+    return buildSitemap(SITE_URL, [...STATIC_PAGES, ...fins.map((f) => `${f.kind}/${f.id}`),
+      ...actors.map((a) => `actor/${a.id}`)]);
+  });
+  return reply.type('application/xml; charset=utf-8').header('Cache-Control', 'public, max-age=3600').send(xml);
+});
 
 // Serve the built front-end (web/dist) with SPA fallback, if present.
 const dist = join(ROOT, 'web', 'dist');
