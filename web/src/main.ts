@@ -14,7 +14,9 @@ import { electionPage, electionsPage } from './pages/elections';
 import { explorePage } from './pages/explore';
 import { homePage } from './pages/home';
 import { partiesPage } from './pages/parties';
+import { lawPage, lawTitle } from './pages/law';
 import { legalPage, legalTitle, privacyPage, privacyTitle } from './pages/legal';
+import { moneyPage } from './pages/money';
 import { statsPage } from './pages/stats';
 import { votePage, votesPage } from './pages/votes';
 
@@ -30,6 +32,8 @@ const PAGES: Record<string, Page> = {
   actor: actorPage,
   donor: donorPage,
   explore: explorePage,
+  money: moneyPage,
+  law: lawPage,
   about: aboutPage,
   stats: statsPage,   // private, not in the navigation
   privacy: privacyPage,
@@ -67,7 +71,7 @@ function shell(page: string) {
       <p>${esc(t.source_efk)}: <a href="https://politikfinanzierung.efk.admin.ch/app/${route.lang === 'en' ? 'de' : route.lang}" target="_blank" rel="noopener">politikfinanzierung.efk.admin.ch</a>
       · ${esc(t.source_swissvotes)}: <a href="https://swissvotes.ch" target="_blank" rel="noopener">swissvotes.ch</a>
       · <span id="updated"></span></p>
-      <p>${esc(t.independent_note)} · <a href="${href('privacy')}">${esc(privacyTitle())}</a> · <a href="${href('legal')}">${esc(legalTitle())}</a></p>
+      <p>${esc(t.independent_note)} · <a href="${href('law')}">${esc(lawTitle())}</a> · <a href="${href('privacy')}">${esc(privacyTitle())}</a> · <a href="${href('legal')}">${esc(legalTitle())}</a></p>
     </footer>`;
   wireSearch();
   get('meta').then((m) => {

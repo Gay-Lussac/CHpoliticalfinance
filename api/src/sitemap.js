@@ -2,7 +2,7 @@
 // Donor and stats pages are left out on purpose (robots.txt keeps them out of search engines too).
 import { LANGS } from './labels.js';
 
-export const STATIC_PAGES = ['', 'votes', 'elections', 'parties', 'explore', 'about', 'privacy', 'legal'];
+export const STATIC_PAGES = ['', 'votes', 'elections', 'parties', 'explore', 'money', 'law', 'about', 'privacy', 'legal'];
 
 const xmlEsc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;' }[c]));
 
