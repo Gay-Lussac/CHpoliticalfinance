@@ -22,6 +22,10 @@ test('detail pages get a specific title and description in their language', () =
   assert.match(m.description, /CHF 4.200.000 de dons déclarés/);
   const a = pageMeta({ lang: 'de', page: 'actor', id: '9' }, { name: 'Komitee X', canton: 'BE', campaigns: 2 });
   assert.match(a.description, /^Komitee X \(BE\): .*2 Kampagnen/);
+  const c = pageMeta({ lang: 'fr', page: 'candidate', id: '7' }, { name: 'Gössi Petra', canton: 'SZ', party_label: 'PLR', backers: [{}, {}, {}] });
+  assert.equal(c.title, 'Gössi Petra (SZ) · Argent politique suisse');
+  assert.match(c.description, /^Gössi Petra \(SZ\)\. Candidat·e \(PLR\) soutenu·e par 3 campagnes/);
+  assert.equal(parsePath('/de/candidate/7').page, 'candidate');
 });
 
 test('renderHead fills language, canonical, alternates and preview tags, escaping data', () => {

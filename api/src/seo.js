@@ -24,6 +24,7 @@ const TEXT = {
     amount: (chf) => `CHF ${chf} de dons déclarés. `,
     financing: 'Budgets et comptes des acteurs engagés, d\'après les données officielles du Contrôle fédéral des finances.',
     actor: (n) => `recettes et dons déclarés pour ${n} ${n > 1 ? 'campagnes' : 'campagne'}, d'après les données officielles du Contrôle fédéral des finances.`,
+    candidate: (party, n) => `Candidat·e${party ? ` (${party})` : ''} soutenu·e par ${n} ${n > 1 ? 'campagnes' : 'campagne'} : qui l'a soutenu·e et avec quel argent, d'après les données officielles du Contrôle fédéral des finances.`,
     image_alt: 'polimoney.ch : qui finance la politique suisse ?',
   },
   de: {
@@ -43,6 +44,7 @@ const TEXT = {
     amount: (chf) => `CHF ${chf} deklarierte Zuwendungen. `,
     financing: 'Budgets und Schlussrechnungen der beteiligten Akteure, nach offiziellen Daten der Eidgenössischen Finanzkontrolle.',
     actor: (n) => `deklarierte Einnahmen und Zuwendungen für ${n} ${n > 1 ? 'Kampagnen' : 'Kampagne'}, nach offiziellen Daten der Eidgenössischen Finanzkontrolle.`,
+    candidate: (party, n) => `Kandidatur${party ? ` (${party})` : ''}, unterstützt von ${n} ${n > 1 ? 'Kampagnen' : 'Kampagne'}: wer sie unterstützt hat und mit welchem Geld, nach offiziellen Daten der Eidgenössischen Finanzkontrolle.`,
     image_alt: 'polimoney.ch: Wer finanziert die Schweizer Politik?',
   },
   it: {
@@ -62,6 +64,7 @@ const TEXT = {
     amount: (chf) => `CHF ${chf} di liberalità dichiarate. `,
     financing: 'Budget e conti finali degli attori coinvolti, secondo i dati ufficiali del Controllo federale delle finanze.',
     actor: (n) => `entrate e liberalità dichiarate per ${n} ${n > 1 ? 'campagne' : 'campagna'}, secondo i dati ufficiali del Controllo federale delle finanze.`,
+    candidate: (party, n) => `Candidatura${party ? ` (${party})` : ''} sostenuta da ${n} ${n > 1 ? 'campagne' : 'campagna'}: chi l'ha sostenuta e con quali soldi, secondo i dati ufficiali del Controllo federale delle finanze.`,
     image_alt: 'polimoney.ch: chi finanzia la politica svizzera?',
   },
   en: {
@@ -81,13 +84,14 @@ const TEXT = {
     amount: (chf) => `CHF ${chf} in declared donations. `,
     financing: 'Budgets and final accounts of those involved, from official Swiss Federal Audit Office data.',
     actor: (n) => `declared revenue and donations for ${n} ${n > 1 ? 'campaigns' : 'campaign'}, from official Swiss Federal Audit Office data.`,
+    candidate: (party, n) => `Candidate${party ? ` (${party})` : ''} backed by ${n} ${n > 1 ? 'campaigns' : 'campaign'}: who supported them and with how much money, from official Swiss Federal Audit Office data.`,
     image_alt: 'polimoney.ch: who funds Swiss politics?',
   },
 };
 
 export const STATIC = ['votes', 'elections', 'parties', 'explore', 'money', 'law', 'about', 'privacy', 'legal'];
 const PRIVATE = ['donor', 'stats'];          // reachable, but kept out of search engines (robots.txt too)
-const DETAIL = ['vote', 'election', 'actor'];
+const DETAIL = ['vote', 'election', 'actor', 'candidate'];
 
 /**
  * Splits a URL path into { lang, page, id, canonicalLang }. Returns null when the path cannot be a page.
@@ -118,7 +122,7 @@ const fmtDate = (lang, iso) => {
 const fmtChf = (lang, v) => new Intl.NumberFormat(LOCALE[lang], { maximumFractionDigits: 0 }).format(v);
 const withSite = (lang, title) => `${title} · ${TEXT[lang].site}`;
 
-/** Metadata for a parsed page; `data` holds the financing or actor row for detail pages. */
+/** Metadata for a parsed page; `data` holds the financing, actor or candidate row for detail pages. */
 export function pageMeta({ lang, page, id }, data) {
   const t = TEXT[lang];
   const path = [page, id].filter(Boolean).join('/');
@@ -132,6 +136,11 @@ export function pageMeta({ lang, page, id }, data) {
     const title = data.title ?? '';
     return { lang, path, title: withSite(lang, when ? `${title} (${when})` : title),
       description: `${when ? `${when} · ` : ''}${title}. ${amount}${t.financing}` };
+  }
+  if (page === 'candidate') {
+    const where = data.canton ? ` (${data.canton})` : '';
+    return { lang, path, title: withSite(lang, `${data.name}${where}`),
+      description: `${data.name}${where}. ${t.candidate(data.party_label, Math.max(1, data.backers?.length ?? 1))}` };
   }
   // actor
   const where = data.canton ? ` (${data.canton})` : '';

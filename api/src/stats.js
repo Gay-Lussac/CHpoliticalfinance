@@ -5,7 +5,7 @@ import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 
 import { LANGS } from './labels.js';
 
-const PAGES_WITH_ID = new Set(['vote', 'election', 'actor', 'donor']);
+const PAGES_WITH_ID = new Set(['vote', 'election', 'actor', 'candidate', 'donor']);
 const PAGES = new Set(['', 'votes', 'elections', 'parties', 'explore', 'money', 'law', 'about', ...PAGES_WITH_ID]);
 const BOT = /bot|crawl|spider|slurp|preview|fetch|curl|wget|python|headless|monitor|lighthouse|scan/i;
 

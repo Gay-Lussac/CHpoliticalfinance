@@ -133,6 +133,8 @@ class Loader:
             ids[cp.efk_id] = cid
             self.c.execute("DELETE FROM campaign_candidate WHERE campaign_id=%s", (cid,))
             for cand in cands:
+                if not cand.canton:       # national campaign label ("dans toute la Suisse") or unreadable: not a person
+                    continue
                 code = self.parties.match(cand.party_label)
                 cand_id = self._upsert_id(
                     "INSERT INTO candidate (full_name, canton, party_label, party_id) VALUES (%s,%s,%s,%s) "

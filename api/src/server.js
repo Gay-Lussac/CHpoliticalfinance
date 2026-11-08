@@ -308,6 +308,90 @@ async function actorById(lang, id) {
   });
 }
 
+// ------------------------------------------------------------------ election candidates
+// A campaign (committee, party section, association…) names the candidates it supports. Its declared revenue
+// covers all of them together, so money is attributed to one candidate only when the campaign backs that
+// candidate alone ("dedicated" campaign); campaigns backing several candidates are listed, never split.
+
+// Revenue per campaign: final accounts when published, else the budget.
+const CAMPAIGN_TOTALS = `SELECT d.campaign_id,
+         COALESCE(SUM(CASE WHEN d.phase = 'final' THEN t.total END), SUM(CASE WHEN d.phase = 'budget' THEN t.total END)) AS total,
+         MAX(d.phase = 'final') AS is_final
+    FROM declaration d JOIN declaration_totals t ON t.declaration_id = d.id
+   WHERE d.campaign_id IS NOT NULL GROUP BY d.campaign_id`;
+
+const CANDIDATE_PARTY = (lang) => `p.code AS party_code, p.color AS party_color,
+         COALESCE(${i18nExpr('party', 'p.id', 'name', lang, 'NULL')}, ca.party_label) AS party_label`;
+
+app.get('/api/financings/:id/candidates', async (req, reply) => {
+  const lang = langOf(req.query);
+  const id = idOf(req.params.id);
+  if (id === null) return reply.code(404).send({ error: 'not found' });
+  return cached(`cands:${lang}:${id}`, async () => {
+    const [rows] = await pool.query(
+      `SELECT ca.id, ca.full_name AS name, ca.canton, ${CANDIDATE_PARTY(lang)},
+              COUNT(*) AS n_backers,
+              SUM(n.n = 1) AS n_dedicated,
+              SUM(CASE WHEN n.n = 1 THEN ct.total ELSE 0 END) AS dedicated_total
+         FROM campaign c
+         JOIN campaign_candidate cc ON cc.campaign_id = c.id
+         JOIN candidate ca ON ca.id = cc.candidate_id
+         JOIN (SELECT campaign_id, COUNT(*) AS n FROM campaign_candidate GROUP BY campaign_id) n ON n.campaign_id = c.id
+         LEFT JOIN (${CAMPAIGN_TOTALS}) ct ON ct.campaign_id = c.id
+         LEFT JOIN party p ON p.id = ca.party_id
+        WHERE c.financing_id = ?
+        GROUP BY ca.id
+        ORDER BY dedicated_total DESC, n_backers DESC, ca.full_name`, [id]);
+    return rows.map((r) => ({ ...r, n_backers: Number(r.n_backers), n_dedicated: Number(r.n_dedicated),
+      dedicated_total: Number(r.dedicated_total ?? 0) }));
+  });
+});
+
+app.get('/api/candidates/:id', async (req, reply) => {
+  const lang = langOf(req.query);
+  const id = idOf(req.params.id);
+  if (id === null) return reply.code(404).send({ error: 'not found' });
+  return (await candidateById(lang, id)) ?? reply.code(404).send({ error: 'not found' });
+});
+
+async function candidateById(lang, id) {
+  const row = await cached(`cand:${lang}:${id}`, async () => {
+    const [[c]] = await pool.query(
+      `SELECT ca.id, ca.full_name AS name, ca.canton, ${CANDIDATE_PARTY(lang)}
+         FROM candidate ca LEFT JOIN party p ON p.id = ca.party_id WHERE ca.id = ?`, [id]);
+    if (!c) return null;
+    const [backers] = await pool.query(
+      `SELECT c.id AS campaign_id, c.financing_id, f.event_date, e.council,
+              ${i18nExpr('financing', 'f.id', 'title', lang, 'f.name')} AS financing_title,
+              a.id AS actor_id, a.name AS actor_name, a.actor_type, n.n AS n_candidates, ct.total, ct.is_final
+         FROM campaign_candidate cc
+         JOIN campaign c ON c.id = cc.campaign_id
+         JOIN financing f ON f.id = c.financing_id
+         LEFT JOIN election e ON e.financing_id = f.id
+         JOIN actor a ON a.id = c.actor_id
+         JOIN (SELECT campaign_id, COUNT(*) AS n FROM campaign_candidate GROUP BY campaign_id) n ON n.campaign_id = c.id
+         LEFT JOIN (${CAMPAIGN_TOTALS}) ct ON ct.campaign_id = c.id
+        WHERE cc.candidate_id = ?
+        ORDER BY f.event_date DESC, n.n = 1 DESC, ct.total DESC`, [id]);
+    // Donations to the campaigns dedicated to this candidate (latest version of each declaration).
+    const dedicated = backers.filter((b) => b.n_candidates === 1).map((b) => b.campaign_id);
+    let donors = [];
+    if (dedicated.length) {
+      [donors] = await pool.query(
+        `SELECT v.donor_id, dn.display_name, v.donor_type, SUM(v.value_chf) AS total, COUNT(*) AS n,
+                MAX(v.is_anonymous) AS is_anonymous
+           FROM v_flow v LEFT JOIN donor dn ON dn.id = v.donor_id
+          WHERE v.campaign_id IN (?) AND v.is_latest
+          GROUP BY v.donor_id, dn.display_name, v.donor_type ORDER BY total DESC`, [dedicated]);
+    }
+    return { ...c, backers: backers.map((b) => ({ ...b, is_final: !!b.is_final })), donors };
+  });
+  if (!row) return null;
+  // Masked donors (objection): no name, no link. Applied after the cache so a new objection takes effect at once.
+  return { ...row, donors: row.donors.map((d) => (suppressed.has(d.donor_id)
+    ? { ...d, donor_id: null, display_name: null, suppressed: true } : d)) };
+}
+
 app.get('/api/donors/:id', async (req, reply) => {
   const id = idOf(req.params.id);
   if (id === null) return reply.code(404).send({ error: 'not found' });
@@ -340,7 +424,7 @@ app.get('/api/parties', async (req) => {
 app.get('/api/search', { config: { rateLimit: { max: 60, timeWindow: '1 minute' } } }, async (req) => {
   const lang = langOf(req.query);
   const q = String(req.query.q ?? '').trim().slice(0, 100);     // longer queries are pointless and cost work
-  if (q.length < 2) return { financings: [], actors: [], donors: [] };
+  if (q.length < 2) return { financings: [], actors: [], candidates: [], donors: [] };
   const like = `%${q.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
   return cached(`search:${lang}:${q.toLowerCase()}`, async () => {
     const [financings] = await pool.query(
@@ -353,7 +437,12 @@ app.get('/api/search', { config: { rateLimit: { max: 60, timeWindow: '1 minute' 
     const [donors] = await pool.query(
       'SELECT id, display_name AS label, city, donor_type FROM donor WHERE display_name LIKE ? ORDER BY display_name LIMIT 8',
       [like]);
-    return { financings, actors, donors: donors.filter((d) => !suppressed.has(d.id)) };
+    const [candidates] = await pool.query(
+      `SELECT ca.id, ca.full_name AS label, ca.canton, COALESCE(p.code, ca.party_label) AS party
+         FROM candidate ca LEFT JOIN party p ON p.id = ca.party_id
+        WHERE ca.full_name LIKE ? AND EXISTS (SELECT 1 FROM campaign_candidate cc WHERE cc.candidate_id = ca.id)
+        ORDER BY ca.full_name LIMIT 8`, [like]);
+    return { financings, actors, candidates, donors: donors.filter((d) => !suppressed.has(d.id)) };
   });
 });
 
@@ -368,7 +457,7 @@ app.post('/api/hit', { config: { rateLimit: { max: 60, timeWindow: '1 minute' } 
 });
 
 async function resolvePages(pages, lang) {
-  const ids = { vote: [], election: [], actor: [], donor: [] };
+  const ids = { vote: [], election: [], actor: [], candidate: [], donor: [] };
   for (const p of pages) { const [k, id] = p.page.split('/'); if (id && ids[k]) ids[k].push(Number(id)); }
   const names = new Map();
   const fin = [...ids.vote, ...ids.election];
@@ -377,6 +466,7 @@ async function resolvePages(pages, lang) {
     for (const x of r) { names.set(`vote/${x.id}`, x.t); names.set(`election/${x.id}`, x.t); }
   }
   if (ids.actor.length) for (const x of (await pool.query('SELECT id, name AS t FROM actor WHERE id IN (?)', [ids.actor]))[0]) names.set(`actor/${x.id}`, x.t);
+  if (ids.candidate.length) for (const x of (await pool.query('SELECT id, full_name AS t FROM candidate WHERE id IN (?)', [ids.candidate]))[0]) names.set(`candidate/${x.id}`, x.t);
   if (ids.donor.length) for (const x of (await pool.query('SELECT id, display_name AS t FROM donor WHERE id IN (?)', [ids.donor]))[0]) names.set(`donor/${x.id}`, suppressed.has(x.id) ? '—' : x.t);
   return pages.map((p) => ({ ...p, label: names.get(p.page) ?? null }));
 }
@@ -408,8 +498,9 @@ app.get('/sitemap.xml', async (req, reply) => {
   const xml = await cached('sitemap', async () => {
     const [fins] = await pool.query(`SELECT id, kind FROM financing WHERE kind IN ('vote', 'election') ORDER BY id`);
     const [actors] = await pool.query('SELECT DISTINCT actor_id AS id FROM declaration ORDER BY actor_id');
+    const [cands] = await pool.query('SELECT DISTINCT candidate_id AS id FROM campaign_candidate ORDER BY candidate_id');
     return buildSitemap(SITE_URL, [...STATIC_PAGES, ...fins.map((f) => `${f.kind}/${f.id}`),
-      ...actors.map((a) => `actor/${a.id}`)]);
+      ...actors.map((a) => `actor/${a.id}`), ...cands.map((c) => `candidate/${c.id}`)]);
   });
   return reply.type('application/xml; charset=utf-8').header('Cache-Control', 'public, max-age=3600').send(xml);
 });
@@ -433,8 +524,10 @@ if (existsSync(dist)) {
     if (route) {
       const id = route.id === undefined ? null : idOf(route.id);
       const data = route.page === 'vote' || route.page === 'election' ? await financingById(route.lang, id)
-        : route.page === 'actor' ? await actorById(route.lang, id) : true;
-      if (data && (data === true || route.page === 'actor' || data.kind === route.page)) meta = pageMeta(route, data);
+        : route.page === 'actor' ? await actorById(route.lang, id)
+          : route.page === 'candidate' ? await candidateById(route.lang, id) : true;
+      const kindOk = route.page === 'vote' || route.page === 'election' ? data?.kind === route.page : true;
+      if (data && kindOk) meta = pageMeta(route, data);
     }
     const lang = route?.lang ?? path.split('/')[1];
     return reply.code(meta ? 200 : 404).type('text/html; charset=utf-8').header('Cache-Control', 'no-cache')

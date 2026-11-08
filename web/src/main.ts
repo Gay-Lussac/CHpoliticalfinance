@@ -9,6 +9,7 @@ import { setNavigator, wireTips } from './views';
 
 import { aboutPage } from './pages/about';
 import { actorPage } from './pages/actor';
+import { candidatePage } from './pages/candidates';
 import { donorPage } from './pages/donor';
 import { electionPage, electionsPage } from './pages/elections';
 import { explorePage } from './pages/explore';
@@ -30,6 +31,7 @@ const PAGES: Record<string, Page> = {
   election: electionPage,
   parties: partiesPage,
   actor: actorPage,
+  candidate: candidatePage,
   donor: donorPage,
   explore: explorePage,
   money: moneyPage,
@@ -96,6 +98,7 @@ function wireSearch() {
         (x) => href(x.kind === 'party_year' ? `parties?year=${x.year}` : `${x.kind === 'election' ? 'election' : 'vote'}/${x.id}`),
         (x) => (x.event_date ? date(x.event_date) : String(x.year)))
         + group(t.search_actors, r.actors, (x) => href(`actor/${x.id}`), (x) => x.city ?? '')
+        + group(t.search_candidates, r.candidates ?? [], (x) => href(`candidate/${x.id}`), (x) => [x.canton, x.party].filter(Boolean).join(' · '))
         + group(t.search_donors, r.donors, (x) => href(`donor/${x.id}`), (x) => x.city ?? '');
       box.innerHTML = html || `<p class="muted">${t.search_none}</p>`;
       box.hidden = false;
