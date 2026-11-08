@@ -440,13 +440,15 @@ _CANDIDATE = re.compile(r"([^,()]+?)\s*\(([^,()]+),\s*([^()]+?)\)")
 
 
 def parse_candidates(campaign_label: str | None, cantons: Cantons) -> list[Candidate]:
-    """'…suivant(e-s): Hensch Anne-Claude (Zurich, Autres partis politiques), …' -> candidates."""
+    """'…suivant(e-s): Hensch Anne-Claude (Zurich, Autres partis politiques), …' -> candidates.
+    Entries scoped "dans toute la Suisse" are national party campaigns, not people: they come back with canton None
+    (still useful for the campaign's party) and the loader does not store them as candidates."""
     if not campaign_label or ":" not in campaign_label:
         return []
     body = campaign_label.split(":", 1)[1]
     out = []
     for name, canton, party in _CANDIDATE.findall(body):
-        name = name.strip(" ,.")
+        name = re.sub(r"\s+", " ", name).strip(" ,.")
         if name:
             out.append(Candidate(name, cantons.code(canton.strip()), party.strip()))
     return out

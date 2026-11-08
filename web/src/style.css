@@ -172,6 +172,23 @@ td:has(.num) { text-align: right; }
 .explore-form select { font: inherit; font-size: .9rem; padding: 6px 8px; border-radius: 6px; border: 1px solid var(--border);
   background: var(--bg); color: var(--text-primary); max-width: 100%; }
 .explore-form > label:has(.checks) { grid-column: 1 / -1; }
+.explore-form input[type=search] { font: inherit; font-size: .9rem; padding: 6px 8px; border-radius: 6px; border: 1px solid var(--border);
+  background: var(--bg); color: var(--text-primary); max-width: 100%; }
+
+/* election candidates */
+.candidates .cand-filters { margin: 12px 0; padding: 0; }
+.cand-foot { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 10px 0 0; }
+.more-btn { font: inherit; font-size: .85rem; padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border);
+  background: var(--bg); color: var(--text-primary); cursor: pointer; }
+.more-btn:hover { border-color: var(--text-muted); }
+.m-only { display: none; }
+.m-only .badge { font-size: .75rem; }
+@media (max-width: 600px) {   /* phones: first column + amount only; the other columns move under the name */
+  .m-compact .m-only { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin-top: 3px; }
+  .m-compact th:not(:first-child):not(:last-child), .m-compact td:not(:first-child):not(:last-child) { display: none; }
+  .m-compact th { white-space: normal; }
+}
+.candidates, .m-compact { margin-top: 16px; }
 .checks { display: flex; flex-wrap: wrap; gap: 6px 14px; color: var(--text-primary); font-size: .9rem; }
 .check { display: inline-flex; gap: 5px; align-items: center; }
 

@@ -30,6 +30,12 @@ class Labels(unittest.TestCase):
                              "Weichelt Manuela (Zoug, Les VERT-E-S suisses)", Cantons())
         self.assertEqual([(x.full_name, x.canton) for x in c], [("Hensch Anne-Claude", "ZH"), ("Weichelt Manuela", "ZG")])
 
+    def test_candidates_schwytz_spaces_and_national_lists(self):
+        c = parse_candidates("…: Gössi  Petra (Schwytz, PLR.Les Libéraux-Radicaux), "
+                             "Kandidierende der SVP Schweiz (dans toute la Suisse, Union Démocratique du Centre)", Cantons())
+        self.assertEqual([(x.full_name, x.canton) for x in c],
+                         [("Gössi Petra", "SZ"), ("Kandidierende der SVP Schweiz", None)])
+
 
 class PartyMatching(unittest.TestCase):
     def setUp(self):

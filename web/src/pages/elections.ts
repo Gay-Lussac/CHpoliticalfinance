@@ -3,6 +3,7 @@ import { chf, chfShort, date, esc, num, typo } from '../format';
 import { setPageTitle, T, tr } from '../i18n';
 import { href } from '../router';
 import { PAGES, renderViews } from '../views';
+import { candidatesSection } from './candidates';
 import { defaultPhase, phaseToggle, statTiles, viewsGrid } from './common';
 
 const electionTotal = (f: Financing, phase: string) => {
@@ -43,4 +44,5 @@ export async function electionPage(main: HTMLElement, id: string | undefined, pa
     { label: t.donations_total, value: chf(al?.total ?? 0), sub: `${num(al?.n ?? 0)} ${t.allowances}` },
   ]);
   renderViews(viewsGrid(main), PAGES.election ?? [], { financing_id: f.id, phase });
+  await candidatesSection(main, f.id);
 }
