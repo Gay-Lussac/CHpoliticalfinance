@@ -1,5 +1,8 @@
 import { esc } from '../format';
 import { lang, T } from '../i18n';
+import { href } from '../router';
+import { lawTitle } from './law';
+import { moneyTitle } from './money';
 
 const TEXT = {
   fr: `
@@ -91,5 +94,6 @@ Donations above CHF 15,000 per donor must be declared by name.</p>
 };
 
 export function aboutPage(main: HTMLElement) {
-  main.innerHTML = `<article class="prose card"><h1>${esc(T().about_title)}</h1>${TEXT[lang()]}</article>`;
+  main.innerHTML = `<article class="prose card"><h1>${esc(T().about_title)}</h1>${TEXT[lang()]}
+    <p><a href="${href('law')}">${esc(lawTitle())} →</a> · <a href="${href('money')}">${esc(moneyTitle())} →</a></p></article>`;
 }

@@ -2,12 +2,16 @@ import { get, type Financing } from '../api';
 import { chf, date, esc, num, typo } from '../format';
 import { setPageTitle, T, tr } from '../i18n';
 import { PAGES, renderViews } from '../views';
+import { lawTitle } from './law';
+import { moneyTitle } from './money';
+import { href } from '../router';
 import { ballotsCard, defaultPhase, phaseToggle, sideTotals, splitBar, statTiles, viewsGrid, voteCard, voteSentence } from './common';
 
 export async function votesPage(main: HTMLElement) {
   const t = T();
   setPageTitle(t.all_votes);
-  main.innerHTML = `<h1>${esc(t.all_votes)}</h1><div id="list"><p class="muted">${t.loading}</p></div>`;
+  main.innerHTML = `<h1>${esc(t.all_votes)}</h1>
+    <p class="page-links"><a href="${href('money')}">${esc(moneyTitle())} →</a> · <a href="${href('law')}">${esc(lawTitle())} →</a></p><div id="list"><p class="muted">${t.loading}</p></div>`;
   const votes = await get<Financing[]>('financings', { kind: 'vote' });
   const byDate = new Map<string, Financing[]>();
   for (const v of votes) {

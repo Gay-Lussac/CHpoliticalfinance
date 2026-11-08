@@ -4,6 +4,7 @@ import { T } from '../i18n';
 import { href } from '../router';
 import { PAGES, renderViews } from '../views';
 import { viewsGrid, voteCard } from './common';
+import { moneyTitle } from './money';
 
 const skeletonCards = (n: number) => Array.from({ length: n }, () =>
   `<div class="card" aria-hidden="true"><div class="skeleton"><span></span><span></span><span></span><span></span></div></div>`).join('');
@@ -14,6 +15,7 @@ export async function homePage(main: HTMLElement) {
       <h1>${esc(t.hero_title)}</h1>
       <p class="lead">${esc(t.hero_lead)}</p>
       <ul class="hero-figures" id="figures" aria-live="polite"></ul>
+      <p><a href="${href('money')}">${esc(moneyTitle())} →</a></p>
     </section>
     <section>
       <div class="section-head"><h2>${esc(t.recent_votes)}</h2><a href="${href('votes')}">${esc(t.all_votes)} →</a></div>

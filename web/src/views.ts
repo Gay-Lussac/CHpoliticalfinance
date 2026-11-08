@@ -377,4 +377,4 @@ export function renderViews(container: HTMLElement, allSpecs: ViewSpec[], contex
   specs.forEach((s, i) => renderView(s, context).then((el) => slots[i].replaceWith(el)));
 }
 
-export { renderTable, cell, colTitle, labelOf };
+export { renderTable, cell, colTitle, labelOf, plotTheme, cssVar, wireSvgTips };
