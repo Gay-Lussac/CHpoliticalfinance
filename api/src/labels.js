@@ -6,6 +6,18 @@ export const LANGS = ['fr', 'de', 'it', 'en'];
 const chain = (lang) => [lang, ...['fr', 'de', 'it', 'en'].filter((l) => l !== lang)];
 
 // SQL expression for a translated field of an entity (uses i18n_label).
+// Party labels that EFK gives in French for candidates without a party of their own.
+const RAW_PARTY = {
+  'Indépendant': { fr: 'Indépendant·e', de: 'Parteilos', it: 'Indipendente', en: 'Independent' },
+  'Autres partis politiques': { fr: 'Autres partis', de: 'Andere Parteien', it: 'Altri partiti', en: 'Other parties' },
+};
+/** SQL expression translating those raw labels (constants only, nothing from the request is interpolated). */
+export function rawPartyExpr(lang, col) {
+  const l = LANGS.includes(lang) ? lang : 'fr';
+  const q = (v) => `'${v.replace(/'/g, "''")}'`;
+  return `CASE ${col} ${Object.entries(RAW_PARTY).map(([raw, t]) => `WHEN ${q(raw)} THEN ${q(t[l])}`).join(' ')} ELSE ${col} END`;
+}
+
 export function i18nExpr(entity, idExpr, field, lang, fallbackExpr) {
   const parts = chain(lang).map(
     (l) => `(SELECT text FROM i18n_label WHERE entity='${entity}' AND entity_id=${idExpr} AND field='${field}' AND lang='${l}')`,
