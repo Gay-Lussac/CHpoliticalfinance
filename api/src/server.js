@@ -10,8 +10,9 @@ import mysql from 'mysql2/promise';
 
 import { buildQuery, QueryError } from './query.js';
 import { notFoundMeta, pageMeta, parsePath, renderHead } from './seo.js';
+import { summarizeElections, summarizeVotes } from './orientation.js';
 import { buildSitemap, STATIC_PAGES } from './sitemap.js';
-import { attachLabels, i18nExpr, LANGS } from './labels.js';
+import { attachLabels, i18nExpr, LANGS, rawPartyExpr } from './labels.js';
 import { Stats } from './stats.js';
 import { StatsAuth } from './auth.js';
 import { SizedCache } from './cache.js';
@@ -321,7 +322,7 @@ const CAMPAIGN_TOTALS = `SELECT d.campaign_id,
    WHERE d.campaign_id IS NOT NULL GROUP BY d.campaign_id`;
 
 const CANDIDATE_PARTY = (lang) => `p.code AS party_code, p.color AS party_color,
-         COALESCE(${i18nExpr('party', 'p.id', 'name', lang, 'NULL')}, ca.party_label) AS party_label`;
+         COALESCE(${i18nExpr('party', 'p.id', 'name', lang, 'NULL')}, ${rawPartyExpr(lang, 'ca.party_label')}) AS party_label`;
 
 app.get('/api/financings/:id/candidates', async (req, reply) => {
   const lang = langOf(req.query);
@@ -392,6 +393,45 @@ async function candidateById(lang, id) {
     ? { ...d, donor_id: null, display_name: null, suppressed: true } : d)) };
 }
 
+// Orientation of an actor: positions taken in votes vs. recommendations, parties of the candidates it backed.
+app.get('/api/actors/:id/orientation', async (req, reply) => {
+  const lang = langOf(req.query);
+  const id = idOf(req.params.id);
+  if (id === null) return reply.code(404).send({ error: 'not found' });
+  return cached(`orient:${lang}:${id}`, async () => {
+    const [stances] = await pool.query(
+      `SELECT DISTINCT c.financing_id, c.stance, f.event_date, b.id AS ballot_id, b.outcome,
+              ${i18nExpr('financing', 'f.id', 'title', lang, 'f.name')} AS title
+         FROM campaign c JOIN financing f ON f.id = c.financing_id
+         JOIN ballot b ON b.financing_id = c.financing_id AND b.role = 'main'
+        WHERE c.actor_id = ? AND c.stance IN ('for', 'against')`, [id]).catch((err) => {
+      if (err.code === 'ER_NO_SUCH_TABLE') return [[]];   // ballots not loaded yet
+      throw err;
+    });
+    let recs = [];
+    if (stances.length) {
+      [recs] = await pool.query(
+        `SELECT br.ballot_id, br.recommendation, r.id AS recommender_id, r.code, r.kind, p.color,
+                COALESCE(${i18nExpr('party', 'p.id', 'name', lang, 'NULL')}, ${i18nExpr('recommender', 'r.id', 'name', lang, 'r.code')}) AS label
+           FROM ballot_recommendation br JOIN recommender r ON r.id = br.recommender_id
+           LEFT JOIN party p ON p.id = r.party_id
+          WHERE br.ballot_id IN (?) AND br.recommendation IN ('yes', 'no')`, [stances.map((s) => s.ballot_id)]);
+    }
+    const [cands] = await pool.query(
+      `SELECT c.id AS campaign_id, c.financing_id, f.event_date, ct.total, cc.candidate_id,
+              p.code AS party_code, p.color AS party_color,
+              COALESCE(${i18nExpr('party', 'p.id', 'name', lang, 'NULL')}, ${rawPartyExpr(lang, 'ca.party_label')}) AS party_label,
+              ${i18nExpr('financing', 'f.id', 'title', lang, 'f.name')} AS title
+         FROM campaign c JOIN financing f ON f.id = c.financing_id
+         JOIN campaign_candidate cc ON cc.campaign_id = c.id
+         JOIN candidate ca ON ca.id = cc.candidate_id
+         LEFT JOIN party p ON p.id = ca.party_id
+         LEFT JOIN (${CAMPAIGN_TOTALS}) ct ON ct.campaign_id = c.id
+        WHERE c.actor_id = ?`, [id]);
+    return { ...summarizeVotes(stances, recs), elections: summarizeElections(cands) };
+  });
+});
+
 app.get('/api/donors/:id', async (req, reply) => {
   const id = idOf(req.params.id);
   if (id === null) return reply.code(404).send({ error: 'not found' });
@@ -438,7 +478,7 @@ app.get('/api/search', { config: { rateLimit: { max: 60, timeWindow: '1 minute' 
       'SELECT id, display_name AS label, city, donor_type FROM donor WHERE display_name LIKE ? ORDER BY display_name LIMIT 8',
       [like]);
     const [candidates] = await pool.query(
-      `SELECT ca.id, ca.full_name AS label, ca.canton, COALESCE(p.code, ca.party_label) AS party
+      `SELECT ca.id, ca.full_name AS label, ca.canton, COALESCE(p.code, ${rawPartyExpr(lang, 'ca.party_label')}) AS party
          FROM candidate ca LEFT JOIN party p ON p.id = ca.party_id
         WHERE ca.full_name LIKE ? AND EXISTS (SELECT 1 FROM campaign_candidate cc WHERE cc.candidate_id = ca.id)
         ORDER BY ca.full_name LIMIT 8`, [like]);
