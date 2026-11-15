@@ -59,12 +59,12 @@ function alignNumberColumns() {
       if (!heads.length) return;
       const numeric = new Set<number>();
       table.querySelectorAll('tbody tr').forEach((tr) => [...tr.children].forEach((td, i) => {
-        if (td.querySelector(':scope > .num')) numeric.add(i);
+        if (td.querySelector(':scope > .num, :scope > button > .num')) numeric.add(i);
       }));
       heads.forEach((th, i) => th.classList.toggle('num-col', numeric.has(i)));
     });
   };
-  new MutationObserver(() => { if (!queued) { queued = true; requestAnimationFrame(run); } })
+  new MutationObserver(() => { if (!queued) { queued = true; queueMicrotask(run); } })
     .observe(document.body, { childList: true, subtree: true });
 }
 setNavigator((url) => navigate(url));

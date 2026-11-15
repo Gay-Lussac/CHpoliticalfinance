@@ -414,3 +414,23 @@ th.num-col { text-align: right; }
 .swatch, .coverage-list .sw { border-radius: 1px; }
 
 @media (max-width: 640px) { .card { padding: 18px 0 4px; } }
+
+/* National Council: click a group to see its members */
+.grp-row { cursor: pointer; }
+@media (hover: hover) and (pointer: fine) { .grp-row:hover td { background: var(--surface-2); } }
+.grp-toggle { background: none; border: 0; padding: 0; font: inherit; color: var(--text-primary); cursor: pointer; text-align: left; }
+.grp-toggle:hover { text-decoration: underline; }
+.chev { width: 0; height: 0; border-left: 5px solid var(--text-muted); border-top: 4px solid transparent; border-bottom: 4px solid transparent;
+  display: inline-block; transition: transform 150ms ease; align-self: center; }
+.grp-row.open .chev { transform: rotate(90deg); }
+.grp-members > td { padding: 4px 0 16px 18px; background: var(--surface-2); }
+.grp-members .parl-list { margin: 8px 0 0; }
+
+/* clickable numbers (National Council): totals line and group cells */
+.pos-btn, .num-btn { background: none; border: 0; padding: 2px 4px; margin: 0; font: inherit; color: inherit; cursor: pointer; border-radius: var(--radius); }
+.pos-btn { display: inline-flex; align-items: center; gap: 6px; margin-right: 10px; }
+.pos-btn.off { cursor: default; opacity: .6; }
+.num-btn { text-decoration: underline dotted var(--text-muted); text-underline-offset: 3px; }
+.pos-btn:hover, .num-btn:hover, .pos-btn.active, .num-btn.active { background: var(--surface-2); }
+.pos-btn.active, .num-btn.active { box-shadow: inset 0 -2px 0 var(--accent); }
+.pos-panel { background: var(--surface-2); padding: 4px 12px 12px; margin: 4px 0 12px; }
