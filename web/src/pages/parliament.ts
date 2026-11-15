@@ -15,14 +15,14 @@ export interface FinalVote { financing_id: number; event_date: string | null; ti
   position: Position; fetched_at: string | null }
 
 const TEXT: Record<Lang, {
-  title: string; lead: (d: string) => string; inverted: string; group: (p: string) => string; other_group: string;
+  title: string; lead: (d: string) => string; inverted: string; group: (p: string) => string; other_group: string; show_group: string; click_hint: string; show_pos: (p: string) => string;
   pos: Record<Position, string>; members: (n: number) => string; search: string; all: string; source: (d: string) => string;
   member_votes: string; member_lead: string; result: string; pending: string; position: string; vote: string;
 }> = {
   fr: {
     title: 'Comment le Conseil national a voté', lead: (d) => `Vote final du ${d}, position de chaque conseiller·ère sur l'objet soumis au peuple.`,
     inverted: "Pour une initiative populaire, le Parlement vote sur sa recommandation : « oui » à l'arrêté signifie le plus souvent « non » à l'initiative. Les positions ci-dessous sont présentées pour ou contre l'objet lui-même.",
-    group: (p) => `Groupe ${p}`, other_group: 'Autres', members: (n) => `Voir les ${n} conseiller·ère·s`, search: 'Chercher un nom', all: 'Tous',
+    group: (p) => `Groupe ${p}`, other_group: 'Autres', show_group: 'Afficher les membres du groupe', click_hint: 'Cliquez sur un groupe ou sur un nombre pour voir les personnes concernées.', show_pos: (p) => `Voir qui : ${p.toLowerCase()}`, members: (n) => `Voir les ${n} conseiller·ère·s`, search: 'Chercher un nom', all: 'Tous',
     pos: { for: 'Pour', against: 'Contre', abstain: 'Abstention', absent: 'Absent·e', excused: 'Excusé·e', president: 'Présidence (ne vote pas)' },
     source: (d) => `Source : Services du Parlement de l'Assemblée fédérale, Berne (données téléchargées le ${d}). Il ne s'agit pas d'une publication officielle.`,
     member_votes: 'Ses votes finaux au Conseil national', member_lead: 'Position sur les objets ensuite soumis au peuple.',
@@ -31,7 +31,7 @@ const TEXT: Record<Lang, {
   de: {
     title: 'Wie der Nationalrat abgestimmt hat', lead: (d) => `Schlussabstimmung vom ${d}, Position jedes Ratsmitglieds zur Vorlage, über die das Volk abstimmt.`,
     inverted: 'Bei einer Volksinitiative stimmt das Parlament über seine Empfehlung ab: «Ja» zum Bundesbeschluss heisst meist «Nein» zur Initiative. Die Positionen unten gelten für oder gegen die Vorlage selbst.',
-    group: (p) => `Fraktion ${p}`, other_group: 'Andere', members: (n) => `Alle ${n} Ratsmitglieder anzeigen`, search: 'Name suchen', all: 'Alle',
+    group: (p) => `Fraktion ${p}`, other_group: 'Andere', show_group: 'Mitglieder der Fraktion anzeigen', click_hint: 'Klicken Sie auf eine Fraktion oder eine Zahl, um die betreffenden Personen zu sehen.', show_pos: (p) => `Wer: ${p}`, members: (n) => `Alle ${n} Ratsmitglieder anzeigen`, search: 'Name suchen', all: 'Alle',
     pos: { for: 'Dafür', against: 'Dagegen', abstain: 'Enthaltung', absent: 'Abwesend', excused: 'Entschuldigt', president: 'Präsidium (stimmt nicht)' },
     source: (d) => `Quelle: Parlamentsdienste der Bundesversammlung, Bern (Daten heruntergeladen am ${d}). Keine offizielle Veröffentlichung.`,
     member_votes: 'Schlussabstimmungen im Nationalrat', member_lead: 'Position zu Vorlagen, über die danach das Volk abgestimmt hat.',
@@ -40,7 +40,7 @@ const TEXT: Record<Lang, {
   it: {
     title: 'Come ha votato il Consiglio nazionale', lead: (d) => `Votazione finale del ${d}, posizione di ogni consigliere sull'oggetto sottoposto al popolo.`,
     inverted: "Per un'iniziativa popolare il Parlamento vota sulla sua raccomandazione: «sì» al decreto significa di solito «no» all'iniziativa. Le posizioni qui sotto sono per o contro l'oggetto stesso.",
-    group: (p) => `Gruppo ${p}`, other_group: 'Altri', members: (n) => `Mostra tutti i ${n} consiglieri`, search: 'Cerca un nome', all: 'Tutti',
+    group: (p) => `Gruppo ${p}`, other_group: 'Altri', show_group: 'Mostra i membri del gruppo', click_hint: 'Cliccate su un gruppo o su un numero per vedere le persone interessate.', show_pos: (p) => `Chi: ${p.toLowerCase()}`, members: (n) => `Mostra tutti i ${n} consiglieri`, search: 'Cerca un nome', all: 'Tutti',
     pos: { for: 'Favorevole', against: 'Contrario', abstain: 'Astensione', absent: 'Assente', excused: 'Scusato/a', president: 'Presidenza (non vota)' },
     source: (d) => `Fonte: Servizi del Parlamento dell'Assemblea federale, Berna (dati scaricati il ${d}). Non si tratta di una pubblicazione ufficiale.`,
     member_votes: 'Votazioni finali al Consiglio nazionale', member_lead: 'Posizione sugli oggetti poi sottoposti al popolo.',
@@ -49,7 +49,7 @@ const TEXT: Record<Lang, {
   en: {
     title: 'How the National Council voted', lead: (d) => `Final vote of ${d}: each member's position on the proposal put to the people.`,
     inverted: 'For a popular initiative, Parliament votes on its recommendation: "yes" to the decree usually means "no" to the initiative. The positions below are for or against the proposal itself.',
-    group: (p) => `${p} group`, other_group: 'Others', members: (n) => `Show all ${n} members`, search: 'Search a name', all: 'All',
+    group: (p) => `${p} group`, other_group: 'Others', show_group: "Show the group's members", click_hint: 'Click a group or a number to see the people concerned.', show_pos: (p) => `Who: ${p.toLowerCase()}`, members: (n) => `Show all ${n} members`, search: 'Search a name', all: 'All',
     pos: { for: 'For', against: 'Against', abstain: 'Abstained', absent: 'Absent', excused: 'Excused', president: 'Chair (does not vote)' },
     source: (d) => `Source: Parliamentary Services of the Federal Assembly, Bern (data downloaded on ${d}). Not an official publication.`,
     member_votes: 'Final votes in the National Council', member_lead: 'Position on proposals later put to the people.',
@@ -64,28 +64,48 @@ const posBadge = (p: Position) => {
   return `<span class="badge${p === 'for' || p === 'against' ? '' : ' muted'}">${dot}${esc(m.pos[p])}</span>`;
 };
 
+const ORDER: Record<string, number> = { for: 0, against: 1, abstain: 2, absent: 3, excused: 3, president: 4 };
+
+/** One member as a list item: name (linked to their candidate page), canton or party, position. */
+function memberItem(x: Member, withParty: boolean): string {
+  const name = esc(`${x.first_name} ${x.last_name}`);
+  const pos = x.position === 'excused' || x.position === 'president' ? 'absent' : x.position;
+  const sub = withParty ? [x.party_label, x.canton] : [x.canton];
+  return `<li data-name="${esc(`${x.first_name} ${x.last_name}`.toLowerCase())}" data-pos="${pos}">
+    ${x.candidate_id ? `<a href="${href(`candidate/${x.candidate_id}`)}">${name}</a>` : name}
+    <span class="muted small">${esc(sub.filter(Boolean).join(' · '))}</span> ${posBadge(x.position)}</li>`;
+}
+
+/** Result per parliamentary group; a click on a group opens its members right below (and closes them again). */
 function groupsTable(members: Member[]): string {
   const m = M();
-  const groups = new Map<string, { label: string; color: string | null; counts: Record<string, number>; n: number }>();
+  const groups = new Map<string, { label: string; color: string | null; counts: Record<string, number>; n: number; members: Member[] }>();
   for (const x of members) {
     const key = x.party_label ?? x.group_code ?? '?';
     const g = groups.get(key) ?? { label: x.party_label ? m.group(x.party_label) : (x.group_code ? m.group(x.group_code) : m.other_group),
-      color: x.party_color, counts: {}, n: 0 };
+      color: x.party_color, counts: {}, n: 0, members: [] };
     const k = x.position === 'excused' || x.position === 'president' ? 'absent' : x.position;
     g.counts[k] = (g.counts[k] ?? 0) + 1;
     g.n += 1;
+    g.members.push(x);
     groups.set(key, g);
   }
   const rows = [...groups.values()].sort((a, b) => b.n - a.n);
   const cols: Position[] = ['for', 'against', 'abstain', 'absent'];
   return `<div class="table-wrap"><table class="parl-groups">
     <thead><tr><th></th>${cols.map((c) => `<th>${esc(m.pos[c])}</th>`).join('')}<th></th></tr></thead>
-    <tbody>${rows.map((g) => {
+    <tbody>${rows.map((g, i) => {
       const voted = (g.counts.for ?? 0) + (g.counts.against ?? 0);
       const pf = voted ? ((g.counts.for ?? 0) / voted) * 100 : 0;
-      return `<tr><td><span class="grp"><i class="dot" style="background:${esc(g.color ?? 'var(--neutral)')}"></i>${esc(g.label)}</span></td>
-        ${cols.map((c) => `<td><span class="num">${num(g.counts[c] ?? 0)}</span></td>`).join('')}
-        <td class="split-cell">${voted ? `<div class="split mini"><span class="yes" style="flex-basis:${pf}%"></span><span class="no" style="flex-basis:${100 - pf}%"></span></div>` : ''}</td></tr>`;
+      const id = `grp-${Math.random().toString(36).slice(2, 8)}-${i}`;
+      const list = [...g.members].sort((a, b) => ORDER[a.position] - ORDER[b.position] || a.last_name.localeCompare(b.last_name));
+      return `<tr class="grp-row" data-target="${id}">
+          <td><button type="button" class="grp grp-toggle" aria-expanded="false" aria-controls="${id}" title="${esc(m.show_group)}">
+            <i class="chev" aria-hidden="true"></i><i class="dot" style="background:${esc(g.color ?? 'var(--neutral)')}"></i>${esc(g.label)}</button></td>
+          ${cols.map((c) => `<td>${g.counts[c] ? `<button type="button" class="num-btn" data-pos="${c}" title="${esc(m.show_pos(m.pos[c]))}"><span class="num">${num(g.counts[c])}</span></button>` : '<span class="num muted">0</span>'}</td>`).join('')}
+          <td class="split-cell">${voted ? `<div class="split mini"><span class="yes" style="flex-basis:${pf}%"></span><span class="no" style="flex-basis:${100 - pf}%"></span></div>` : ''}</td></tr>
+        <tr class="grp-members" id="${id}" hidden><td colspan="${cols.length + 2}">
+          <ul class="parl-list">${list.map((x) => memberItem(x, false)).join('')}</ul></td></tr>`;
     }).join('')}</tbody></table></div>`;
 }
 
@@ -97,13 +117,7 @@ function membersBlock(v: ParlVote): string {
       <label>${esc(m.position)}<select name="pos"><option value="">${esc(m.all)}</option>${(['for', 'against', 'abstain', 'absent'] as Position[])
         .map((p) => `<option value="${p}">${esc(m.pos[p])}</option>`).join('')}</select></label>
     </form>
-    <ul class="parl-list">${v.members.map((x) => {
-      const name = esc(`${x.first_name} ${x.last_name}`);
-      const pos = x.position === 'excused' || x.position === 'president' ? 'absent' : x.position;
-      return `<li data-name="${esc(`${x.first_name} ${x.last_name}`.toLowerCase())}" data-pos="${pos}">
-        ${x.candidate_id ? `<a href="${href(`candidate/${x.candidate_id}`)}">${name}</a>` : name}
-        <span class="muted small">${esc([x.party_label, x.canton].filter(Boolean).join(' · '))}</span> ${posBadge(x.position)}</li>`;
-    }).join('')}</ul></details>`;
+    <ul class="parl-list">${v.members.map((x) => memberItem(x, true)).join('')}</ul></details>`;
 }
 
 /** Appends one card per ballot with a National Council final vote; nothing when there is none. */
@@ -118,14 +132,58 @@ export async function parliamentCard(container: HTMLElement, financingId: number
     return `<div class="parl-vote">
       ${votes.length > 1 ? `<h3>${esc([v.role === 'main' ? '' : tr(v.role), v.bill_title ? typo(v.bill_title) : ''].filter(Boolean).join(': '))}</h3>` : ''}
       <p>${esc(m.lead(date(v.voted_at)))}</p>
-      <p class="parl-total">${posBadge('for')} <strong>${num(c('for'))}</strong> &nbsp; ${posBadge('against')} <strong>${num(c('against'))}</strong>
-        &nbsp; <span class="muted small">${esc(m.pos.abstain)} ${num(c('abstain'))} · ${esc(m.pos.absent)} ${num(c('absent') + c('excused') + c('president'))}</span></p>
+      <p class="parl-total">${(['for', 'against', 'abstain', 'absent'] as Position[]).map((p) => {
+        const n = p === 'absent' ? c('absent') + c('excused') + c('president') : c(p);
+        return n ? `<button type="button" class="pos-btn" data-pos="${p}" aria-expanded="false" title="${esc(m.show_pos(m.pos[p]))}">${posBadge(p)} <strong>${num(n)}</strong></button>`
+          : `<span class="pos-btn off">${posBadge(p)} <strong>0</strong></span>`;
+      }).join('')}</p>
+      <div class="pos-panel" hidden><ul class="parl-list">${[...v.members].sort((a, b) => a.last_name.localeCompare(b.last_name))
+        .map((x) => memberItem(x, true)).join('')}</ul></div>
+      <p class="muted small">${esc(m.click_hint)}</p>
       ${groupsTable(v.members)}
       ${v.inverted ? `<p class="muted small">${esc(m.inverted)}</p>` : ''}
       ${membersBlock(v)}
     </div>`;
   }).join('') + `<p class="muted small">${esc(m.source(date(votes[0].fetched_at)))}</p>`;
   container.append(section);
+  // Show only members with one position in a list; '' shows everyone.
+  const showPos = (list: HTMLElement, pos: string) => list.querySelectorAll<HTMLElement>('li').forEach((li) => {
+    li.hidden = !!pos && li.dataset.pos !== pos;
+  });
+  // Group rows: the group name opens all its members; a number opens only the members with that position.
+  // Clicking what is already open closes it.
+  section.querySelectorAll<HTMLTableRowElement>('.grp-row').forEach((row) => {
+    const btn = row.querySelector<HTMLButtonElement>('.grp-toggle')!;
+    const panel = section.querySelector<HTMLElement>(`#${row.dataset.target}`)!;
+    const open = (pos: string | null) => {
+      const isOpen = pos !== null;
+      btn.setAttribute('aria-expanded', String(isOpen));
+      row.classList.toggle('open', isOpen);
+      panel.hidden = !isOpen;
+      panel.dataset.pos = pos ?? '';
+      row.querySelectorAll<HTMLElement>('.num-btn').forEach((b) => b.classList.toggle('active', isOpen && b.dataset.pos === pos));
+      if (isOpen) showPos(panel, pos);
+    };
+    row.addEventListener('click', (e) => {
+      const target = e.target as HTMLElement;
+      if (target.closest('a')) return;
+      const pos = target.closest<HTMLElement>('.num-btn')?.dataset.pos ?? '';
+      open(!panel.hidden && panel.dataset.pos === pos ? null : pos);
+    });
+  });
+  // Totals line: each number opens the list of all members with that position.
+  section.querySelectorAll<HTMLElement>('.parl-vote').forEach((block) => {
+    const panel = block.querySelector<HTMLElement>('.pos-panel')!;
+    const buttons = block.querySelectorAll<HTMLButtonElement>('.pos-btn[data-pos]');
+    buttons.forEach((b) => b.addEventListener('click', () => {
+      const pos = b.dataset.pos!;
+      const close = !panel.hidden && panel.dataset.pos === pos;
+      panel.hidden = close;
+      panel.dataset.pos = close ? '' : pos;
+      buttons.forEach((x) => { const on = !close && x === b; x.classList.toggle('active', on); x.setAttribute('aria-expanded', String(on)); });
+      if (!close) showPos(panel, pos);
+    }));
+  });
   section.querySelectorAll<HTMLFormElement>('.parl-members form').forEach((form) => {
     const list = form.parentElement!.querySelector('.parl-list')!;
     const filter = () => {

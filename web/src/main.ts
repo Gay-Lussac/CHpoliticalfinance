@@ -46,6 +46,27 @@ const PAGES: Record<string, Page> = {
 
 const app = document.getElementById('app')!;
 wireTips(document.body);
+alignNumberColumns();
+
+/** Right-align the heading of every table column that holds numbers, so headings sit above their figures.
+ *  Tables are rendered by many pages and cards, often after data arrives, so this watches the page. */
+function alignNumberColumns() {
+  let queued = false;
+  const run = () => {
+    queued = false;
+    document.querySelectorAll('table').forEach((table) => {
+      const heads = table.querySelectorAll('thead th');
+      if (!heads.length) return;
+      const numeric = new Set<number>();
+      table.querySelectorAll('tbody tr').forEach((tr) => [...tr.children].forEach((td, i) => {
+        if (td.querySelector(':scope > .num, :scope > button > .num')) numeric.add(i);
+      }));
+      heads.forEach((th, i) => th.classList.toggle('num-col', numeric.has(i)));
+    });
+  };
+  new MutationObserver(() => { if (!queued) { queued = true; queueMicrotask(run); } })
+    .observe(document.body, { childList: true, subtree: true });
+}
 setNavigator((url) => navigate(url));
 
 function shell(page: string) {
