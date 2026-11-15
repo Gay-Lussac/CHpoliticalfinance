@@ -4,6 +4,7 @@ import { setPageTitle, T, tr } from '../i18n';
 import { href } from '../router';
 import { PAGES, renderViews } from '../views';
 import { candidatesSection } from './candidates';
+import { inkindCard } from './inkind';
 import { defaultPhase, phaseToggle, statTiles, viewsGrid } from './common';
 
 const electionTotal = (f: Financing, phase: string) => {
@@ -45,4 +46,8 @@ export async function electionPage(main: HTMLElement, id: string | undefined, pa
   ]);
   renderViews(viewsGrid(main), PAGES.election ?? [], { financing_id: f.id, phase });
   await candidatesSection(main, f.id);
+  const extra = document.createElement('div');
+  extra.className = 'extra-cards';
+  main.append(extra);
+  await inkindCard(extra, f.id);
 }

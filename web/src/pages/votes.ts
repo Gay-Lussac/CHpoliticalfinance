@@ -5,6 +5,8 @@ import { PAGES, renderViews } from '../views';
 import { lawTitle } from './law';
 import { moneyTitle } from './money';
 import { href } from '../router';
+import { inkindCard } from './inkind';
+import { timingCard } from './timing';
 import { ballotsCard, defaultPhase, phaseToggle, sideTotals, splitBar, statTiles, viewsGrid, voteCard, voteSentence } from './common';
 
 export async function votesPage(main: HTMLElement) {
@@ -45,4 +47,9 @@ export async function votePage(main: HTMLElement, id: string | undefined, params
     { label: t.donations_total, value: chf(al?.total ?? 0), sub: `${num(al?.n ?? 0)} ${t.allowances}` },
   ]));
   renderViews(viewsGrid(main), PAGES.vote ?? [], { financing_id: f.id, phase });
+  const extra = document.createElement('div');
+  extra.className = 'extra-cards';
+  main.append(extra);
+  await timingCard(extra, f.id);
+  await inkindCard(extra, f.id);
 }

@@ -17,6 +17,7 @@ import { homePage } from './pages/home';
 import { partiesPage } from './pages/parties';
 import { lawPage, lawTitle } from './pages/law';
 import { legalPage, legalTitle, privacyPage, privacyTitle } from './pages/legal';
+import { mandatesPage } from './pages/mandates';
 import { moneyPage } from './pages/money';
 import { statsPage } from './pages/stats';
 import { votePage, votesPage } from './pages/votes';
@@ -35,6 +36,7 @@ const PAGES: Record<string, Page> = {
   donor: donorPage,
   explore: explorePage,
   money: moneyPage,
+  mandates: mandatesPage,
   law: lawPage,
   about: aboutPage,
   stats: statsPage,   // private, not in the navigation

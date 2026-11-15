@@ -23,3 +23,12 @@ test('election money is split evenly between the candidates of each campaign', (
   assert.equal(r.parties[0].share, 0.75);
   assert.deepEqual(r.campaigns.map((c) => c.n_candidates), [3, 1]);
 });
+
+test('group campaigns are split between the parties they name', () => {
+  const g = (campaign_id, total, party_code) => ({ campaign_id, financing_id: 9, total, party_code, party_label: party_code });
+  const r = summarizeElections([], [g(5, 400, 'FDP'), g(5, 400, 'SVP'), g(6, 100, null)]);
+  assert.equal(r.n_candidates, 0);
+  assert.equal(r.n_group_campaigns, 2);
+  assert.deepEqual(r.parties.map((p) => [p.code, p.est_chf, p.n_groups]), [['FDP', 200, 1], ['SVP', 200, 1], [null, 100, 1]]);
+  assert.deepEqual(r.campaigns.find((c) => c.campaign_id === 5).parties, ['FDP', 'SVP']);
+});

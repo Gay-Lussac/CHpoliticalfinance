@@ -153,6 +153,14 @@ def build_snapshot(archive: Archive, cantons: Cantons):
             cands = parse_candidates(decl.campaign_label, cantons)
             if cands and len(cands) >= len(candidates_by_campaign.get(ref.campaign_efk_id, [])):
                 candidates_by_campaign[ref.campaign_efk_id] = cands
+    # Campaigns that only filed donation forms have no revenue label: read the candidates from the campaign's own
+    # name in the tree ("Schneider-Schneiter Elisabeth (Bâle-Campagne, Le Centre)"). Group labels are skipped.
+    for efk_id, cp in campaigns.items():
+        if cp.stance == "candidates" and efk_id not in candidates_by_campaign and cp.name \
+                and not cp.name.lower().startswith("candidats/candidates soutenu"):
+            cands = parse_candidates(f"x: {cp.name}", cantons)
+            if cands:
+                candidates_by_campaign[efk_id] = cands
     return Snapshot(financings, actors, campaigns, declarations, kept), forms, candidates_by_campaign, errors
 
 

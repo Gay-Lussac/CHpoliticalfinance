@@ -11,6 +11,7 @@ import mysql from 'mysql2/promise';
 import { buildQuery, QueryError } from './query.js';
 import { notFoundMeta, pageMeta, parsePath, renderHead } from './seo.js';
 import { summarizeElections, summarizeVotes } from './orientation.js';
+import { institutionCode } from './mandates.js';
 import { buildSitemap, STATIC_PAGES } from './sitemap.js';
 import { attachLabels, i18nExpr, LANGS, rawPartyExpr } from './labels.js';
 import { Stats } from './stats.js';
@@ -428,8 +429,78 @@ app.get('/api/actors/:id/orientation', async (req, reply) => {
          LEFT JOIN party p ON p.id = ca.party_id
          LEFT JOIN (${CAMPAIGN_TOTALS}) ct ON ct.campaign_id = c.id
         WHERE c.actor_id = ?`, [id]);
-    return { ...summarizeVotes(stances, recs), elections: summarizeElections(cands) };
+    // Group campaigns (no named candidates) and the parties they name; table from migration 003.
+    const [groups] = await pool.query(
+      `SELECT c.id AS campaign_id, c.financing_id, f.event_date, ct.total,
+              p.code AS party_code, p.color AS party_color,
+              ${i18nExpr('party', 'p.id', 'name', lang, 'p.code')} AS party_label,
+              ${i18nExpr('financing', 'f.id', 'title', lang, 'f.name')} AS title
+         FROM campaign c JOIN financing f ON f.id = c.financing_id
+         LEFT JOIN campaign_target_party tp ON tp.campaign_id = c.id
+         LEFT JOIN party p ON p.id = tp.party_id
+         LEFT JOIN (${CAMPAIGN_TOTALS}) ct ON ct.campaign_id = c.id
+        WHERE c.actor_id = ? AND c.stance = 'candidates'
+          AND NOT EXISTS (SELECT 1 FROM campaign_candidate cc WHERE cc.campaign_id = c.id)`, [id]).catch((err) => {
+      if (err.code === 'ER_NO_SUCH_TABLE') return [[]];
+      throw err;
+    });
+    return { ...summarizeVotes(stances, recs), elections: summarizeElections(cands, groups) };
   });
+});
+
+// Party levies on office holders, one row per person, party and year (aggregation is done in the browser).
+app.get('/api/mandates', async (req) => {
+  const lang = langOf(req.query);
+  return cached(`mandates:${lang}`, async () => {
+    const [rows] = await pool.query(
+      `SELECT m.last_name, m.first_name, m.institution, m.amount_chf AS amount, f.year, d.actor_id,
+              a.name AS actor_name, p.code AS party_code, p.color AS party_color,
+              ${i18nExpr('party', 'p.id', 'name', lang, 'NULL')} AS party_label
+         FROM mandate_contribution m
+         JOIN declaration d ON d.id = m.declaration_id
+         JOIN financing f ON f.id = d.financing_id
+         JOIN actor a ON a.id = d.actor_id
+         LEFT JOIN actor_party ap ON ap.actor_id = d.actor_id
+         LEFT JOIN party p ON p.id = ap.party_id
+        ORDER BY f.year, m.last_name, m.first_name`);
+    return rows.map((r) => ({ ...r, institution_code: institutionCode(r.institution), amount: Number(r.amount) }));
+  });
+});
+
+// When named donations arrive: weeks before vote day (-1 = after the vote, 26 = 26 weeks or more), by side.
+const MAX_WEEKS = 26;
+app.get('/api/timing', async (req) => {
+  const id = req.query.financing_id === undefined ? null : idOf(req.query.financing_id);
+  if (req.query.financing_id !== undefined && id === null) return [];
+  return cached(`timing:${id ?? 'all'}`, async () => {
+    const [rows] = await pool.query(
+      `SELECT GREATEST(-1, LEAST(${MAX_WEEKS}, FLOOR(DATEDIFF(event_date, granted_on) / 7))) AS weeks, stance,
+              SUM(value_chf) AS total, COUNT(*) AS n, COUNT(DISTINCT financing_id) AS votes
+         FROM v_flow
+        WHERE financing_kind = 'vote' AND is_latest AND granted_on IS NOT NULL AND event_date IS NOT NULL
+          AND stance IN ('for', 'against') ${id === null ? '' : 'AND financing_id = ?'}
+        GROUP BY weeks, stance ORDER BY weeks DESC`, id === null ? [] : [id]);
+    return rows.map((r) => ({ weeks: Number(r.weeks), stance: r.stance, total: Number(r.total), n: Number(r.n) }));
+  });
+});
+
+// In-kind support (services, goods) for one vote or election: latest version of each declaration.
+app.get('/api/inkind', async (req, reply) => {
+  const id = idOf(req.query.financing_id);
+  if (id === null) return reply.code(404).send({ error: 'not found' });
+  const rows = await cached(`inkind:${id}`, async () => {
+    const [r] = await pool.query(
+      `SELECT v.donor_id, dn.display_name AS donor_name, v.donor_type, v.is_anonymous, v.actor_id, ac.name AS actor_name,
+              v.stance, al.service_type, al.description, v.value_chf AS value, v.granted_on
+         FROM v_flow v JOIN allowance al ON al.id = v.allowance_id
+         JOIN actor ac ON ac.id = v.actor_id
+         LEFT JOIN donor dn ON dn.id = v.donor_id
+        WHERE v.financing_id = ? AND v.is_latest AND v.nature = 'non_monetary'
+        ORDER BY v.value_chf DESC`, [id]);
+    return r.map((x) => ({ ...x, value: Number(x.value), is_anonymous: !!x.is_anonymous }));
+  });
+  // Masked donors (objection): no name, no link.
+  return rows.map((x) => (suppressed.has(x.donor_id) ? { ...x, donor_id: null, donor_name: null, suppressed: true } : x));
 });
 
 app.get('/api/donors/:id', async (req, reply) => {

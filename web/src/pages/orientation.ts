@@ -10,18 +10,19 @@ interface Rec { id: number; code: string; kind: 'party' | 'organisation'; label:
   agree: number; disagree: number; n: number; share: number }
 interface VoteRow { financing_id: number; title: string; event_date: string; stance: 'for' | 'against';
   outcome: string | null; won: boolean | null }
-interface PartyRow { code: string | null; label: string | null; color: string | null; n_candidates: number; est_chf: number; share: number }
+interface PartyRow { code: string | null; label: string | null; color: string | null; n_candidates: number; n_groups: number; est_chf: number; share: number }
 export interface Orientation {
   votes: VoteRow[]; recommenders: Rec[];
-  elections: { n_candidates: number; total_chf: number; parties: PartyRow[];
-    campaigns: { campaign_id: number; financing_id: number; title: string; event_date: string; total: number | null; n_candidates: number }[] };
+  elections: { n_candidates: number; n_group_campaigns: number; total_chf: number; parties: PartyRow[];
+    campaigns: { campaign_id: number; financing_id: number; title: string; event_date: string; total: number | null;
+      n_candidates: number; parties: string[] }[] };
 }
 
 const TEXT: Record<Lang, {
   tab_money: string; tab_orientation: string; votes_title: string; votes_intro: (n: number) => string;
   parties: string; orgs: string; same: string; opposite: string; agree_sub: (a: number, n: number) => string;
   few: string; list_title: string; side: string; result: string; won: string; lost: string; pending: string;
-  el_title: string; el_intro: (n: number) => string; el_note: string; col_party: string; col_cands: string; col_est: string;
+  el_title: string; el_intro: (n: number, g: number) => string; group_n: (n: number) => string; for_parties: (p: string) => string; no_party_named: string; el_note: string; col_party: string; col_cands: string; col_est: string;
   el_campaigns: string; with_n: (n: number) => string; none: string; unknown_party: string;
 }> = {
   fr: {
@@ -33,8 +34,9 @@ const TEXT: Record<Lang, {
     few: 'Trop peu de votations pour un pourcentage : voici simplement qui a recommandé le même camp.',
     list_title: 'Ses positions', side: 'Camp', result: 'Résultat', won: 'gagné', lost: 'perdu', pending: 'à venir',
     el_title: 'Élections : les partis des candidat·e·s soutenu·e·s',
-    el_intro: (n) => `${n} ${n > 1 ? 'candidat·e·s soutenu·e·s' : 'candidat·e soutenu·e'}, par parti.`,
-    el_note: "Estimation : une campagne déclare un seul montant pour tous les candidat·e·s qu'elle soutient. Le montant par personne n'étant pas connu, il est réparti à parts égales entre elles et eux.",
+    el_intro: (n, g) => [n ? `${n} ${n > 1 ? 'candidat·e·s soutenu·e·s' : 'candidat·e soutenu·e'}` : '', g ? `${g} ${g > 1 ? 'campagnes' : 'campagne'} pour un ou plusieurs partis, sans candidat·e nommé·e` : ''].filter(Boolean).join(' et ') + ', par parti.',
+    group_n: (n) => `${n} ${n > 1 ? 'campagnes de parti' : 'campagne de parti'}`, for_parties: (p) => `pour ${p}`, no_party_named: 'aucun parti nommé',
+    el_note: "Estimation : une campagne déclare un seul montant pour tous les candidat·e·s qu'elle soutient. Le montant par personne n'étant pas connu, il est réparti à parts égales entre elles et eux, ou entre les partis qu'une campagne de parti nomme.",
     col_party: 'Parti', col_cands: 'Candidat·e·s', col_est: 'Montant estimé',
     el_campaigns: 'Campagnes électorales', with_n: (n) => `${n} ${n > 1 ? 'candidat·e·s' : 'candidat·e'}`,
     none: "Pas encore de position connue : cet acteur n'a fait campagne ni pour ou contre un objet avec des mots d'ordre, ni pour des candidat·e·s nommé·e·s.",
@@ -49,8 +51,9 @@ const TEXT: Record<Lang, {
     few: 'Zu wenige Abstimmungen für einen Prozentwert: hier einfach, wer dieselbe Seite empfohlen hat.',
     list_title: 'Seine Positionen', side: 'Seite', result: 'Resultat', won: 'gewonnen', lost: 'verloren', pending: 'noch offen',
     el_title: 'Wahlen: Parteien der unterstützten Kandidierenden',
-    el_intro: (n) => `${n} unterstützte ${n > 1 ? 'Kandidierende' : 'Kandidatur'}, nach Partei.`,
-    el_note: 'Schätzung: Eine Kampagne deklariert einen einzigen Betrag für alle Kandidierenden, die sie unterstützt. Da der Betrag pro Person nicht bekannt ist, wird er zu gleichen Teilen aufgeteilt.',
+    el_intro: (n, g) => [n ? `${n} unterstützte ${n > 1 ? 'Kandidierende' : 'Kandidatur'}` : '', g ? `${g} ${g > 1 ? 'Kampagnen' : 'Kampagne'} für eine oder mehrere Parteien ohne namentlich genannte Kandidierende` : ''].filter(Boolean).join(' und ') + ', nach Partei.',
+    group_n: (n) => `${n} ${n > 1 ? 'Parteikampagnen' : 'Parteikampagne'}`, for_parties: (p) => `für ${p}`, no_party_named: 'keine Partei genannt',
+    el_note: 'Schätzung: Eine Kampagne deklariert einen einzigen Betrag für alle Kandidierenden, die sie unterstützt. Da der Betrag pro Person nicht bekannt ist, wird er zu gleichen Teilen auf sie aufgeteilt, bzw. auf die Parteien, die eine Parteikampagne nennt.',
     col_party: 'Partei', col_cands: 'Kandidierende', col_est: 'Geschätzter Betrag',
     el_campaigns: 'Wahlkampagnen', with_n: (n) => `${n} ${n > 1 ? 'Kandidierende' : 'Kandidatur'}`,
     none: 'Noch keine bekannte Position: Dieser Akteur hat weder für oder gegen eine Vorlage mit Parolen noch für namentlich genannte Kandidierende geworben.',
@@ -65,8 +68,9 @@ const TEXT: Record<Lang, {
     few: 'Troppo poche votazioni per una percentuale: ecco semplicemente chi ha raccomandato lo stesso campo.',
     list_title: 'Le sue posizioni', side: 'Campo', result: 'Risultato', won: 'vinto', lost: 'perso', pending: 'in sospeso',
     el_title: 'Elezioni: i partiti dei candidati sostenuti',
-    el_intro: (n) => `${n} ${n > 1 ? 'candidature sostenute' : 'candidatura sostenuta'}, per partito.`,
-    el_note: "Stima: una campagna dichiara un solo importo per tutte le candidature che sostiene. Poiché l'importo per persona non è noto, viene ripartito in parti uguali.",
+    el_intro: (n, g) => [n ? `${n} ${n > 1 ? 'candidature sostenute' : 'candidatura sostenuta'}` : '', g ? `${g} ${g > 1 ? 'campagne' : 'campagna'} per uno o più partiti senza candidature nominate` : ''].filter(Boolean).join(' e ') + ', per partito.',
+    group_n: (n) => `${n} ${n > 1 ? 'campagne di partito' : 'campagna di partito'}`, for_parties: (p) => `per ${p}`, no_party_named: 'nessun partito nominato',
+    el_note: "Stima: una campagna dichiara un solo importo per tutte le candidature che sostiene. Poiché l'importo per persona non è noto, viene ripartito in parti uguali tra le persone, o tra i partiti nominati da una campagna di partito.",
     col_party: 'Partito', col_cands: 'Candidature', col_est: 'Importo stimato',
     el_campaigns: 'Campagne elettorali', with_n: (n) => `${n} ${n > 1 ? 'candidature' : 'candidatura'}`,
     none: 'Nessuna posizione nota: questo attore non ha fatto campagna né per o contro un oggetto con raccomandazioni né per candidature nominate.',
@@ -81,8 +85,9 @@ const TEXT: Record<Lang, {
     few: 'Too few votes for a percentage: this simply shows who recommended the same side.',
     list_title: 'Its positions', side: 'Side', result: 'Result', won: 'won', lost: 'lost', pending: 'pending',
     el_title: 'Elections: parties of the candidates it backed',
-    el_intro: (n) => `${n} ${n > 1 ? 'candidates' : 'candidate'} backed, by party.`,
-    el_note: 'Estimate: a campaign declares one amount for all the candidates it backs. As the amount per person is not known, it is split evenly between them.',
+    el_intro: (n, g) => [n ? `${n} ${n > 1 ? 'candidates' : 'candidate'} backed` : '', g ? `${g} ${g > 1 ? 'campaigns' : 'campaign'} for one or more parties without named candidates` : ''].filter(Boolean).join(' and ') + ', by party.',
+    group_n: (n) => `${n} party ${n > 1 ? 'campaigns' : 'campaign'}`, for_parties: (p) => `for ${p}`, no_party_named: 'no party named',
+    el_note: 'Estimate: a campaign declares one amount for all the candidates it backs. As the amount per person is not known, it is split evenly between them, or between the parties a party campaign names.',
     col_party: 'Party', col_cands: 'Candidates', col_est: 'Estimated amount',
     el_campaigns: 'Election campaigns', with_n: (n) => `${n} ${n > 1 ? 'candidates' : 'candidate'}`,
     none: 'No known position yet: this actor has neither campaigned for or against a proposal with voting recommendations nor for named candidates.',
@@ -95,7 +100,7 @@ const MIN_FOR_SHARE = 3;
 const pct = (v: number) => (v > 0 && v < 0.005 ? '< 1 %' : `${new Intl.NumberFormat(locale(), { maximumFractionDigits: 0 }).format(v * 100)} %`);
 const dot = (color: string | null) => `<i class="dot" style="background:${esc(color ?? 'var(--neutral)')}"></i>`;
 
-function meterRows(items: { label: string; color: string | null; share: number; value: string; sub: string }[]) {
+export function meterRows(items: { label: string; color: string | null; share: number; value: string; sub: string }[]) {
   return `<div class="meters">${items.map((i) => `<div class="meter-row">
       <div class="meter-label">${dot(i.color)}${esc(i.label)}</div>
       <div class="meter" role="img" aria-label="${esc(`${i.label}: ${i.value}, ${i.sub}`)}"><span style="width:${Math.max(0, Math.min(1, i.share)) * 100}%;background:${esc(i.color ?? 'var(--neutral)')}"></span></div>
@@ -142,23 +147,24 @@ function votesSection(o: Orientation): string {
 
 function electionsSection(o: Orientation): string {
   const e = o.elections;
-  if (!e.n_candidates) return '';
+  if (!e.n_candidates && !e.n_group_campaigns) return '';
+  const counts = (p: PartyRow) => [p.n_candidates ? m.with_n(p.n_candidates) : '', p.n_groups ? m.group_n(p.n_groups) : ''].filter(Boolean).join(' · ');
   const m = OT();
   const hasMoney = e.total_chf > 0;
   return `<section class="card orient">
       <h2>${esc(m.el_title)}</h2>
-      <p class="muted small">${esc(m.el_intro(e.n_candidates))}</p>
+      <p class="muted small">${esc(m.el_intro(e.n_candidates, e.n_group_campaigns))}</p>
       ${meterRows(e.parties.map((p) => ({ label: p.label ?? m.unknown_party, color: p.color, share: p.share,
-        value: hasMoney ? pct(p.share) : num(p.n_candidates),
-        sub: hasMoney ? `${chfShort(p.est_chf)} · ${m.with_n(p.n_candidates)}` : m.with_n(p.n_candidates) })))}
+        value: hasMoney ? pct(p.share) : num(p.n_candidates + p.n_groups),
+        sub: hasMoney ? `${chfShort(p.est_chf)} · ${counts(p)}` : counts(p) })))}
       <p class="muted small">${esc(m.el_note)}</p>
       <h3>${esc(m.el_campaigns)}</h3>
       <ul class="plain-list">${e.campaigns.map((c) => `<li><a href="${href(`election/${c.financing_id}`)}">${esc(typo(c.title))}</a>
-        <span class="muted small">· ${esc(m.with_n(c.n_candidates))}${c.total != null ? ` · ${esc(chf(c.total))}` : ''}</span></li>`).join('')}</ul>
+        <span class="muted small">· ${esc(c.n_candidates ? m.with_n(c.n_candidates) : m.for_parties(c.parties.join(', ') || m.no_party_named))}${c.total != null ? ` · ${esc(chf(c.total))}` : ''}</span></li>`).join('')}</ul>
     </section>`;
 }
 
-export const hasOrientation = (o: Orientation | null) => !!o && (o.votes.length > 0 || o.elections.n_candidates > 0);
+export const hasOrientation = (o: Orientation | null) => !!o && (o.votes.length > 0 || o.elections.n_candidates > 0 || o.elections.n_group_campaigns > 0);
 
 export function orientationHtml(o: Orientation | null): string {
   if (!hasOrientation(o)) return `<p class="muted">${esc(OT().none)}</p>`;
