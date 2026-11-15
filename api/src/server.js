@@ -12,6 +12,7 @@ import { buildQuery, QueryError } from './query.js';
 import { notFoundMeta, pageMeta, parsePath, renderHead } from './seo.js';
 import { summarizeElections, summarizeVotes } from './orientation.js';
 import { institutionCode } from './mandates.js';
+import { areaChain, buildIndex, parsePolicyAreas, search } from './search.js';
 import { buildSitemap, STATIC_PAGES } from './sitemap.js';
 import { attachLabels, i18nExpr, LANGS, rawPartyExpr } from './labels.js';
 import { Stats } from './stats.js';
@@ -614,29 +615,88 @@ app.get('/api/parties', async (req) => {
   });
 });
 
+// ------------------------------------------------------------------ search (see search.js)
+const POLICY_AREAS = parsePolicyAreas(readFileSync(join(ROOT, 'config', 'policy_areas.yaml'), 'utf8'));
+const areaName = (code, lang) => POLICY_AREAS[code]?.[lang] ?? POLICY_AREAS[code]?.fr ?? null;
+let searchIndex = { version: null, index: null, building: null };
+
+/** Everything searchable, rebuilt after each data sync (a few thousand small documents). */
+async function buildSearchIndex() {
+  const titles = (rows) => { const m = new Map(); for (const r of rows) (m.get(r.id) ?? m.set(r.id, []).get(r.id)).push(r); return m; };
+  const [fins] = await pool.query('SELECT id, kind, event_date, year, name FROM financing');
+  const [finLabels] = await pool.query(
+    "SELECT entity_id AS id, lang, text FROM i18n_label WHERE entity = 'financing' AND field = 'title'");
+  const [ballots] = await pool.query(
+    `SELECT b.financing_id AS id, b.policy_areas, l.text FROM ballot b
+       LEFT JOIN i18n_label l ON l.entity = 'ballot' AND l.entity_id = b.id AND l.field = 'title'`).catch((err) => {
+    if (err.code === 'ER_BAD_FIELD_ERROR' || err.code === 'ER_NO_SUCH_TABLE') return [[]];   // before migration 005
+    throw err;
+  });
+  const [actors] = await pool.query('SELECT id, name, city FROM actor');
+  const [donors] = await pool.query('SELECT id, display_name, city, donor_type FROM donor');
+  const [cands] = await pool.query(
+    `SELECT ca.id, ca.full_name, ca.canton, ca.party_label, p.code AS party_code FROM candidate ca
+       LEFT JOIN party p ON p.id = ca.party_id
+      WHERE EXISTS (SELECT 1 FROM campaign_candidate cc WHERE cc.candidate_id = ca.id)`);
+  const byFin = titles(finLabels);
+  const byBallot = titles(ballots);
+  const docs = [];
+  for (const f of fins) {
+    const labels = byFin.get(f.id) ?? [];
+    const label = Object.fromEntries(['fr', 'de', 'it', 'en'].map((l) =>
+      [l, (labels.find((x) => x.lang === l) ?? labels.find((x) => x.lang === 'fr'))?.text ?? f.name]));
+    const fields = [{ text: f.name, weight: 1 }, ...labels.map((x) => ({ text: x.text, weight: 1 })),
+      { text: String(f.year), weight: 0.6 }];
+    const areas = new Set();
+    for (const b of byBallot.get(f.id) ?? []) {
+      if (b.text) fields.push({ text: b.text, weight: 1 });
+      for (const code of String(b.policy_areas ?? '').split(',').filter(Boolean)) {
+        areaChain(code).forEach((c, i) => { if (!areas.has(c)) { areas.add(c); fields.push(...areaFields(c, i)); } });
+      }
+    }
+    docs.push({ group: 'financings', id: f.id, label, date: f.event_date,
+      extra: { kind: f.kind, event_date: f.event_date, year: f.year }, fields });
+  }
+  for (const a of actors) {
+    docs.push({ group: 'actors', id: a.id, label: a.name, extra: { city: a.city },
+      fields: [{ text: a.name, weight: 1 }, { text: a.city, weight: 0.3 }] });
+  }
+  for (const d of donors) {
+    if (suppressed.has(d.id)) continue;
+    docs.push({ group: 'donors', id: d.id, label: d.display_name, extra: { city: d.city, donor_type: d.donor_type },
+      fields: [{ text: d.display_name, weight: 1 }, { text: d.city, weight: 0.3 }] });
+  }
+  for (const c of cands) {
+    docs.push({ group: 'candidates', id: c.id, label: c.full_name,
+      extra: { canton: c.canton, party: c.party_code ?? c.party_label },
+      fields: [{ text: c.full_name, weight: 1 }, { text: `${c.canton ?? ''} ${c.party_code ?? ''}`, weight: 0.3 }] });
+  }
+  return buildIndex(docs);
+}
+
+/** Search fields for one policy area: its name and related terms in every language. Broader areas weigh less. */
+function areaFields(code, depth) {
+  const a = POLICY_AREAS[code];
+  if (!a) return [];
+  const weight = depth === 0 ? 0.8 : 0.5;
+  return [{ text: [a.fr, a.de, a.it, a.en, ...(a.words ?? [])].join(' | '), weight, area: code }];
+}
+
+async function getSearchIndex() {
+  const version = await currentVersion();
+  if (searchIndex.version === version && searchIndex.index) return searchIndex.index;
+  searchIndex.building ??= buildSearchIndex()
+    .then((index) => { searchIndex = { version, index, building: null }; return index; })
+    .catch((err) => { searchIndex.building = null; throw err; });
+  return searchIndex.building;
+}
+
 app.get('/api/search', { config: { rateLimit: { max: 60, timeWindow: '1 minute' } } }, async (req) => {
   const lang = langOf(req.query);
   const q = String(req.query.q ?? '').trim().slice(0, 100);     // longer queries are pointless and cost work
-  if (q.length < 2) return { financings: [], actors: [], candidates: [], donors: [] };
-  const like = `%${q.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
-  return cached(`search:${lang}:${q.toLowerCase()}`, async () => {
-    const [financings] = await pool.query(
-      `SELECT f.id, f.kind, f.event_date, f.year, ${i18nExpr('financing', 'f.id', 'title', lang, 'f.name')} AS label
-         FROM financing f
-        WHERE f.name LIKE ? OR EXISTS (SELECT 1 FROM i18n_label l WHERE l.entity='financing' AND l.entity_id=f.id AND l.text LIKE ?)
-        ORDER BY f.event_date DESC LIMIT 8`, [like, like]);
-    const [actors] = await pool.query(
-      'SELECT id, name AS label, city FROM actor WHERE name LIKE ? ORDER BY name LIMIT 8', [like]);
-    const [donors] = await pool.query(
-      'SELECT id, display_name AS label, city, donor_type FROM donor WHERE display_name LIKE ? ORDER BY display_name LIMIT 8',
-      [like]);
-    const [candidates] = await pool.query(
-      `SELECT ca.id, ca.full_name AS label, ca.canton, COALESCE(p.code, ${rawPartyExpr(lang, 'ca.party_label')}) AS party
-         FROM candidate ca LEFT JOIN party p ON p.id = ca.party_id
-        WHERE ca.full_name LIKE ? AND EXISTS (SELECT 1 FROM campaign_candidate cc WHERE cc.candidate_id = ca.id)
-        ORDER BY ca.full_name LIMIT 8`, [like]);
-    return { financings, actors, candidates, donors: donors.filter((d) => !suppressed.has(d.id)) };
-  });
+  const empty = { financings: [], actors: [], candidates: [], donors: [] };
+  if (q.length < 2) return empty;
+  return cached(`search:${lang}:${q.toLowerCase()}`, async () => ({ ...empty, ...search(await getSearchIndex(), q, lang, 8, areaName) }));
 });
 
 // ------------------------------------------------------------------ visit statistics (docs/05 › Visit statistics)

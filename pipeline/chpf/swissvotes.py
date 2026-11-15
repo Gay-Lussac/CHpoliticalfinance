@@ -49,6 +49,7 @@ class Ballot:
     outcome: str | None
     cantons_yes: Decimal | None
     recommendations: dict = field(default_factory=dict)   # recommender code -> recommendation
+    policy_areas: list = field(default_factory=list)      # most specific policy-area codes, e.g. ["10.21", "6.14"]
 
 
 def fetch(client: httpx.Client | None = None) -> tuple[bytes, str]:
@@ -103,6 +104,12 @@ def parse(body: bytes, since: date, recommender_codes: list[str]) -> list[Ballot
                                                   else None),
             cantons_yes=_num(row["kt-ja"]),
         )
+        # Up to three policy areas (d1, d2, d3), each at up to three levels: keep the most specific code of each.
+        for area in ("d1", "d2", "d3"):
+            codes = [row.get(f"{area}e{lvl}", "").strip() for lvl in (3, 2, 1)]
+            code = next((c for c in codes if re.fullmatch(r"\d{1,2}(\.\d{1,2})?", c)), None)
+            if code and code not in b.policy_areas:
+                b.policy_areas.append(code)
         for code in recommender_codes:
             v = row[f"p-{code}"].strip()
             if v in RECOMMENDATION:

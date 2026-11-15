@@ -99,7 +99,7 @@ function wireSearch() {
         items.length ? `<h3>${esc(title)}</h3><ul>${items.map((x) => `<li><a href="${link(x)}">${esc(x.label)}</a> <span class="muted">${esc(sub(x))}</span></li>`).join('')}</ul>` : '';
       const html = group(t.search_votes, r.financings,
         (x) => href(x.kind === 'party_year' ? `parties?year=${x.year}` : `${x.kind === 'election' ? 'election' : 'vote'}/${x.id}`),
-        (x) => (x.event_date ? date(x.event_date) : String(x.year)))
+        (x) => [x.event_date ? date(x.event_date) : String(x.year), x.via ? `${t.search_topic} ${x.via}` : ''].filter(Boolean).join(' · '))
         + group(t.search_actors, r.actors, (x) => href(`actor/${x.id}`), (x) => x.city ?? '')
         + group(t.search_candidates, r.candidates ?? [], (x) => href(`candidate/${x.id}`), (x) => [x.canton, x.party].filter(Boolean).join(' · '))
         + group(t.search_donors, r.donors, (x) => href(`donor/${x.id}`), (x) => x.city ?? '');
