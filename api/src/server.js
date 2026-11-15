@@ -381,7 +381,15 @@ async function parliamentOf(lang, candidateId) {
       WHERE t.parliamentarian_id = ?
       ORDER BY FIELD(t.kind, 'geschaeftsfuehrend', 'vorstand', 'beirat', 'taetig', 'gesellschafter', 'finanziell', 'mitglied'),
                t.pay DESC, org_name`, [p.id]);
-  return { ...p, ties: ties.map((t) => ({ ...t, must_declare: !!t.must_declare, main_job: !!t.main_job,
+  // Their National Council final votes on objects put to the people (migration 006).
+  const [finalVotes] = await pool.query(
+    `SELECT b.financing_id, f.event_date, ${i18nExpr('financing', 'f.id', 'title', lang, 'f.name')} AS title, b.role,
+            b.outcome, ${POSITION} AS position, pv.fetched_at
+       FROM lw_parliamentarian lp JOIN parl_voting v ON v.person_number = lp.parl_person_number
+       JOIN parl_vote pv ON pv.id = v.vote_id JOIN ballot b ON b.id = pv.ballot_id JOIN financing f ON f.id = b.financing_id
+      WHERE lp.id = ? ORDER BY f.event_date DESC, FIELD(b.role, 'main', 'counter_proposal', 'tie_break')`, [p.id])
+    .catch((err) => { if (['ER_NO_SUCH_TABLE', 'ER_BAD_FIELD_ERROR'].includes(err.code)) return [[]]; throw err; });
+  return { ...p, final_votes: finalVotes, ties: ties.map((t) => ({ ...t, must_declare: !!t.must_declare, main_job: !!t.main_job,
     donor_id: suppressed.has(t.donor_id) ? null : t.donor_id })) };
 }
 
@@ -400,6 +408,40 @@ async function lobbyLinks(lang, column, id) {
                p.last_name, p.first_name`, [id]).catch(noLobbywatch);
   return rows;
 }
+
+// ------------------------------------------------------------------ National Council final votes (migration 006)
+// Parliamentary group -> party (for colour and name). M-E = Mitte-EVP group.
+const GROUP_PARTY = "CASE v.group_code WHEN 'V' THEN 'SVP' WHEN 'S' THEN 'SP' WHEN 'RL' THEN 'FDP' WHEN 'M-E' THEN 'MITTE' "
+  + "WHEN 'CE' THEN 'MITTE' WHEN 'BD' THEN 'MITTE' WHEN 'G' THEN 'GRUENE' WHEN 'GL' THEN 'GLP' END";
+/** Position on the object put to the people, from Parliament's decision and the vote's orientation. */
+const POSITION = "CASE WHEN v.decision = 'yes' THEN IF(pv.inverted, 'against', 'for') "
+  + "WHEN v.decision = 'no' THEN IF(pv.inverted, 'for', 'against') ELSE v.decision END";
+
+app.get('/api/financings/:id/parliament', async (req, reply) => {
+  const lang = langOf(req.query);
+  const id = idOf(req.params.id);
+  if (id === null) return reply.code(404).send({ error: 'not found' });
+  return cached(`parl:${lang}:${id}`, async () => {
+    const [votes] = await pool.query(
+      `SELECT pv.id, pv.business, pv.bill_title, pv.voted_at, pv.inverted, pv.fetched_at, b.role, b.anr
+         FROM parl_vote pv JOIN ballot b ON b.id = pv.ballot_id
+        WHERE b.financing_id = ? ORDER BY FIELD(b.role, 'main', 'counter_proposal', 'tie_break')`, [id])
+      .catch((err) => { if (err.code === 'ER_NO_SUCH_TABLE') return [[]]; throw err; });
+    const out = [];
+    for (const pv of votes) {
+      const [members] = await pool.query(
+        `SELECT v.person_number, v.first_name, v.last_name, v.canton, v.group_code, ${POSITION} AS position,
+                p.code AS party_code, p.color AS party_color, ${i18nExpr('party', 'p.id', 'name', lang, 'NULL')} AS party_label,
+                (SELECT MIN(lc.candidate_id) FROM lw_parliamentarian lp JOIN lw_candidate lc ON lc.parliamentarian_id = lp.id
+                  WHERE lp.parl_person_number = v.person_number) AS candidate_id
+           FROM parl_voting v JOIN parl_vote pv ON pv.id = v.vote_id
+           LEFT JOIN party p ON p.code = ${GROUP_PARTY}
+          WHERE v.vote_id = ? ORDER BY v.last_name, v.first_name`, [pv.id]);
+      out.push({ ...pv, inverted: !!pv.inverted, members });
+    }
+    return out;
+  });
+});
 
 app.get('/api/actors/:id/lobby', async (req, reply) => {
   const lang = langOf(req.query);

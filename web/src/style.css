@@ -312,3 +312,18 @@ main:focus { outline: none; }
 .coverage-list { list-style: none; padding: 0; margin: 10px 0 0; display: grid; gap: 4px; font-size: .88rem; }
 .coverage-list li { display: grid; grid-template-columns: 14px 1fr auto; gap: 8px; align-items: center; }
 .coverage-list .sw { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+
+/* National Council final votes */
+.parl-vote + .parl-vote { margin-top: 22px; padding-top: 16px; border-top: 1px solid var(--border); }
+.parl-total { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.parl-groups td.split-cell { width: 30%; min-width: 80px; vertical-align: middle; }
+.split.mini { height: 8px; margin: 0; }
+.badge.muted { color: var(--text-muted); }
+.grp { display: inline-flex; align-items: baseline; gap: 6px; }
+.grp .dot { flex: none; transform: translateY(-1px); }
+.parl-members { margin-top: 12px; }
+.parl-members summary { cursor: pointer; color: var(--link); }
+.parl-list { list-style: none; padding: 0; margin: 8px 0 0; display: grid; gap: 4px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); }
+.parl-list li { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; font-size: .9rem; }
+.parl-list li[hidden] { display: none; }
+@media (max-width: 600px) { .parl-groups th:nth-child(4), .parl-groups td:nth-child(4), .parl-groups th:nth-child(5), .parl-groups td:nth-child(5) { display: none; } }

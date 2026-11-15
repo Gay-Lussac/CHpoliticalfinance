@@ -8,7 +8,7 @@ import { href } from '../router';
 export interface Tie { kind: string; role: string | null; pay: number | null; pay_year: number | null; must_declare: boolean;
   main_job: boolean; description: string | null; org_id: number; org_name: string; lobby_group: string | null;
   actor_id: number | null; donor_id: number | null }
-export interface Parliament { id: number; council: 'NR' | 'SR' | null; in_council_since: string | null; canton: string | null;
+export interface Parliament { final_votes?: import('./parliament').FinalVote[]; id: number; council: 'NR' | 'SR' | null; in_council_since: string | null; canton: string | null;
   party_code: string | null; party_color: string | null; party_label: string | null; ties: Tie[] }
 interface Link { lw_id: number; last_name: string; first_name: string; canton: string | null; council: 'NR' | 'SR' | null;
   party_code: string | null; party_color: string | null; party_label: string | null; candidate_id: number | null;
