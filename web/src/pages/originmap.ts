@@ -13,7 +13,7 @@ type Mode = 'total' | 'per_voter';
 
 const TEXT: Record<Lang, {
   title: string; lead: string; total: string; per_voter: string; tip: (c: string, v: string, d: number, pv: string) => string;
-  rest: (abroad: string, unknown: string, unnamed: string) => string; note: string; source: string; per: string;
+  rest: (abroad: string, unknown: string, unnamed: string) => string; note: string; source: string; per: string; none: string;
 }> = {
   fr: {
     title: "D'où vient l'argent", lead: 'Dons nommés (plus de 15 000 CHF) selon le canton de la donatrice ou du donateur, toutes votations, élections et années de partis confondues.',
@@ -21,7 +21,7 @@ const TEXT: Record<Lang, {
     tip: (c, v, d, pv) => `${c} : ${v} de ${d} ${d > 1 ? 'donateur·rice·s' : 'donateur·rice'}${pv ? ` · ${pv} par électeur·rice` : ''}`,
     rest: (a, u, n) => `En plus : ${a} de l'étranger, ${u} de localités qu'on ne peut pas attribuer à un canton${n ? `, ${n} de dons non nominatifs` : ''}.`,
     note: "Le canton est déduit de la localité indiquée dans la déclaration (siège pour une entreprise ou une association). Seuls les dons de plus de 15 000 CHF sont nommés : les petits dons n'y figurent pas.",
-    source: 'Données : Contrôle fédéral des finances ; communes et électeur·rice·s inscrit·e·s : Office fédéral de la statistique. Fond de carte : OFS / swisstopo, via swiss-maps.', per: 'par électeur·rice',
+    source: 'Données : Contrôle fédéral des finances ; communes et électeur·rice·s inscrit·e·s : Office fédéral de la statistique. Fond de carte : OFS / swisstopo, via swiss-maps.', per: 'par électeur·rice', none: 'Aucun don nommé',
   },
   de: {
     title: 'Woher das Geld kommt', lead: 'Namentliche Zuwendungen (über 15 000 CHF) nach Kanton der Spenderin oder des Spenders, über alle Abstimmungen, Wahlen und Parteijahre.',
@@ -29,7 +29,7 @@ const TEXT: Record<Lang, {
     tip: (c, v, d, pv) => `${c}: ${v} von ${d} Zuwendenden${pv ? ` · ${pv} pro Stimmberechtigte` : ''}`,
     rest: (a, u, n) => `Dazu: ${a} aus dem Ausland, ${u} von Orten, die keinem Kanton zugeordnet werden können${n ? `, ${n} nicht namentliche Zuwendungen` : ''}.`,
     note: 'Der Kanton wird aus dem Ort in der Deklaration abgeleitet (Sitz bei Firmen und Verbänden). Nur Zuwendungen über 15 000 CHF sind namentlich: Kleinspenden fehlen hier.',
-    source: 'Daten: Eidgenössische Finanzkontrolle; Gemeinden und Stimmberechtigte: Bundesamt für Statistik. Kartengrundlage: BFS / swisstopo, via swiss-maps.', per: 'pro Stimmberechtigte',
+    source: 'Daten: Eidgenössische Finanzkontrolle; Gemeinden und Stimmberechtigte: Bundesamt für Statistik. Kartengrundlage: BFS / swisstopo, via swiss-maps.', per: 'pro Stimmberechtigte', none: 'Keine namentlichen Zuwendungen',
   },
   it: {
     title: 'Da dove vengono i soldi', lead: 'Liberalità nominative (oltre 15 000 CHF) secondo il cantone di chi dona, per tutte le votazioni, elezioni e anni dei partiti.',
@@ -37,7 +37,7 @@ const TEXT: Record<Lang, {
     tip: (c, v, d, pv) => `${c}: ${v} da ${d} ${d > 1 ? 'donatori' : 'donatore'}${pv ? ` · ${pv} per avente diritto` : ''}`,
     rest: (a, u, n) => `Inoltre: ${a} dall'estero, ${u} da località non attribuibili a un cantone${n ? `, ${n} di liberalità non nominative` : ''}.`,
     note: "Il cantone è dedotto dalla località indicata nella dichiarazione (sede per aziende e associazioni). Solo le liberalità oltre 15 000 CHF sono nominative: le piccole donazioni non figurano.",
-    source: 'Dati: Controllo federale delle finanze; comuni e aventi diritto di voto: Ufficio federale di statistica. Base cartografica: UST / swisstopo, tramite swiss-maps.', per: 'per avente diritto',
+    source: 'Dati: Controllo federale delle finanze; comuni e aventi diritto di voto: Ufficio federale di statistica. Base cartografica: UST / swisstopo, tramite swiss-maps.', per: 'per avente diritto', none: 'Nessuna liberalità nominativa',
   },
   en: {
     title: 'Where the money comes from', lead: "Named donations (over CHF 15,000) by the donor's canton, across all votes, elections and party years.",
@@ -45,7 +45,7 @@ const TEXT: Record<Lang, {
     tip: (c, v, d, pv) => `${c}: ${v} from ${d} ${d > 1 ? 'donors' : 'donor'}${pv ? ` · ${pv} per registered voter` : ''}`,
     rest: (a, u, n) => `Also: ${a} from abroad, ${u} from places that cannot be attributed to a canton${n ? `, ${n} in unnamed donations` : ''}.`,
     note: 'The canton is derived from the town given in the declaration (head office for companies and associations). Only donations over CHF 15,000 are named: small donations are not included.',
-    source: 'Data: Swiss Federal Audit Office; municipalities and registered voters: Federal Statistical Office. Base map: FSO / swisstopo, via swiss-maps.', per: 'per registered voter',
+    source: 'Data: Swiss Federal Audit Office; municipalities and registered voters: Federal Statistical Office. Base map: FSO / swisstopo, via swiss-maps.', per: 'per registered voter', none: 'No named donations',
   },
 };
 
@@ -103,7 +103,9 @@ export async function originMapCard(container: HTMLElement) {
     }) as unknown as Node);
     wireSvgTips(chart);
     const labels = [`< ${fmt(breaks[0])}`, ...breaks.slice(0, -1).map((b, i) => `${fmt(b)}–${fmt(breaks[i + 1])}`), `≥ ${fmt(breaks[breaks.length - 1])}`];
+    const empty = shapes.some((f: any) => { const v = value(f.properties.code); return v == null || v <= 0; });
     legend.innerHTML = ramp.map((c, i) => `<span class="lg-item"><i style="background:${c}"></i>${esc(labels[i])}</span>`).join('')
+      + (empty ? `<span class="lg-item"><i style="background:${neutral};box-shadow:inset 0 0 0 1px ${cssVar('--border') || '#ccc'}"></i>${esc(m.none)}</span>` : '')
       + (mode === 'per_voter' ? `<span class="muted small">${esc(m.per)}</span>` : '');
   };
   draw();

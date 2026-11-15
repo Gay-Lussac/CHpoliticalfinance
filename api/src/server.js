@@ -576,6 +576,29 @@ app.get('/api/actors/:id/lobby', async (req, reply) => {
   return cached(`lobby:a:${lang}:${id}`, () => lobbyLinks(lang, 'actor_id', id));
 });
 
+// Current members of the Federal Assembly from the actor's party (party actors only; Lobbywatch's list of members,
+// both chambers), with their declared ties and their agreement with their canton's voters.
+app.get('/api/actors/:id/members', async (req, reply) => {
+  const lang = langOf(req.query);
+  const id = idOf(req.params.id);
+  if (id === null) return reply.code(404).send({ error: 'not found' });
+  const actor = await actorById(lang, id);
+  if (!actor) return reply.code(404).send({ error: 'not found' });
+  if (!actor.party_id) return [];
+  return cached(`members:${id}`, async () => {
+    const [rows] = await pool.query(
+      `SELECT p.id AS lw_id, p.first_name, p.last_name, p.canton, p.council, p.in_council_since, p.parl_person_number,
+              (SELECT MIN(lc.candidate_id) FROM lw_candidate lc WHERE lc.parliamentarian_id = p.id) AS candidate_id,
+              (SELECT COUNT(*) FROM lw_tie t WHERE t.parliamentarian_id = p.id) AS ties,
+              (SELECT COUNT(*) FROM lw_tie t WHERE t.parliamentarian_id = p.id AND t.pay >= 1) AS paid_ties
+         FROM lw_parliamentarian p WHERE p.party_id = ? ORDER BY p.last_name, p.first_name`, [actor.party_id])
+      .catch((err) => { if (['ER_NO_SUCH_TABLE', 'ER_BAD_FIELD_ERROR'].includes(err.code)) return [[]]; throw err; });
+    const agreement = rows.length ? await cantonAgreement() : {};
+    return rows.map(({ parl_person_number: n, ...r }) => ({ ...r, ties: Number(r.ties), paid_ties: Number(r.paid_ties),
+      canton_agreement: (n && agreement[n]) || null }));
+  });
+});
+
 app.get('/api/donors/:id/lobby', async (req, reply) => {
   const lang = langOf(req.query);
   const id = idOf(req.params.id);
