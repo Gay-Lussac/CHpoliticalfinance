@@ -5,6 +5,7 @@ import { href } from '../router';
 import { PAGES, renderViews } from '../views';
 import { statTiles, viewsGrid } from './common';
 import { lobbyLinksCard } from './lobby';
+import { partyMembersCard } from './members';
 import { hasOrientation, loadOrientation, orientationHtml, OT } from './orientation';
 
 export async function actorPage(main: HTMLElement, id: string | undefined, params?: URLSearchParams) {
@@ -39,5 +40,6 @@ export async function actorPage(main: HTMLElement, id: string | undefined, param
   const extra = document.createElement('div');
   extra.className = 'extra-cards';
   main.append(extra);
+  if (a.party_id) await partyMembersCard(extra, a.id, a.party_label, a.canton ?? null);
   await lobbyLinksCard(extra, 'actors', a.id);
 }
