@@ -451,3 +451,10 @@ th.num-col { text-align: right; }
 .parl h2 + .chamber-title { margin-top: 6px; }
 .chamber { margin-top: 22px; padding-top: 14px; border-top: 1px solid var(--border); }
 .chamber .split { max-width: 420px; }
+
+/* agreement with the canton's voters */
+.agree-tag { font-size: .75rem; color: var(--text-muted); background: var(--surface-2); padding: 0 6px; border-radius: var(--radius); }
+.agree-ok { font-size: .8rem; color: var(--text-muted); }
+.agree-ko { font-size: .8rem; color: var(--accent); font-weight: 600; }
+.cmap-table .num-btn { font-variant-numeric: tabular-nums; }
+.cmap-table tr.open td { background: var(--surface-2); }

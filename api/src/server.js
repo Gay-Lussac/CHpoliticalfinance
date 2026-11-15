@@ -384,11 +384,13 @@ async function parliamentOf(lang, candidateId) {
   // Their National Council final votes on objects put to the people (migration 006).
   const [finalVotes] = await pool.query(
     `SELECT b.financing_id, f.event_date, ${i18nExpr('financing', 'f.id', 'title', lang, 'f.name')} AS title, b.role,
-            b.outcome, ${POSITION} AS position, pv.fetched_at
+            b.outcome, ${POSITION} AS position, pv.fetched_at, v.canton, bc.yes_share AS canton_yes_share
        FROM lw_parliamentarian lp JOIN parl_voting v ON v.person_number = lp.parl_person_number
        JOIN parl_vote pv ON pv.id = v.vote_id JOIN ballot b ON b.id = pv.ballot_id JOIN financing f ON f.id = b.financing_id
+       LEFT JOIN ballot_canton bc ON bc.ballot_id = b.id AND bc.canton = v.canton
       WHERE lp.id = ? ORDER BY f.event_date DESC, FIELD(b.role, 'main', 'counter_proposal', 'tie_break')`, [p.id])
     .catch((err) => { if (['ER_NO_SUCH_TABLE', 'ER_BAD_FIELD_ERROR'].includes(err.code)) return [[]]; throw err; });
+  for (const fv of finalVotes) fv.canton_yes_share = fv.canton_yes_share == null ? null : Number(fv.canton_yes_share);
   return { ...p, final_votes: finalVotes, ties: ties.map((t) => ({ ...t, must_declare: !!t.must_declare, main_job: !!t.main_job,
     donor_id: suppressed.has(t.donor_id) ? null : t.donor_id })) };
 }
@@ -417,6 +419,23 @@ const GROUP_PARTY = "CASE v.group_code WHEN 'V' THEN 'SVP' WHEN 'S' THEN 'SP' WH
 const POSITION = "CASE WHEN v.decision = 'yes' THEN IF(pv.inverted, 'against', 'for') "
   + "WHEN v.decision = 'no' THEN IF(pv.inverted, 'for', 'against') ELSE v.decision END";
 
+/**
+ * How often each National Council member voted like the majority of their own canton's voters, over all popular votes
+ * with both a final vote and canton results: person_number -> { agree, n }. Exact 50 % results and abstentions are left out.
+ */
+async function cantonAgreement() {
+  return cached('canton-agreement', async () => {
+    const [rows] = await pool.query(
+      `SELECT v.person_number, SUM((${POSITION}) = IF(bc.yes_share > 50, 'for', 'against')) AS agree, COUNT(*) AS n
+         FROM parl_voting v JOIN parl_vote pv ON pv.id = v.vote_id
+         JOIN ballot_canton bc ON bc.ballot_id = pv.ballot_id AND bc.canton = v.canton
+        WHERE v.decision IN ('yes', 'no') AND bc.yes_share <> 50
+        GROUP BY v.person_number`)
+      .catch((err) => { if (err.code === 'ER_NO_SUCH_TABLE') return [[]]; throw err; });
+    return Object.fromEntries(rows.map((r) => [r.person_number, { agree: Number(r.agree), n: Number(r.n) }]));
+  });
+}
+
 app.get('/api/financings/:id/parliament', async (req, reply) => {
   const lang = langOf(req.query);
   const id = idOf(req.params.id);
@@ -438,6 +457,10 @@ app.get('/api/financings/:id/parliament', async (req, reply) => {
            LEFT JOIN party p ON p.code = ${GROUP_PARTY}
           WHERE v.vote_id = ? ORDER BY v.last_name, v.first_name`, [pv.id]);
       out.push({ ...pv, inverted: !!pv.inverted, members });
+    }
+    if (out.length) {
+      const agreement = await cantonAgreement();
+      for (const v of out) for (const m of v.members) m.canton_agreement = agreement[m.person_number] ?? null;
     }
     return out;
   });

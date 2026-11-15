@@ -7,6 +7,7 @@ import { get } from '../api';
 import { esc, num } from '../format';
 import { lang, locale, type Lang } from '../i18n';
 import { cssVar, wireSvgTips } from '../views';
+import { memberItem, type Member, type ParlVote } from './parliament';
 
 interface NR { for: number; against: number; abstain: number; absent: number }
 interface CantonRow { canton: string; yes_share: number | null; yes: number | null; no: number | null; turnout: number | null;
@@ -18,7 +19,7 @@ const TEXT: Record<Lang, {
   title: string; lead: string; people: string; nr: string; col_canton: string; col_people: string; col_nr: string; col_gap: string;
   gap: string; same: string; split: string; none: string; tip_people: (p: string) => string; tip_nr: (f: number, a: number, o: number) => string;
   legend_yes: string; legend_no: string; legend_nr_for: string; legend_nr_against: string; no_members: string; source: string;
-  upcoming: string; provisional: string; nr_short: string;
+  upcoming: string; provisional: string; nr_short: string; show_members: string;
 }> = {
   fr: {
     title: 'Les cantons et leurs élu·e·s', lead: 'Résultat dans chaque canton et vote final de ses conseiller·ère·s nationaux·ales sur le même objet.',
@@ -28,7 +29,7 @@ const TEXT: Record<Lang, {
     legend_yes: 'Oui', legend_no: 'Non', legend_nr_for: 'Pour', legend_nr_against: 'Contre', no_members: 'aucun vote ou égalité',
     source: 'Résultats : Office fédéral de la statistique (données ouvertes du jour de vote). Votes : Services du Parlement de l’Assemblée fédérale. Fond de carte : OFS / swisstopo, via swiss-maps.',
     upcoming: 'Le peuple n’a pas encore voté : la carte montre pour l’instant les votes des conseiller·ère·s nationaux·ales.',
-    provisional: 'Résultats provisoires.', nr_short: 'Conseil national',
+    provisional: 'Résultats provisoires.', nr_short: 'Conseil national', show_members: 'Voir les conseiller·ère·s nationaux·ales du canton',
   },
   de: {
     title: 'Die Kantone und ihre Gewählten', lead: 'Resultat in jedem Kanton und Schlussabstimmung seiner Nationalratsmitglieder zur selben Vorlage.',
@@ -38,7 +39,7 @@ const TEXT: Record<Lang, {
     legend_yes: 'Ja', legend_no: 'Nein', legend_nr_for: 'Dafür', legend_nr_against: 'Dagegen', no_members: 'keine Stimme oder Gleichstand',
     source: 'Resultate: Bundesamt für Statistik (Open Data am Abstimmungstag). Stimmen: Parlamentsdienste der Bundesversammlung. Kartengrundlage: BFS / swisstopo, via swiss-maps.',
     upcoming: 'Das Volk hat noch nicht abgestimmt: Die Karte zeigt vorerst die Stimmen der Nationalratsmitglieder.',
-    provisional: 'Provisorische Resultate.', nr_short: 'Nationalrat',
+    provisional: 'Provisorische Resultate.', nr_short: 'Nationalrat', show_members: 'Nationalratsmitglieder des Kantons anzeigen',
   },
   it: {
     title: 'I cantoni e i loro eletti', lead: 'Risultato in ogni cantone e votazione finale dei suoi consiglieri nazionali sullo stesso oggetto.',
@@ -48,7 +49,7 @@ const TEXT: Record<Lang, {
     legend_yes: 'Sì', legend_no: 'No', legend_nr_for: 'Favorevoli', legend_nr_against: 'Contrari', no_members: 'nessun voto o parità',
     source: 'Risultati: Ufficio federale di statistica (dati aperti del giorno di voto). Voti: Servizi del Parlamento dell’Assemblea federale. Base cartografica: UST / swisstopo, tramite swiss-maps.',
     upcoming: 'Il popolo non ha ancora votato: per ora la carta mostra i voti dei consiglieri nazionali.',
-    provisional: 'Risultati provvisori.', nr_short: 'Consiglio nazionale',
+    provisional: 'Risultati provvisori.', nr_short: 'Consiglio nazionale', show_members: 'Mostra i consiglieri nazionali del cantone',
   },
   en: {
     title: 'The cantons and their representatives', lead: "Result in each canton, and the final vote of its National Council members on the same proposal.",
@@ -58,7 +59,7 @@ const TEXT: Record<Lang, {
     legend_yes: 'Yes', legend_no: 'No', legend_nr_for: 'For', legend_nr_against: 'Against', no_members: 'no vote or tie',
     source: 'Results: Federal Statistical Office (voting-day open data). Votes: Parliamentary Services of the Federal Assembly. Base map: FSO / swisstopo, via swiss-maps.',
     upcoming: 'The people have not voted yet: for now the map shows the votes of the National Council members.',
-    provisional: 'Provisional results.', nr_short: 'National Council',
+    provisional: 'Provisional results.', nr_short: 'National Council', show_members: "Show the canton's National Council members",
   },
 };
 const M = () => TEXT[lang()];
@@ -109,10 +110,16 @@ const loadGeo = () => (geo ??= fetch('/geo/ch-cantons.json').then((r) => (r.ok ?
 
 /** Appends the map card for a vote; nothing when there are neither canton results nor National Council votes. */
 export async function cantonMapCard(container: HTMLElement, financingId: number) {
-  const [ballots, fc] = await Promise.all([
-    get<BallotCantons[]>(`financings/${financingId}/cantons`).catch(() => [] as BallotCantons[]), loadGeo()]);
+  const [ballots, fc, votes] = await Promise.all([
+    get<BallotCantons[]>(`financings/${financingId}/cantons`).catch(() => [] as BallotCantons[]), loadGeo(),
+    get<ParlVote[]>(`financings/${financingId}/parliament`).catch(() => [] as ParlVote[])]);
   const b = ballots.find((x) => x.role === 'main') ?? ballots[0];
   if (!b || !fc) return;
+  // Members of each canton in this ballot's final vote, for the clickable numbers in the table.
+  const members = new Map<string, Member[]>();
+  for (const x of votes.find((v) => v.anr === b.anr)?.members ?? []) {
+    if (x.canton) (members.get(x.canton) ?? members.set(x.canton, []).get(x.canton)!).push(x);
+  }
   const m = M();
   const hasPeople = b.cantons.some((c) => c.yes_share != null);
   const hasNr = b.cantons.some((c) => c.nr.for + c.nr.against > 0);
@@ -139,6 +146,9 @@ export async function cantonMapCard(container: HTMLElement, financingId: number)
 
   // Table: one row per canton, flagged when most of its members voted against the canton's majority.
   const rows = [...b.cantons].sort((a, c) => a.canton.localeCompare(c.canton));
+  const ORDER: Record<string, number> = { for: 0, against: 1, abstain: 2, absent: 3, excused: 3, president: 4 };
+  const numBtn = (code: string, pos: string, n: number) => (n && members.has(code)
+    ? `<button type="button" class="num-btn" data-canton="${esc(code)}" data-pos="${pos}" title="${esc(m.show_members)}">${num(n)}</button>` : num(n));
   section.querySelector('tbody')!.innerHTML = rows.map((c) => {
     const share = nrShare(c.nr);
     // Compare majorities only when both exist: an evenly split delegation (or an exact 50 % result) has none.
@@ -146,12 +156,35 @@ export async function cantonMapCard(container: HTMLElement, financingId: number)
     const gap = c.yes_share != null && share != null && !tie && (c.yes_share > 50) !== (share > 50);
     const people = c.yes_share == null ? m.none : pct(c.yes_share);
     const nr = c.nr.for + c.nr.against ? `${num(c.nr.for)} / ${num(c.nr.against)}` : m.none;
-    return `<tr${gap ? ' class="gap"' : ''}><td><strong>${esc(c.canton)}</strong>
-        <div class="m-only muted small"><span>${esc(people)}</span><span>${esc(`${m.nr_short}: ${nr}`)}</span></div></td>
-      <td><span class="num">${esc(people)}</span></td><td><span class="num">${esc(nr)}</span></td>
+    const nrCell = c.nr.for + c.nr.against ? `${numBtn(c.canton, 'for', c.nr.for)} / ${numBtn(c.canton, 'against', c.nr.against)}` : m.none;
+    const list = [...(members.get(c.canton) ?? [])].sort((a, z) => ORDER[a.position] - ORDER[z.position] || a.last_name.localeCompare(z.last_name));
+    const panel = list.length ? `<tr class="grp-members" data-panel="${esc(c.canton)}" hidden><td colspan="4">
+        <ul class="parl-list">${list.map((x) => memberItem(x, true)).join('')}</ul></td></tr>` : '';
+    return `<tr${gap ? ' class="gap"' : ''} data-canton-row="${esc(c.canton)}"><td>${list.length
+        ? `<button type="button" class="grp grp-toggle" data-canton="${esc(c.canton)}" data-pos="" aria-expanded="false" title="${esc(m.show_members)}"><i class="chev" aria-hidden="true"></i><strong>${esc(c.canton)}</strong></button>`
+        : `<strong>${esc(c.canton)}</strong>`}
+        <div class="m-only muted small"><span>${esc(people)}</span><span>${esc(m.nr_short)}: ${nrCell}</span></div></td>
+      <td><span class="num">${esc(people)}</span></td><td><span class="num">${nrCell}</span></td>
       <td>${c.yes_share == null || share == null ? m.none : tie ? `<span class="muted">${esc(m.split)}</span>`
-        : gap ? `<span class="gap-flag">${esc(m.gap)}</span>` : `<span class="muted">${esc(m.same)}</span>`}</td></tr>`;
+        : gap ? `<span class="gap-flag">${esc(m.gap)}</span>` : `<span class="muted">${esc(m.same)}</span>`}</td></tr>${panel}`;
   }).join('');
+  // Canton name: all its members; a number: only the members with that position. Clicking what is open closes it.
+  section.querySelector('tbody')!.addEventListener('click', (e) => {
+    const btn = (e.target as HTMLElement).closest<HTMLElement>('[data-canton]');
+    if (!btn) return;
+    const code = btn.dataset.canton!;
+    const pos = btn.dataset.pos ?? '';
+    const panel = section.querySelector<HTMLElement>(`[data-panel="${code}"]`);
+    const row = section.querySelector<HTMLElement>(`[data-canton-row="${code}"]`);
+    if (!panel || !row) return;
+    const close = !panel.hidden && panel.dataset.pos === pos;
+    panel.hidden = close;
+    panel.dataset.pos = close ? '' : pos;
+    row.classList.toggle('open', !close);
+    row.querySelector('.grp-toggle')?.setAttribute('aria-expanded', String(!close));
+    row.querySelectorAll<HTMLElement>('.num-btn').forEach((b) => b.classList.toggle('active', !close && b.dataset.pos === pos));
+    panel.querySelectorAll<HTMLElement>('li').forEach((li) => { li.hidden = !!pos && li.dataset.pos !== pos; });
+  });
 
   const draw = () => {
     const pal = palette();
