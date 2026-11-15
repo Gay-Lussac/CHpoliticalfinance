@@ -394,8 +394,9 @@ main > section + section, main > .views-grid { margin-top: 24px; }
 
 /* tables: quiet header, hairline rows */
 th { font-size: .78rem; text-transform: uppercase; letter-spacing: .04em; font-weight: 600; }
-th, td { padding: 8px 8px 8px 0; }
-td:has(.num), th:last-child { padding-right: 0; }
+th, td { padding: 8px 16px 8px 0; }
+th:last-child, td:last-child { padding-right: 0; }
+th.num-col { text-align: right; }
 
 /* forms and buttons: square, light */
 .explore-form select, .explore-form input[type=search], .stats-key input { border-radius: var(--radius); background: var(--surface); border-color: #c9c9c9; }
