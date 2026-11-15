@@ -26,6 +26,7 @@ class EfkClient:
         self._last = 0.0
         self._retries = retries
         self.request_count = 0
+        self.not_modified = 0
 
     def close(self) -> None:
         self._http.close()
@@ -36,18 +37,25 @@ class EfkClient:
             time.sleep(wait)
         self._last = time.monotonic()
 
-    def get_json(self, lang: str, path: str) -> tuple[dict, str, bytes]:
-        """Return (payload, checksum, raw body). Checksum = meta.data_checksum_sha256 or sha256(body)."""
+    def get_json(self, lang: str, path: str, validators=None, have_copy: bool = False):
+        """Return (payload, checksum, raw body), or None when the server says the file has not changed since our copy
+        (conditional request, see revalidate.py). Checksum = meta.data_checksum_sha256 or sha256(body)."""
         url = f"/{lang}/{path}"
+        key = f"efk:{lang}/{path}"
         for attempt in range(self._retries + 1):
             self._throttle()
             self.request_count += 1
             try:
-                r = self._http.get(url)
+                r = self._http.get(url, headers=validators.headers(key, have_copy) if validators else None)
             except httpx.HTTPError as e:
                 err = str(e)
             else:
+                if r.status_code == 304:
+                    self.not_modified += 1
+                    return None
                 if r.status_code == 200:
+                    if validators:
+                        validators.remember(key, r)
                     try:
                         payload = r.json()
                     except json.JSONDecodeError as e:

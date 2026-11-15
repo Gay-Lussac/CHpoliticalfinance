@@ -71,3 +71,19 @@ pipeline check               # run invariants on the current DB
 It runs on Infomaniak via cron if the plan allows Python (to verify, see [05-hosting-infomaniak.md](05-hosting-infomaniak.md)).
 Otherwise it runs as a scheduled GitHub Action that connects to the DB remotely, or that uploads a SQL dump over SSH. The code
 is identical in both cases; only the entry point differs.
+
+## Incremental runs (Nov 2026)
+
+A nightly `sync` only downloads what changed and only touches the database when something did:
+
+- **Conditional downloads** (`pipeline/chpf/revalidate.py`): the ETag / Last-Modified of every EFK tree and declaration,
+  the Swissvotes dataset and the Lobbywatch export is kept in `data/raw/validators.json` and sent back next time; an
+  unchanged file answers 304 with no body. A validator is only sent when the archive holds a copy. The EFK server
+  appends `-gzip` to its ETags but does not accept them back: the suffix is stripped. Parliament votes and BFS
+  results are fetched once (BFS again only while provisional and recent).
+- **No-op loads**: after downloading, a fingerprint of the archive (latest checksum of every file), the importer's code
+  and configuration, and the database structure is compared with the one of the last successful load
+  (`data/raw/last_load.json`). If identical, the run is recorded as `unchanged` (migration 008) and the database is
+  left as is; the API's data version only counts `ok`/`partial` runs, so the site's cache survives too.
+  A code or config change, a new migration or any new data triggers a normal load. `rebuild` and `sync --full`
+  always load; a `partial` load is retried the next night.

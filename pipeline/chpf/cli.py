@@ -19,6 +19,7 @@ import yaml
 
 from . import settings
 from .archive import Archive
+from .revalidate import Validators
 from .efk import EfkClient, EfkError
 from .load import Snapshot, connect, load_snapshot
 from . import bfs_results, lobbywatch, parliament, swissvotes
@@ -35,16 +36,16 @@ def log(msg: str) -> None:
 
 # ----------------------------------------------------------------- fetching
 
-def fetch_trees(client: EfkClient, archive: Archive) -> list[str]:
+def fetch_trees(client: EfkClient, archive: Archive, validators: Validators) -> list[str]:
     changed = []
-    for lang in settings.LANGS:
-        for path in TREES:
-            payload, checksum, body = client.get_json(lang, path)
-            _, is_new = archive.store(lang, path, checksum, body)
-            if is_new:
-                changed.append(f"{lang}/{path}")
-    payload, checksum, body = client.get_json("fr", CANTON_TREE)
-    archive.store("fr", CANTON_TREE, checksum, body)
+    for lang, path in [(lang, path) for lang in settings.LANGS for path in TREES] + [("fr", CANTON_TREE)]:
+        got = client.get_json(lang, path, validators, archive.latest(lang, path) is not None)
+        if got is None:                       # not modified since our copy
+            continue
+        _, checksum, body = got
+        _, is_new = archive.store(lang, path, checksum, body)
+        if is_new and path != CANTON_TREE:
+            changed.append(f"{lang}/{path}")
     return changed
 
 
@@ -73,24 +74,31 @@ def select_details(archive: Archive, forms, financings, full: bool) -> list:
     return wanted, (state_file, new)
 
 
-def fetch_swissvotes(archive: Archive) -> str:
-    """Fetch the Swissvotes CSV; returns a one-line status for the report (never raises)."""
+def fetch_swissvotes(archive: Archive, validators: Validators) -> str:
+    """Fetch the Swissvotes CSV if it changed; returns a one-line status for the report (never raises)."""
     try:
-        body, checksum = swissvotes.fetch()
+        got = swissvotes.fetch(validators=validators,
+                               have_copy=archive.latest(swissvotes.ARCHIVE_LANG, swissvotes.ARCHIVE_PATH) is not None)
+        if got is None:
+            return "not modified"
+        body, checksum = got
         _, is_new = archive.store(swissvotes.ARCHIVE_LANG, swissvotes.ARCHIVE_PATH, checksum, body, ext="csv")
         return "changed" if is_new else "unchanged"
     except Exception as e:   # Swissvotes is enrichment: an outage must not block the EFK sync
         return f"FAILED ({e}) – previous version kept"
 
 
-def fetch_lobbywatch(archive: Archive) -> str:
+def fetch_lobbywatch(archive: Archive, validators: Validators) -> str:
     """Fetch the weekly Lobbywatch export at most once every 6 days (it is refreshed on Monday mornings).
     Returns a status line for the report; never raises."""
     latest = archive.latest(lobbywatch.ARCHIVE_LANG, lobbywatch.ARCHIVE_PATH)
     if latest and datetime.now(timezone.utc) - datetime.fromisoformat(latest.fetched_at) < timedelta(days=6):
         return "recent copy kept"
     try:
-        body, checksum = lobbywatch.fetch()
+        got = lobbywatch.fetch(validators=validators, have_copy=latest is not None)
+        if got is None:
+            return "not modified"
+        body, checksum = got
         _, is_new = archive.store(lobbywatch.ARCHIVE_LANG, lobbywatch.ARCHIVE_PATH, checksum, body, ext="zip")
         # Only current Lobbywatch data is openly licensed: keep the last few versions, not a history.
         folder = (settings.RAW_DIR / archive.latest(lobbywatch.ARCHIVE_LANG, lobbywatch.ARCHIVE_PATH).file).parent
@@ -178,13 +186,15 @@ def build_ballots(archive: Archive, financings) -> tuple[list | None, dict, list
     return ballots, mapping, problems
 
 
-def fetch_details(client: EfkClient, archive: Archive, refs) -> tuple[int, list[str]]:
+def fetch_details(client: EfkClient, archive: Archive, refs, validators: Validators) -> tuple[int, list[str]]:
     changed, errors = 0, []
     for i, ref in enumerate(refs, 1):
         try:
-            payload, checksum, body = client.get_json("fr", ref.detail_path)
-            _, is_new = archive.store("fr", ref.detail_path, checksum, body)
-            changed += is_new
+            got = client.get_json("fr", ref.detail_path, validators, archive.latest("fr", ref.detail_path) is not None)
+            if got is not None:
+                _, checksum, body = got
+                _, is_new = archive.store("fr", ref.detail_path, checksum, body)
+                changed += is_new
         except EfkError as e:
             errors.append(str(e))
         if i % 100 == 0:
@@ -294,6 +304,11 @@ def start_run(conn, trigger: str) -> int:
 
 def finish_run(conn, run_id: int, status: str, notes: str) -> None:
     with conn.cursor() as c:
+        if status == "unchanged":             # 'unchanged' exists from migration 008 on; before it, record 'ok'
+            c.execute("SHOW COLUMNS FROM fetch_run LIKE 'status'")
+            row = c.fetchone()
+            if not row or "unchanged" not in str(row[1]):
+                status = "ok"
         c.execute("UPDATE fetch_run SET finished_at=NOW(), status=%s, notes=%s WHERE id=%s", (status, notes[:60000], run_id))
     conn.commit()
 
@@ -317,6 +332,26 @@ def write_report(run_id: int, lines: list[str]) -> str:
 
 # ----------------------------------------------------------------- commands
 
+LAST_LOAD = settings.RAW_DIR / "last_load.json"
+
+
+def load_fingerprint(conn, archive: Archive) -> str:
+    """Everything a load depends on: the archived data (latest checksum of every file), the importer's code and
+    configuration, and the database structure (so a newly applied migration triggers a load)."""
+    h = hashlib.sha256()
+    for e in sorted(archive.entries(), key=lambda e: (e.lang, e.path)):
+        h.update(f"{e.lang}|{e.path}|{e.checksum}\n".encode())
+    code = sorted(settings.ROOT.joinpath("pipeline", "chpf").glob("*.py")) + sorted(settings.CONFIG_DIR.glob("*.*"))
+    for f in code:
+        h.update(f.name.encode() + b"\0" + f.read_bytes())
+    with conn.cursor() as c:
+        c.execute("SELECT table_name, column_name, column_type FROM information_schema.columns "
+                  "WHERE table_schema = DATABASE() ORDER BY table_name, ordinal_position")
+        for row in c.fetchall():
+            h.update("|".join(map(str, row)).encode() + b"\n")
+    return h.hexdigest()
+
+
 def cmd_load(trigger: str, full: bool, fetch: bool) -> int:
     archive, cantons, parties = Archive(), Cantons(), Parties()
     conn = connect()
@@ -327,21 +362,39 @@ def cmd_load(trigger: str, full: bool, fetch: bool) -> int:
         fetch_errors = []
         if fetch:
             client = EfkClient()
+            validators = Validators()
             log("fetching trees (fr/de/it)")
-            changed_trees = fetch_trees(client, archive)
+            changed_trees = fetch_trees(client, archive, validators)
             report.append(f"- changed trees: {', '.join(changed_trees) or 'none'}")
             log("fetching Swissvotes dataset")
-            report.append(f"- Swissvotes dataset: {fetch_swissvotes(archive)}")
-            report.append(f"- Lobbywatch export: {fetch_lobbywatch(archive)}")
+            report.append(f"- Swissvotes dataset: {fetch_swissvotes(archive, validators)}")
+            report.append(f"- Lobbywatch export: {fetch_lobbywatch(archive, validators)}")
             report.append(f"- Parliament final votes: {fetch_parliament(archive)}")
             report.append(f"- Canton results (BFS): {fetch_canton_results(archive)}")
             snap, forms, _, _ = build_snapshot(archive, cantons)
             refs, (state_file, new_state) = select_details(archive, forms, snap.financings, full)
             log(f"fetching {len(refs)} of {len(forms)} declaration details")
-            n_changed, fetch_errors = fetch_details(client, archive, refs)
+            n_changed, fetch_errors = fetch_details(client, archive, refs, validators)
             state_file.write_text(json.dumps(new_state, indent=0))
-            report.append(f"- details fetched: {len(refs)} ({n_changed} new/changed), requests: {client.request_count}")
+            report.append(f"- details checked: {len(refs)} ({n_changed} new/changed), requests: {client.request_count}, "
+                          f"not modified: {client.not_modified}")
+            validators.save()
             client.close()
+        # Nothing new since the last successful load (same data, code and database structure): leave the database
+        # and the site's cache alone. `rebuild` and `sync --full` always load.
+        conn = fresh(conn)
+        fingerprint = load_fingerprint(conn, archive)
+        try:
+            previous = json.loads(LAST_LOAD.read_text()).get("fingerprint")
+        except (OSError, ValueError):
+            previous = None
+        if fetch and not full and previous == fingerprint and not fetch_errors:
+            report += ["", "## No changes since the last load – database left as is"]
+            finish_run(conn, run_id, "unchanged", "\n".join(report))
+            path = write_report(run_id, report)
+            log(f"run {run_id}: unchanged – report: {path}")
+            print("\n".join(report))
+            return 0
         log("parsing archive")
         snap, forms, cands, parse_errors = build_snapshot(archive, cantons)
         snap.ballots, snap.ballot_map, sv_problems = build_ballots(archive, snap.financings)
@@ -378,6 +431,8 @@ def cmd_load(trigger: str, full: bool, fetch: bool) -> int:
         write_report(run_id, report)
         raise
     finish_run(conn, run_id, status, "\n".join(report))
+    if status == "ok":                        # a partial load must be retried next time
+        LAST_LOAD.write_text(json.dumps({"fingerprint": load_fingerprint(fresh(conn), archive), "run": run_id}))
     path = write_report(run_id, report)
     log(f"run {run_id}: {status} – report: {path}")
     print("\n".join(report))
@@ -387,7 +442,9 @@ def cmd_load(trigger: str, full: bool, fetch: bool) -> int:
 def cmd_discover() -> int:
     archive, cantons = Archive(), Cantons()
     client = EfkClient()
-    changed = fetch_trees(client, archive)
+    validators = Validators()
+    changed = fetch_trees(client, archive, validators)
+    validators.save()
     snap, forms, _, _ = build_snapshot(archive, cantons)
     refs, _ = select_details(archive, forms, snap.financings, full=False)
     by_kind = defaultdict(int)
