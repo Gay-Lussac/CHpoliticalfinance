@@ -53,6 +53,8 @@ class Ballot:
     business: str | None = None                          # parliamentary business number (gesch_nr), e.g. "24.080"
     nr_yes: int | None = None                            # National Council final vote, for the object (nrja/nrnein)
     nr_no: int | None = None
+    sr_yes: int | None = None                            # Council of States final vote (srja/srnein)
+    sr_no: int | None = None
 
 
 def fetch(client: httpx.Client | None = None) -> tuple[bytes, str]:
@@ -112,6 +114,8 @@ def parse(body: bytes, since: date, recommender_codes: list[str]) -> list[Ballot
             b.business = None
         nr = [_num(row.get(k, "")) for k in ("nrja", "nrnein")]
         b.nr_yes, b.nr_no = (int(nr[0]), int(nr[1])) if None not in nr else (None, None)
+        sr = [_num(row.get(k, "")) for k in ("srja", "srnein")]
+        b.sr_yes, b.sr_no = (int(sr[0]), int(sr[1])) if None not in sr else (None, None)
         # Up to three policy areas (d1, d2, d3), each at up to three levels: keep the most specific code of each.
         for area in ("d1", "d2", "d3"):
             codes = [row.get(f"{area}e{lvl}", "").strip() for lvl in (3, 2, 1)]

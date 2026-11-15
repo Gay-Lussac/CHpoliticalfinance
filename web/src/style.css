@@ -434,3 +434,20 @@ th.num-col { text-align: right; }
 .pos-btn:hover, .num-btn:hover, .pos-btn.active, .num-btn.active { background: var(--surface-2); }
 .pos-btn.active, .num-btn.active { box-shadow: inset 0 -2px 0 var(--accent); }
 .pos-panel { background: var(--surface-2); padding: 4px 12px 12px; margin: 4px 0 12px; }
+
+/* vote map: cantons */
+:root { --lake: #d4e3f1; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --lake: #22313f; } }
+:root[data-theme="dark"] { --lake: #22313f; }
+.cmap .segmented { margin: 4px 0 12px; }
+.cmap-figure { max-width: 760px; }
+.cmap-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 2px; font-size: .82rem; color: var(--text-secondary); margin: 4px 0 14px; }
+.cmap-legend i { width: 28px; height: 10px; display: inline-block; }
+.cmap-legend > span:first-child { margin-right: 6px; } .cmap-legend > span:nth-child(8) { margin-left: 6px; }
+.cmap-empty { display: inline-flex; align-items: center; gap: 6px; margin-left: 16px; }
+.cmap-table tr.gap td { background: color-mix(in srgb, var(--accent) 6%, transparent); }
+.gap-flag { color: var(--accent); font-weight: 600; font-size: .85rem; }
+.chamber-title { font-size: .8rem; text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted); margin: 18px 0 6px; }
+.parl h2 + .chamber-title { margin-top: 6px; }
+.chamber { margin-top: 22px; padding-top: 14px; border-top: 1px solid var(--border); }
+.chamber .split { max-width: 420px; }

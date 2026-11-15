@@ -15,12 +15,12 @@ export interface FinalVote { financing_id: number; event_date: string | null; ti
   position: Position; fetched_at: string | null }
 
 const TEXT: Record<Lang, {
-  title: string; lead: (d: string) => string; inverted: string; group: (p: string) => string; other_group: string; show_group: string; click_hint: string; show_pos: (p: string) => string;
+  title: string; nr: string; sr: string; sr_lead: string; sr_names: string; lead: (d: string) => string; inverted: string; group: (p: string) => string; other_group: string; show_group: string; click_hint: string; show_pos: (p: string) => string;
   pos: Record<Position, string>; members: (n: number) => string; search: string; all: string; source: (d: string) => string;
   member_votes: string; member_lead: string; result: string; pending: string; position: string; vote: string;
 }> = {
   fr: {
-    title: 'Comment le Conseil national a voté', lead: (d) => `Vote final du ${d}, position de chaque conseiller·ère sur l'objet soumis au peuple.`,
+    title: 'Comment le Parlement a voté', nr: 'Conseil national', sr: 'Conseil des États', sr_lead: 'Vote final, nombre de conseiller·ère·s aux États pour et contre l’objet soumis au peuple (décompte Swissvotes).', sr_names: 'Le détail par personne n’est pas encore disponible pour le Conseil des États.', lead: (d) => `Vote final du ${d}, position de chaque conseiller·ère sur l'objet soumis au peuple.`,
     inverted: "Pour une initiative populaire, le Parlement vote sur sa recommandation : « oui » à l'arrêté signifie le plus souvent « non » à l'initiative. Les positions ci-dessous sont présentées pour ou contre l'objet lui-même.",
     group: (p) => `Groupe ${p}`, other_group: 'Autres', show_group: 'Afficher les membres du groupe', click_hint: 'Cliquez sur un groupe ou sur un nombre pour voir les personnes concernées.', show_pos: (p) => `Voir qui : ${p.toLowerCase()}`, members: (n) => `Voir les ${n} conseiller·ère·s`, search: 'Chercher un nom', all: 'Tous',
     pos: { for: 'Pour', against: 'Contre', abstain: 'Abstention', absent: 'Absent·e', excused: 'Excusé·e', president: 'Présidence (ne vote pas)' },
@@ -29,7 +29,7 @@ const TEXT: Record<Lang, {
     result: 'Résultat', pending: 'à venir', position: 'Position', vote: 'Votation',
   },
   de: {
-    title: 'Wie der Nationalrat abgestimmt hat', lead: (d) => `Schlussabstimmung vom ${d}, Position jedes Ratsmitglieds zur Vorlage, über die das Volk abstimmt.`,
+    title: 'Wie das Parlament abgestimmt hat', nr: 'Nationalrat', sr: 'Ständerat', sr_lead: 'Schlussabstimmung, Anzahl Ständerätinnen und Ständeräte für und gegen die Vorlage (Zählung Swissvotes).', sr_names: 'Einzelstimmen des Ständerats sind noch nicht verfügbar.', lead: (d) => `Schlussabstimmung vom ${d}, Position jedes Ratsmitglieds zur Vorlage, über die das Volk abstimmt.`,
     inverted: 'Bei einer Volksinitiative stimmt das Parlament über seine Empfehlung ab: «Ja» zum Bundesbeschluss heisst meist «Nein» zur Initiative. Die Positionen unten gelten für oder gegen die Vorlage selbst.',
     group: (p) => `Fraktion ${p}`, other_group: 'Andere', show_group: 'Mitglieder der Fraktion anzeigen', click_hint: 'Klicken Sie auf eine Fraktion oder eine Zahl, um die betreffenden Personen zu sehen.', show_pos: (p) => `Wer: ${p}`, members: (n) => `Alle ${n} Ratsmitglieder anzeigen`, search: 'Name suchen', all: 'Alle',
     pos: { for: 'Dafür', against: 'Dagegen', abstain: 'Enthaltung', absent: 'Abwesend', excused: 'Entschuldigt', president: 'Präsidium (stimmt nicht)' },
@@ -38,7 +38,7 @@ const TEXT: Record<Lang, {
     result: 'Resultat', pending: 'noch offen', position: 'Position', vote: 'Abstimmung',
   },
   it: {
-    title: 'Come ha votato il Consiglio nazionale', lead: (d) => `Votazione finale del ${d}, posizione di ogni consigliere sull'oggetto sottoposto al popolo.`,
+    title: 'Come ha votato il Parlamento', nr: 'Consiglio nazionale', sr: 'Consiglio degli Stati', sr_lead: 'Votazione finale, numero di consiglieri agli Stati favorevoli e contrari all’oggetto sottoposto al popolo (conteggio Swissvotes).', sr_names: 'Il dettaglio per persona non è ancora disponibile per il Consiglio degli Stati.', lead: (d) => `Votazione finale del ${d}, posizione di ogni consigliere sull'oggetto sottoposto al popolo.`,
     inverted: "Per un'iniziativa popolare il Parlamento vota sulla sua raccomandazione: «sì» al decreto significa di solito «no» all'iniziativa. Le posizioni qui sotto sono per o contro l'oggetto stesso.",
     group: (p) => `Gruppo ${p}`, other_group: 'Altri', show_group: 'Mostra i membri del gruppo', click_hint: 'Cliccate su un gruppo o su un numero per vedere le persone interessate.', show_pos: (p) => `Chi: ${p.toLowerCase()}`, members: (n) => `Mostra tutti i ${n} consiglieri`, search: 'Cerca un nome', all: 'Tutti',
     pos: { for: 'Favorevole', against: 'Contrario', abstain: 'Astensione', absent: 'Assente', excused: 'Scusato/a', president: 'Presidenza (non vota)' },
@@ -47,7 +47,7 @@ const TEXT: Record<Lang, {
     result: 'Risultato', pending: 'in sospeso', position: 'Posizione', vote: 'Votazione',
   },
   en: {
-    title: 'How the National Council voted', lead: (d) => `Final vote of ${d}: each member's position on the proposal put to the people.`,
+    title: 'How Parliament voted', nr: 'National Council', sr: 'Council of States', sr_lead: 'Final vote: number of members of the Council of States for and against the proposal (Swissvotes count).', sr_names: 'Individual votes are not available yet for the Council of States.', lead: (d) => `Final vote of ${d}: each member's position on the proposal put to the people.`,
     inverted: 'For a popular initiative, Parliament votes on its recommendation: "yes" to the decree usually means "no" to the initiative. The positions below are for or against the proposal itself.',
     group: (p) => `${p} group`, other_group: 'Others', show_group: "Show the group's members", click_hint: 'Click a group or a number to see the people concerned.', show_pos: (p) => `Who: ${p.toLowerCase()}`, members: (n) => `Show all ${n} members`, search: 'Search a name', all: 'All',
     pos: { for: 'For', against: 'Against', abstain: 'Abstained', absent: 'Absent', excused: 'Excused', president: 'Chair (does not vote)' },
@@ -121,13 +121,33 @@ function membersBlock(v: ParlVote): string {
 }
 
 /** Appends one card per ballot with a National Council final vote; nothing when there is none. */
+interface StatesTotal { anr: string; role: string; sr_yes: number; sr_no: number }
+
+/** Council of States: totals for and against the proposal (individual votes come later). */
+function statesBlock(rows: StatesTotal[]): string {
+  if (!rows.length) return '';
+  const m = M();
+  return `<div class="chamber"><h3 class="chamber-title">${esc(m.sr)}</h3>
+    <p>${esc(m.sr_lead)}</p>
+    ${rows.map((r) => {
+      const total = r.sr_yes + r.sr_no;
+      return `${rows.length > 1 ? `<p class="small muted">${esc(r.role === 'main' ? '' : tr(r.role))}</p>` : ''}
+        <p class="parl-total">${posBadge('for')} <strong>${num(r.sr_yes)}</strong> ${posBadge('against')} <strong>${num(r.sr_no)}</strong></p>
+        ${total ? `<div class="split"><span class="yes" style="flex-basis:${(r.sr_yes / total) * 100}%"></span><span class="no" style="flex-basis:${(r.sr_no / total) * 100}%"></span></div>` : ''}`;
+    }).join('')}
+    <p class="muted small">${esc(m.sr_names)}</p></div>`;
+}
+
 export async function parliamentCard(container: HTMLElement, financingId: number) {
-  const votes = await get<ParlVote[]>(`financings/${financingId}/parliament`).catch(() => [] as ParlVote[]);
-  if (!votes.length) return;
+  const [votes, states] = await Promise.all([
+    get<ParlVote[]>(`financings/${financingId}/parliament`).catch(() => [] as ParlVote[]),
+    get<StatesTotal[]>(`financings/${financingId}/states`).catch(() => [] as StatesTotal[]),
+  ]);
+  if (!votes.length && !states.length) return;
   const m = M();
   const section = document.createElement('section');
   section.className = 'card parl';
-  section.innerHTML = `<h2>${esc(m.title)}</h2>` + votes.map((v) => {
+  section.innerHTML = `<h2>${esc(m.title)}</h2>` + (votes.length ? `<h3 class="chamber-title">${esc(m.nr)}</h3>` : '') + votes.map((v) => {
     const c = (p: Position) => v.members.filter((x) => x.position === p).length;
     return `<div class="parl-vote">
       ${votes.length > 1 ? `<h3>${esc([v.role === 'main' ? '' : tr(v.role), v.bill_title ? typo(v.bill_title) : ''].filter(Boolean).join(': '))}</h3>` : ''}
@@ -144,7 +164,8 @@ export async function parliamentCard(container: HTMLElement, financingId: number
       ${v.inverted ? `<p class="muted small">${esc(m.inverted)}</p>` : ''}
       ${membersBlock(v)}
     </div>`;
-  }).join('') + `<p class="muted small">${esc(m.source(date(votes[0].fetched_at)))}</p>`;
+  }).join('') + statesBlock(states)
+    + (votes.length ? `<p class="muted small">${esc(m.source(date(votes[0].fetched_at)))}</p>` : '');
   container.append(section);
   // Show only members with one position in a list; '' shows everyone.
   const showPos = (list: HTMLElement, pos: string) => list.querySelectorAll<HTMLElement>('li').forEach((li) => {

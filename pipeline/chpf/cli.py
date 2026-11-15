@@ -21,7 +21,7 @@ from . import settings
 from .archive import Archive
 from .efk import EfkClient, EfkError
 from .load import Snapshot, connect, load_snapshot
-from . import lobbywatch, parliament, swissvotes
+from . import bfs_results, lobbywatch, parliament, swissvotes
 from .parse import Cantons, Parties, ParseError, classify_form, parse_candidates, parse_detail, parse_trees
 
 TREES = ["campaign_financings", "party_financings"]
@@ -124,6 +124,26 @@ def fetch_parliament(archive: Archive) -> str:
         return f"{n} new files" + (f", {len(errors)} errors: {'; '.join(errors[:3])}" if errors else "")
     except Exception as e:
         return f"FAILED ({e})"
+
+
+def fetch_canton_results(archive: Archive) -> str:
+    """Fetch the BFS results of past voting days (missing or still provisional). Never raises."""
+    try:
+        snap, _, _, _ = build_snapshot(archive, Cantons())
+        ballots, _, _ = build_ballots(archive, snap.financings)
+        n, errors = bfs_results.fetch(archive, [b.vote_date for b in ballots or []])
+        return f"{n} new or updated files" + (f", {len(errors)} errors: {'; '.join(errors[:3])}" if errors else "")
+    except Exception as e:
+        return f"FAILED ({e})"
+
+
+def load_canton_results(conn, archive: Archive, ballots) -> str:
+    try:
+        r = bfs_results.load(conn, archive, ballots)
+    except Exception as e:
+        conn.rollback()
+        return f"FAILED ({e}) – previous data kept"
+    return f"{r['ballots']} ballots, {r['rows']} canton rows" if r else "tables missing (apply migration 007)"
 
 
 def load_parliament(conn, archive: Archive, ballots) -> list[str]:
@@ -314,6 +334,7 @@ def cmd_load(trigger: str, full: bool, fetch: bool) -> int:
             report.append(f"- Swissvotes dataset: {fetch_swissvotes(archive)}")
             report.append(f"- Lobbywatch export: {fetch_lobbywatch(archive)}")
             report.append(f"- Parliament final votes: {fetch_parliament(archive)}")
+            report.append(f"- Canton results (BFS): {fetch_canton_results(archive)}")
             snap, forms, _, _ = build_snapshot(archive, cantons)
             refs, (state_file, new_state) = select_details(archive, forms, snap.financings, full)
             log(f"fetching {len(refs)} of {len(forms)} declaration details")
@@ -334,6 +355,8 @@ def cmd_load(trigger: str, full: bool, fetch: bool) -> int:
         report.append(f"- Lobbywatch: {load_lobbywatch(conn, archive, parties)}")
         log("loading National Council final votes")
         report += load_parliament(conn, archive, snap.ballots)
+        log("loading canton results")
+        report.append(f"- Canton results (BFS): {load_canton_results(conn, archive, snap.ballots)}")
         report += ["", "## Loaded", *[f"- {k}: {v}" for k, v in sorted(ld.stats.items())],
                    f"- new donors: {len(ld.new_donor_keys)}"]
         report += ["", f"## Swissvotes: {len(snap.ballot_map)} ballots matched to EFK votes",
