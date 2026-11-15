@@ -44,6 +44,8 @@ class Loader:
         self.has_target_party = self.c.fetchone() is not None
         self.c.execute("SHOW COLUMNS FROM ballot LIKE 'policy_areas'")          # migration 005
         self.has_policy_areas = self.c.fetchone() is not None
+        self.c.execute("SHOW COLUMNS FROM ballot LIKE 'sr_yes'")                # migration 007
+        self.has_chamber_counts = self.c.fetchone() is not None
 
     def _upsert_id(self, sql: str, args) -> int:
         """sql must end with 'ON DUPLICATE KEY UPDATE id=LAST_INSERT_ID(id), …'."""
@@ -266,6 +268,9 @@ class Loader:
                 self._label("ballot", bid, "title", lang, title, official=False)
             if self.has_policy_areas:
                 self.c.execute("UPDATE ballot SET policy_areas=%s WHERE id=%s", (",".join(b.policy_areas) or None, bid))
+            if self.has_chamber_counts:
+                self.c.execute("UPDATE ballot SET nr_yes=%s, nr_no=%s, sr_yes=%s, sr_no=%s WHERE id=%s",
+                               (b.nr_yes, b.nr_no, b.sr_yes, b.sr_no, bid))
             self.c.execute("DELETE FROM ballot_recommendation WHERE ballot_id=%s", (bid,))
             rows = [(bid, rec_ids[code], rec) for code, rec in b.recommendations.items() if code in rec_ids]
             if rows:

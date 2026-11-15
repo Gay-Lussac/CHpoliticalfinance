@@ -443,6 +443,58 @@ app.get('/api/financings/:id/parliament', async (req, reply) => {
   });
 });
 
+// Council of States totals (Swissvotes, migration 007) per ballot of a vote; [] before the migration.
+async function statesTotals(financingId) {
+  const [rows] = await pool.query(
+    `SELECT b.anr, b.role, b.sr_yes, b.sr_no FROM ballot b WHERE b.financing_id = ? AND b.sr_yes IS NOT NULL
+      ORDER BY FIELD(b.role, 'main', 'counter_proposal', 'tie_break')`, [financingId])
+    .catch((err) => { if (err.code === 'ER_BAD_FIELD_ERROR') return [[]]; throw err; });
+  return rows;
+}
+
+app.get('/api/financings/:id/states', async (req, reply) => {
+  const id = idOf(req.params.id);
+  if (id === null) return reply.code(404).send({ error: 'not found' });
+  return cached(`states:${id}`, () => statesTotals(id));
+});
+
+// Popular result per canton (BFS) with how that canton's National Council members voted, per ballot of a vote.
+app.get('/api/financings/:id/cantons', async (req, reply) => {
+  const id = idOf(req.params.id);
+  if (id === null) return reply.code(404).send({ error: 'not found' });
+  return cached(`cantons:${id}`, async () => {
+    const [ballots] = await pool.query(
+      `SELECT b.id, b.anr, b.role, b.outcome, DATEDIFF(CURDATE(), b.vote_date) <= 14 AS recent FROM ballot b WHERE b.financing_id = ?
+        ORDER BY FIELD(b.role, 'main', 'counter_proposal', 'tie_break')`, [id]);
+    const out = [];
+    for (const b of ballots) {
+      const [cantons] = await pool.query(
+        'SELECT canton, yes_share, yes, no, turnout, provisional FROM ballot_canton WHERE ballot_id = ? ORDER BY canton', [b.id])
+        .catch((err) => { if (err.code === 'ER_NO_SUCH_TABLE') return [[]]; throw err; });
+      const [members] = await pool.query(
+        `SELECT v.canton, ${POSITION} AS position, COUNT(*) AS n
+           FROM parl_vote pv JOIN parl_voting v ON v.vote_id = pv.id
+          WHERE pv.ballot_id = ? GROUP BY v.canton, position`, [b.id])
+        .catch((err) => { if (err.code === 'ER_NO_SUCH_TABLE') return [[]]; throw err; });
+      if (!cantons.length && !members.length) continue;
+      const nr = {};
+      for (const m of members) {
+        const k = ['excused', 'president'].includes(m.position) ? 'absent' : m.position;
+        (nr[m.canton] ??= { for: 0, against: 0, abstain: 0, absent: 0 })[k] += Number(m.n);
+      }
+      const codes = [...new Set([...cantons.map((c) => c.canton), ...Object.keys(nr)])].sort();
+      out.push({ anr: b.anr, role: b.role, outcome: b.outcome, cantons: codes.map((code) => {
+        const c = cantons.find((x) => x.canton === code);
+        return { canton: code, yes_share: c ? Number(c.yes_share) : null, yes: c?.yes ?? null, no: c?.no ?? null,
+          // The BFS keeps its "provisional" flag long after a vote: shown only in the first two weeks.
+          turnout: c?.turnout == null ? null : Number(c.turnout), provisional: !!c?.provisional && !!b.recent,
+          nr: nr[code] ?? { for: 0, against: 0, abstain: 0, absent: 0 } };
+      }) });
+    }
+    return out;
+  });
+});
+
 app.get('/api/actors/:id/lobby', async (req, reply) => {
   const lang = langOf(req.query);
   const id = idOf(req.params.id);

@@ -7,6 +7,7 @@ import { moneyTitle } from './money';
 import { href } from '../router';
 import { inkindCard } from './inkind';
 import { parliamentCard } from './parliament';
+import { cantonMapCard } from './cantonmap';
 import { timingCard } from './timing';
 import { ballotsCard, defaultPhase, phaseToggle, sideTotals, splitBar, statTiles, viewsGrid, voteCard, voteSentence } from './common';
 
@@ -52,6 +53,7 @@ export async function votePage(main: HTMLElement, id: string | undefined, params
   extra.className = 'extra-cards';
   main.append(extra);
   await parliamentCard(extra, f.id);
+  await cantonMapCard(extra, f.id);
   await timingCard(extra, f.id);
   await inkindCard(extra, f.id);
 }
