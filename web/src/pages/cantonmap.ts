@@ -65,10 +65,10 @@ const TEXT: Record<Lang, {
 const M = () => TEXT[lang()];
 
 // ---- colours: OKLab mix between a neutral and the yes / no series colours (three steps each side)
-const hex = (h: string) => { const v = h.replace('#', ''); return [0, 2, 4].map((i) => parseInt(v.slice(i, i + 2), 16) / 255); };
+export const hex = (h: string) => { const v = h.replace('#', ''); return [0, 2, 4].map((i) => parseInt(v.slice(i, i + 2), 16) / 255); };
 const lin = (c: number) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
 const gam = (c: number) => (c <= 0.0031308 ? 12.92 * c : 1.055 * c ** (1 / 2.4) - 0.055);
-function toLab([r, g, b]: number[]) {
+export function toLab([r, g, b]: number[]) {
   const [R, G, B] = [lin(r), lin(g), lin(b)];
   const l = Math.cbrt(0.4122214708 * R + 0.5363015264 * G + 0.0514459929 * B);
   const m = Math.cbrt(0.2119034982 * R + 0.6806995451 * G + 0.1073969566 * B);
@@ -84,7 +84,7 @@ function toHex([L, a, b]: number[]) {
     -0.0041960863 * l - 0.7034186147 * m + 1.707614701 * s];
   return `#${rgb.map((c) => Math.round(Math.min(1, Math.max(0, gam(c))) * 255).toString(16).padStart(2, '0')).join('')}`;
 }
-const mix = (a: string, b: string, t: number) => { const A = toLab(hex(a)); const B = toLab(hex(b)); return toHex(A.map((x, i) => x + (B[i] - x) * t)); };
+export const mix = (a: string, b: string, t: number) => { const A = toLab(hex(a)); const B = toLab(hex(b)); return toHex(A.map((x, i) => x + (B[i] - x) * t)); };
 
 /** Six classes: no ≥ 65 %, 55–65, 50–55 | 50–55, 55–65, ≥ 65 % yes. Each side: a lighter shade, the series colour, and a
  *  stronger shade (towards the text colour). Validated per side with the dataviz checker, light and dark. */
@@ -106,7 +106,7 @@ const pct = (v: number) => new Intl.NumberFormat(locale(), { style: 'percent', m
 const nrShare = (n: NR) => (n.for + n.against ? (n.for / (n.for + n.against)) * 100 : null);
 
 let geo: Promise<any> | null = null;
-const loadGeo = () => (geo ??= fetch('/geo/ch-cantons.json').then((r) => (r.ok ? r.json() : null)).catch(() => null));
+export const loadGeo = () => (geo ??= fetch('/geo/ch-cantons.json').then((r) => (r.ok ? r.json() : null)).catch(() => null));
 
 /** Appends the map card for a vote; nothing when there are neither canton results nor National Council votes. */
 export async function cantonMapCard(container: HTMLElement, financingId: number) {

@@ -16,6 +16,7 @@ const TEXT = {
     parties: ['Partis', 'Financement annuel des partis politiques suisses : recettes et dons déclarés.'],
     explore: ['Explorer les données', 'Explorer et filtrer toutes les données du financement politique en Suisse.'],
     money: ['L\'argent fait-il gagner les votations ?', 'Argent déclaré par les camps du Oui et du Non face au résultat de chaque votation fédérale : le camp le plus financé gagne-t-il ?'],
+    agreement: ['Les élu·e·s votent-ils comme leur canton ?', 'Part des électrices et électeurs inscrits de son canton ayant voté comme chaque conseiller·ère national·e : méthode et résultats.'],
     mandates: ['Ce que les élu·e·s et les juges reversent à leur parti', 'Contributions des conseillers fédéraux, parlementaires et juges fédéraux à leur parti, nom par nom, d\'après les comptes annuels des partis.'],
     law: ['Ce que couvre la loi', 'Les règles fédérales de transparence du financement politique en bref : qui doit déclarer, quels dons sont nommés, ce qui n\'est pas couvert.'],
     about: ['À propos et méthodologie', 'Sources, méthode et limites des données sur le financement politique en Suisse.'],
@@ -37,6 +38,7 @@ const TEXT = {
     parties: ['Parteien', 'Jährliche Finanzierung der Schweizer Parteien: deklarierte Einnahmen und Zuwendungen.'],
     explore: ['Daten erkunden', 'Alle Daten zur Politikfinanzierung in der Schweiz erkunden und filtern.'],
     money: ['Gewinnt, wer mehr Geld hat?', 'Deklariertes Geld der Ja- und Nein-Lager im Vergleich zum Resultat jeder eidgenössischen Abstimmung: Gewinnt das finanzstärkere Lager?'],
+    agreement: ['Stimmen die Gewählten wie ihr Kanton?', 'Anteil der Stimmberechtigten im eigenen Kanton, die wie jedes Nationalratsmitglied gestimmt haben: Methode und Resultate.'],
     mandates: ['Was Gewählte und Richter·innen ihrer Partei abgeben', 'Mandatsbeiträge von Bundesrät·innen, Parlamentsmitgliedern und Bundesrichter·innen an ihre Partei, Name für Name, nach den Jahresrechnungen der Parteien.'],
     law: ['Was das Gesetz erfasst', 'Die Transparenzregeln des Bundes zur Politikfinanzierung kurz erklärt: wer offenlegen muss, welche Spenden namentlich genannt werden, was nicht erfasst ist.'],
     about: ['Über das Projekt und Methodik', 'Quellen, Methode und Grenzen der Daten zur Politikfinanzierung in der Schweiz.'],
@@ -58,6 +60,7 @@ const TEXT = {
     parties: ['Partiti', 'Finanziamento annuale dei partiti svizzeri: entrate e liberalità dichiarate.'],
     explore: ['Esplorare i dati', 'Esplorare e filtrare tutti i dati sul finanziamento della politica in Svizzera.'],
     money: ['Vince chi ha più soldi?', 'Denaro dichiarato dai fronti del sì e del no a confronto con il risultato di ogni votazione federale: vince il fronte più finanziato?'],
+    agreement: ['Gli eletti votano come il loro cantone?', 'Quota di aventi diritto di voto del proprio cantone che hanno votato come ogni consigliere nazionale: metodo e risultati.'],
     mandates: ['Quanto eletti e giudici versano al loro partito', 'Contributi di consiglieri federali, parlamentari e giudici federali al loro partito, nome per nome, secondo i conti annuali dei partiti.'],
     law: ['Cosa copre la legge', 'Le regole federali sulla trasparenza del finanziamento della politica in breve: chi deve dichiarare, quali donazioni sono nominative, cosa non è coperto.'],
     about: ['Informazioni e metodologia', 'Fonti, metodo e limiti dei dati sul finanziamento della politica in Svizzera.'],
@@ -79,6 +82,7 @@ const TEXT = {
     parties: ['Parties', 'Annual funding of Swiss political parties: declared revenue and donations.'],
     explore: ['Explore the data', 'Explore and filter all the data on political funding in Switzerland.'],
     money: ['Does money win votes?', 'Money declared by the Yes and No sides against the result of every Swiss federal vote: does the better-funded side win?'],
+    agreement: ['Do representatives vote like their canton?', "Share of their canton's registered voters who voted like each member of the National Council: method and results."],
     mandates: ['What office holders hand over to their party', 'Contributions of federal councillors, members of parliament and federal judges to their party, name by name, from the parties\' annual accounts.'],
     law: ['What the law covers', 'Switzerland\'s federal rules on political funding transparency in brief: who must disclose, which donations are named, what is not covered.'],
     about: ['About and methodology', 'Sources, method and limits of the data on political funding in Switzerland.'],
@@ -93,7 +97,7 @@ const TEXT = {
   },
 };
 
-export const STATIC = ['votes', 'elections', 'parties', 'mandates', 'explore', 'money', 'law', 'about', 'privacy', 'legal'];
+export const STATIC = ['votes', 'elections', 'parties', 'mandates', 'agreement', 'explore', 'money', 'law', 'about', 'privacy', 'legal'];
 const PRIVATE = ['donor', 'stats'];          // reachable, but kept out of search engines (robots.txt too)
 const DETAIL = ['vote', 'election', 'actor', 'candidate'];
 

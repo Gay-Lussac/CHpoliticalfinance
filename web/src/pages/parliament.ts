@@ -7,20 +7,25 @@ import { lang, locale, T, tr, type Lang } from '../i18n';
 import { href } from '../router';
 
 export type Position = 'for' | 'against' | 'abstain' | 'absent' | 'excused' | 'president';
+/** See the agreement page: average share of the canton's registered voters who voted like the member. */
+export interface Agreement { score: number; n: number; majority: number; majority_n: number }
+
 export interface Member { person_number: number; first_name: string; last_name: string; canton: string | null; group_code: string | null;
   position: Position; party_code: string | null; party_color: string | null; party_label: string | null; candidate_id: number | null;
-  canton_agreement?: { agree: number; n: number } | null }
+  canton_agreement?: Agreement | null }
 export interface ParlVote { id: number; business: string; bill_title: string | null; voted_at: string | null; inverted: boolean;
   fetched_at: string | null; role: string; anr: string; members: Member[] }
 export interface FinalVote { financing_id: number; event_date: string | null; title: string; role: string; outcome: string | null;
-  position: Position; fetched_at: string | null; canton: string | null; canton_yes_share: number | null }
+  position: Position; fetched_at: string | null; canton: string | null; canton_yes_share: number | null;
+  canton_yes: number | null; canton_no: number | null; canton_eligible: number | null }
 
 const TEXT: Record<Lang, {
   title: string; nr: string; sr: string; sr_lead: string; sr_names: string; lead: (d: string) => string; inverted: string; group: (p: string) => string; other_group: string; show_group: string; click_hint: string; show_pos: (p: string) => string;
   pos: Record<Position, string>; members: (n: number) => string; search: string; all: string; source: (d: string) => string;
   member_votes: string; member_lead: string; result: string; pending: string; position: string; vote: string;
-  agree_short: (p: string) => string; agree_title: (a: number, n: number) => string; agree_lead: (a: number, n: number, p: string) => string;
-  col_canton: string; agree_yes: string; agree_no: string; agree_note: string;
+  agree_short: (p: string) => string; agree_title: (p: string, n: number) => string; agree_lead: (p: string, n: number) => string;
+  agree_majority: (a: number, n: number) => string; col_canton: string; agree_yes: string; agree_no: string;
+  same_side: (p: string) => string; agree_more: string; yes_word: string;
 }> = {
   fr: {
     title: 'Comment le Parlement a voté', nr: 'Conseil national', sr: 'Conseil des États', sr_lead: 'Vote final, nombre de conseiller·ère·s aux États pour et contre l’objet soumis au peuple (décompte Swissvotes).', sr_names: 'Le détail par personne n’est pas encore disponible pour le Conseil des États.', lead: (d) => `Vote final du ${d}, position de chaque conseiller·ère sur l'objet soumis au peuple.`,
@@ -30,10 +35,11 @@ const TEXT: Record<Lang, {
     source: (d) => `Source : Services du Parlement de l'Assemblée fédérale, Berne (données téléchargées le ${d}). Il ne s'agit pas d'une publication officielle.`,
     member_votes: 'Ses votes finaux au Conseil national', member_lead: 'Position sur les objets ensuite soumis au peuple.',
     result: 'Résultat', pending: 'à venir', position: 'Position', vote: 'Votation',
-    agree_short: (p) => `avec son canton ${p}`, agree_title: (a, n) => `A voté comme la majorité des votant·e·s de son canton dans ${a} votations sur ${n}`,
-    agree_lead: (a, n, p) => `A voté comme la majorité des votant·e·s de son canton dans ${a} votations sur ${n} (${p}).`,
-    col_canton: 'Votant·e·s du canton', agree_yes: 'comme le canton', agree_no: 'contre le canton',
-    agree_note: "Compare le vote final de l'élu·e avec le résultat dans son canton ; les abstentions et les résultats à exactement 50 % ne comptent pas. Un·e élu·e représente aussi son parti et ses convictions : ce n'est pas une note.",
+    agree_short: (p) => `${p} des électeur·rice·s du canton`, agree_title: (p, n) => `En moyenne, ${p} des électeur·rice·s inscrit·e·s de son canton ont voté comme cette personne (${n} votations)`,
+    agree_lead: (p, n) => `En moyenne, ${p} des électeur·rice·s inscrit·e·s de son canton ont voté comme cette personne (${n} votations).`,
+    agree_majority: (a, n) => `Du côté de la majorité de son canton dans ${a} votations sur ${n}.`,
+    col_canton: 'Électeur·rice·s du canton', agree_yes: 'comme la majorité', agree_no: 'contre la majorité', same_side: (p) => `${p} des inscrit·e·s du même avis`,
+    agree_more: 'Comment ce chiffre est calculé', yes_word: 'oui',
   },
   de: {
     title: 'Wie das Parlament abgestimmt hat', nr: 'Nationalrat', sr: 'Ständerat', sr_lead: 'Schlussabstimmung, Anzahl Ständerätinnen und Ständeräte für und gegen die Vorlage (Zählung Swissvotes).', sr_names: 'Einzelstimmen des Ständerats sind noch nicht verfügbar.', lead: (d) => `Schlussabstimmung vom ${d}, Position jedes Ratsmitglieds zur Vorlage, über die das Volk abstimmt.`,
@@ -43,10 +49,11 @@ const TEXT: Record<Lang, {
     source: (d) => `Quelle: Parlamentsdienste der Bundesversammlung, Bern (Daten heruntergeladen am ${d}). Keine offizielle Veröffentlichung.`,
     member_votes: 'Schlussabstimmungen im Nationalrat', member_lead: 'Position zu Vorlagen, über die danach das Volk abgestimmt hat.',
     result: 'Resultat', pending: 'noch offen', position: 'Position', vote: 'Abstimmung',
-    agree_short: (p) => `mit dem Kanton ${p}`, agree_title: (a, n) => `Hat in ${a} von ${n} Abstimmungen wie die Mehrheit der Stimmenden im eigenen Kanton gestimmt`,
-    agree_lead: (a, n, p) => `Hat in ${a} von ${n} Abstimmungen wie die Mehrheit der Stimmenden im eigenen Kanton gestimmt (${p}).`,
-    col_canton: 'Stimmende im Kanton', agree_yes: 'wie der Kanton', agree_no: 'gegen den Kanton',
-    agree_note: 'Vergleicht die Schlussabstimmung des Ratsmitglieds mit dem Resultat im eigenen Kanton; Enthaltungen und Resultate von genau 50 % zählen nicht. Gewählte vertreten auch Partei und Überzeugungen: Das ist keine Note.',
+    agree_short: (p) => `${p} der Stimmberechtigten im Kanton`, agree_title: (p, n) => `Im Durchschnitt haben ${p} der Stimmberechtigten im eigenen Kanton wie diese Person gestimmt (${n} Abstimmungen)`,
+    agree_lead: (p, n) => `Im Durchschnitt haben ${p} der Stimmberechtigten im eigenen Kanton wie diese Person gestimmt (${n} Abstimmungen).`,
+    agree_majority: (a, n) => `Auf der Seite der Kantonsmehrheit in ${a} von ${n} Abstimmungen.`,
+    col_canton: 'Stimmende im Kanton', agree_yes: 'wie die Mehrheit', agree_no: 'gegen die Mehrheit', same_side: (p) => `${p} der Stimmberechtigten gleicher Meinung`,
+    agree_more: 'Wie diese Zahl berechnet wird', yes_word: 'Ja',
   },
   it: {
     title: 'Come ha votato il Parlamento', nr: 'Consiglio nazionale', sr: 'Consiglio degli Stati', sr_lead: 'Votazione finale, numero di consiglieri agli Stati favorevoli e contrari all’oggetto sottoposto al popolo (conteggio Swissvotes).', sr_names: 'Il dettaglio per persona non è ancora disponibile per il Consiglio degli Stati.', lead: (d) => `Votazione finale del ${d}, posizione di ogni consigliere sull'oggetto sottoposto al popolo.`,
@@ -56,10 +63,11 @@ const TEXT: Record<Lang, {
     source: (d) => `Fonte: Servizi del Parlamento dell'Assemblea federale, Berna (dati scaricati il ${d}). Non si tratta di una pubblicazione ufficiale.`,
     member_votes: 'Votazioni finali al Consiglio nazionale', member_lead: 'Posizione sugli oggetti poi sottoposti al popolo.',
     result: 'Risultato', pending: 'in sospeso', position: 'Posizione', vote: 'Votazione',
-    agree_short: (p) => `con il cantone ${p}`, agree_title: (a, n) => `Ha votato come la maggioranza dei votanti del suo cantone in ${a} votazioni su ${n}`,
-    agree_lead: (a, n, p) => `Ha votato come la maggioranza dei votanti del suo cantone in ${a} votazioni su ${n} (${p}).`,
-    col_canton: 'Votanti del cantone', agree_yes: 'come il cantone', agree_no: 'contro il cantone',
-    agree_note: "Confronta la votazione finale dell'eletto con il risultato nel suo cantone; astensioni e risultati esattamente al 50 % non contano. Un eletto rappresenta anche partito e convinzioni: non è un voto in pagella.",
+    agree_short: (p) => `${p} degli aventi diritto del cantone`, agree_title: (p, n) => `In media, ${p} degli aventi diritto di voto del suo cantone hanno votato come questa persona (${n} votazioni)`,
+    agree_lead: (p, n) => `In media, ${p} degli aventi diritto di voto del suo cantone hanno votato come questa persona (${n} votazioni).`,
+    agree_majority: (a, n) => `Dalla parte della maggioranza del suo cantone in ${a} votazioni su ${n}.`,
+    col_canton: 'Votanti del cantone', agree_yes: 'come la maggioranza', agree_no: 'contro la maggioranza', same_side: (p) => `${p} degli aventi diritto della stessa opinione`,
+    agree_more: 'Come si calcola questo numero', yes_word: 'sì',
   },
   en: {
     title: 'How Parliament voted', nr: 'National Council', sr: 'Council of States', sr_lead: 'Final vote: number of members of the Council of States for and against the proposal (Swissvotes count).', sr_names: 'Individual votes are not available yet for the Council of States.', lead: (d) => `Final vote of ${d}: each member's position on the proposal put to the people.`,
@@ -69,10 +77,11 @@ const TEXT: Record<Lang, {
     source: (d) => `Source: Parliamentary Services of the Federal Assembly, Bern (data downloaded on ${d}). Not an official publication.`,
     member_votes: 'Final votes in the National Council', member_lead: 'Position on proposals later put to the people.',
     result: 'Result', pending: 'pending', position: 'Position', vote: 'Vote',
-    agree_short: (p) => `with canton ${p}`, agree_title: (a, n) => `Voted like the majority of voters in their canton in ${a} of ${n} votes`,
-    agree_lead: (a, n, p) => `Voted like the majority of voters in their canton in ${a} of ${n} votes (${p}).`,
-    col_canton: 'Canton voters', agree_yes: 'like the canton', agree_no: 'against the canton',
-    agree_note: "Compares the member's final vote with the result in their canton; abstentions and results of exactly 50% are left out. Members also represent their party and convictions: this is not a score.",
+    agree_short: (p) => `${p} of canton voters`, agree_title: (p, n) => `On average, ${p} of the registered voters in their canton voted the same way as this person (${n} votes)`,
+    agree_lead: (p, n) => `On average, ${p} of the registered voters in their canton voted the same way as this person (${n} votes).`,
+    agree_majority: (a, n) => `On the side of their canton's majority in ${a} of ${n} votes.`,
+    col_canton: 'Canton voters', agree_yes: 'like the majority', agree_no: 'against the majority', same_side: (p) => `${p} of registered voters agreed`,
+    agree_more: 'How this number is calculated', yes_word: 'yes',
   },
 };
 const M = () => TEXT[lang()];
@@ -88,11 +97,12 @@ const ORDER: Record<string, number> = { for: 0, against: 1, abstain: 2, absent: 
 /** One member as a list item: name (linked to their candidate page), canton or party, position. */
 const pct0 = (v: number) => new Intl.NumberFormat(locale(), { style: 'percent', maximumFractionDigits: 0 }).format(v);
 
-/** "With canton 73 %": how often the member voted like their canton's majority (all popular votes so far). */
-export function agreementTag(a: { agree: number; n: number } | null | undefined): string {
+/** "31% of canton voters": share of the canton's registered voters who voted like the member, on average. Links to
+ *  the page explaining it. */
+export function agreementTag(a: Agreement | null | undefined): string {
   if (!a?.n) return '';
   const m = M();
-  return ` <span class="agree-tag" title="${esc(m.agree_title(a.agree, a.n))}">${esc(m.agree_short(pct0(a.agree / a.n)))}</span>`;
+  return ` <a class="agree-tag" href="${href('agreement')}" title="${esc(m.agree_title(pct0(a.score), a.n))}">${esc(m.agree_short(pct0(a.score)))}</a>`;
 }
 
 export function memberItem(x: Member, withParty: boolean): string {
@@ -248,30 +258,35 @@ export async function parliamentCard(container: HTMLElement, financingId: number
 }
 
 /** Card with a member's final votes (candidate page); '' when none. */
-export function memberVotesCard(votes: FinalVote[] | undefined): string {
+export function memberVotesCard(votes: FinalVote[] | undefined, agreement?: Agreement | null): string {
   if (!votes?.length) return '';
   const m = M();
   const t = T();
-  // Agreement with the canton's voters: only votes where the member took a side and the canton had a clear majority.
-  const agrees = (v: FinalVote) => (v.canton_yes_share == null || v.canton_yes_share === 50 || !['for', 'against'].includes(v.position)
-    ? null : (v.position === 'for') === (v.canton_yes_share > 50));
-  const counted = votes.map(agrees).filter((x) => x !== null) as boolean[];
-  const agree = counted.filter(Boolean).length;
+  const tookSide = (v: FinalVote) => v.position === 'for' || v.position === 'against';
+  // Per vote: share of the canton's registered voters who voted the same way, and whether that was the majority side.
+  const sameShare = (v: FinalVote) => (!tookSide(v) || !v.canton_eligible || v.canton_yes == null || v.canton_no == null ? null
+    : (v.position === 'for' ? v.canton_yes : v.canton_no) / v.canton_eligible);
+  const withMajority = (v: FinalVote) => (!tookSide(v) || v.canton_yes_share == null || v.canton_yes_share === 50 ? null
+    : (v.position === 'for') === (v.canton_yes_share > 50));
   const cantonCell = (v: FinalVote) => {
-    if (v.canton_yes_share == null) return '–';
-    const a = agrees(v);
-    return `${esc(`${v.canton ?? ''} ${pct0(v.canton_yes_share / 100)}`)} ${a === null ? '' : `<span class="${a ? 'agree-ok' : 'agree-ko'}">${esc(a ? m.agree_yes : m.agree_no)}</span>`}`;
+    if (v.canton_yes_share == null) return esc(v.outcome ? tr(v.outcome) : m.pending);
+    const share = sameShare(v);
+    const maj = withMajority(v);
+    return `${esc(`${v.canton ?? ''} ${pct0(v.canton_yes_share / 100)} ${m.yes_word}`)}${share == null ? ''
+      : `<br><span class="muted small">${esc(m.same_side(pct0(share)))}</span>`}${maj === null ? ''
+      : ` <span class="${maj ? 'agree-ok' : 'agree-ko'}">${esc(maj ? m.agree_yes : m.agree_no)}</span>`}`;
   };
   return `<section class="card m-compact parl">
     <h2>${esc(m.member_votes)}</h2><p class="muted small">${esc(m.member_lead)}</p>
-    ${counted.length ? `<p><strong>${esc(m.agree_lead(agree, counted.length, pct0(agree / counted.length)))}</strong></p>` : ''}
+    ${agreement?.n ? `<p><strong>${esc(m.agree_lead(pct0(agreement.score), agreement.n))}</strong>
+      ${agreement.majority_n ? esc(m.agree_majority(agreement.majority, agreement.majority_n)) : ''}
+      <a href="${href('agreement')}">${esc(m.agree_more)} →</a></p>` : ''}
     <div class="table-wrap"><table>
       <thead><tr><th>${esc(m.vote)}</th><th>${esc(t.date)}</th><th>${esc(m.col_canton)}</th><th>${esc(m.position)}</th></tr></thead>
       <tbody>${votes.map((v) => `<tr>
         <td><a href="${href(`vote/${v.financing_id}`)}">${esc(typo(v.title))}</a>${v.role !== 'main' ? ` <span class="muted small">(${esc(tr(v.role))})</span>` : ''}
           <div class="m-only muted small"><span>${esc(date(v.event_date))}</span><span>${cantonCell(v)}</span></div></td>
-        <td class="nowrap">${esc(date(v.event_date))}</td><td>${v.canton_yes_share == null ? esc(v.outcome ? tr(v.outcome) : m.pending) : cantonCell(v)}</td>
+        <td class="nowrap">${esc(date(v.event_date))}</td><td>${cantonCell(v)}</td>
         <td>${posBadge(v.position)}</td></tr>`).join('')}</tbody></table></div>
-    ${counted.length ? `<p class="muted small">${esc(m.agree_note)}</p>` : ''}
     <p class="muted small">${esc(m.source(date(votes[0].fetched_at)))}</p></section>`;
 }

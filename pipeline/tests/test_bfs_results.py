@@ -15,7 +15,8 @@ class FakeArchive:
 PAYLOAD = {"schweiz": {"vorlagen": [
     {"vorlagenId": 6821, "provisorisch": False, "kantone": [
         {"geoLevelnummer": "1", "resultat": {"jaStimmenInProzent": 39.97, "jaStimmenAbsolut": 238179,
-                                               "neinStimmenAbsolut": 357691, "stimmbeteiligungInProzent": 61.02}},
+                                               "neinStimmenAbsolut": 357691, "stimmbeteiligungInProzent": 61.02,
+                                               "anzahlStimmberechtigte": 982722}},
         {"geoLevelnummer": "26", "resultat": {"jaStimmenInProzent": None}}]},
     {"vorlagenId": 6830, "provisorisch": True, "kantone": []}]}}
 
@@ -23,8 +24,8 @@ PAYLOAD = {"schweiz": {"vorlagen": [
 class CantonResults(unittest.TestCase):
     def test_ballot_id_is_swissvotes_number_times_ten(self):
         rows = bfs.canton_results(FakeArchive(PAYLOAD), date(2026, 3, 8), "682.1")
-        self.assertEqual(rows, [{"canton": "ZH", "yes_share": 39.97, "yes": 238179, "no": 357691, "turnout": 61.02,
-                                 "provisional": False}])
+        self.assertEqual(rows, [{"canton": "ZH", "yes_share": 39.97, "yes": 238179, "no": 357691, "eligible": 982722,
+                                 "turnout": 61.02, "provisional": False}])
 
     def test_missing_ballot_or_day(self):
         self.assertEqual(bfs.canton_results(FakeArchive(PAYLOAD), date(2026, 3, 8), "690"), [])

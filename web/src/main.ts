@@ -8,6 +8,7 @@ import { href, navigate, parseLocation, startRouter } from './router';
 import { setNavigator, wireTips } from './views';
 
 import { aboutPage } from './pages/about';
+import { agreementPage } from './pages/agreement';
 import { actorPage } from './pages/actor';
 import { candidatePage } from './pages/candidates';
 import { donorPage } from './pages/donor';
@@ -37,6 +38,7 @@ const PAGES: Record<string, Page> = {
   explore: explorePage,
   money: moneyPage,
   mandates: mandatesPage,
+  agreement: agreementPage,
   law: lawPage,
   about: aboutPage,
   stats: statsPage,   // private, not in the navigation
