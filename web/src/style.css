@@ -451,3 +451,22 @@ th.num-col { text-align: right; }
 .parl h2 + .chamber-title { margin-top: 6px; }
 .chamber { margin-top: 22px; padding-top: 14px; border-top: 1px solid var(--border); }
 .chamber .split { max-width: 420px; }
+
+/* agreement with the canton's voters */
+.agree-tag { font-size: .75rem; color: var(--text-muted); background: var(--surface-2); padding: 0 6px; border-radius: var(--radius); }
+.agree-ok { font-size: .8rem; color: var(--text-muted); }
+.agree-ko { font-size: .8rem; color: var(--accent); font-weight: 600; }
+.cmap-table .num-btn { font-variant-numeric: tabular-nums; }
+.cmap-table tr.open td { background: var(--surface-2); }
+
+/* homepage money-origin map legend */
+.origin-map .cmap-legend { gap: 4px 14px; }
+.origin-map .lg-item { display: inline-flex; align-items: center; gap: 6px; }
+.origin-map .lg-item i { width: 18px; height: 10px; }
+
+/* agreement page */
+.score-cell { min-width: 140px; }
+.score-cell .num { display: inline-block; min-width: 3.5em; }
+.score-bar { display: inline-block; width: 70px; height: 8px; background: var(--surface-2); margin-left: 8px; vertical-align: middle; }
+.score-bar i { display: block; height: 100%; background: var(--series-7); }
+a.agree-tag:hover { text-decoration: none; color: var(--text-primary); }

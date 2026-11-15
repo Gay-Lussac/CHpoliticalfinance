@@ -154,6 +154,15 @@ def load_canton_results(conn, archive: Archive, ballots) -> str:
     return f"{r['ballots']} ballots, {r['rows']} canton rows" if r else "tables missing (apply migration 007)"
 
 
+def load_donor_cantons(conn, archive: Archive) -> str:
+    try:
+        r = bfs_results.load_geo(conn, archive)
+    except Exception as e:
+        conn.rollback()
+        return f"FAILED ({e}) – previous data kept"
+    return ", ".join(f"{k} {v}" for k, v in r.items()) if r else "tables missing (apply migration 009)"
+
+
 def load_parliament(conn, archive: Archive, ballots) -> list[str]:
     try:
         r = parliament.load(conn, archive, ballots)
@@ -410,6 +419,7 @@ def cmd_load(trigger: str, full: bool, fetch: bool) -> int:
         report += load_parliament(conn, archive, snap.ballots)
         log("loading canton results")
         report.append(f"- Canton results (BFS): {load_canton_results(conn, archive, snap.ballots)}")
+        report.append(f"- Donor cantons: {load_donor_cantons(conn, archive)}")
         report += ["", "## Loaded", *[f"- {k}: {v}" for k, v in sorted(ld.stats.items())],
                    f"- new donors: {len(ld.new_donor_keys)}"]
         report += ["", f"## Swissvotes: {len(snap.ballot_map)} ballots matched to EFK votes",

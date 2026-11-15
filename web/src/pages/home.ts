@@ -5,6 +5,7 @@ import { href } from '../router';
 import { PAGES, renderViews } from '../views';
 import { viewsGrid, voteCard } from './common';
 import { moneyTitle } from './money';
+import { originMapCard } from './originmap';
 
 const skeletonCards = (n: number) => Array.from({ length: n }, () =>
   `<div class="card" aria-hidden="true"><div class="skeleton"><span></span><span></span><span></span><span></span></div></div>`).join('');
@@ -21,7 +22,9 @@ export async function homePage(main: HTMLElement) {
       <div class="section-head"><h2>${esc(t.recent_votes)}</h2><a href="${href('votes')}">${esc(t.all_votes)} →</a></div>
       <div class="cards" id="vote-cards" aria-busy="true">${skeletonCards(6)}<span class="sr-only">${esc(t.loading)}</span></div>
       <div id="upcoming"></div>
-    </section>`;
+    </section>
+    <div id="origin-slot" class="slot"></div>`;
+  void originMapCard(document.getElementById('origin-slot')!);
   get('meta').then((m) => {
     const c = m.counts;
     document.getElementById('figures')!.innerHTML = [
