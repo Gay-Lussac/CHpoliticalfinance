@@ -16,7 +16,7 @@ def _zip(tables: dict) -> bytes:
     return buf.getvalue()
 
 
-PARL = {"id": 1, "nachname": "Gössi", "vorname": "Petra", "vorname_kurz": "", "kanton": "SZ", "rat": "SR", "partei": "FDP",
+PARL = {"id": 1, "nachname": "Gössi", "vorname": "Petra", "vorname_kurz": "", "parlament_biografie_id": 1108, "kanton": "SZ", "rat": "SR", "partei": "FDP",
         "partei_name": "FDP.Die Liberalen", "im_rat_seit": "2011-12-05"}
 TIE = {"id": 10, "parlamentarier_id": 1, "organisation_id": 100, "art": "vorstand", "funktion_im_gremium": "praesident",
        "beschreibung": "", "beschreibung_fr": "", "deklarationstyp": "deklarationspflichtig", "hauptberuflich": "0",
@@ -32,7 +32,7 @@ class Parse(unittest.TestCase):
     def test_current_ties_latest_pay(self):
         ex = lw.parse(_zip({"parlamentarier": [PARL], "interessenbindung": [TIE, OLD_TIE], "interessenbindung_jahr": YEARS,
                             "organisation": [ORG, {**ORG, "id": 101, "name_de": "Old"}], "interessengruppe": [GROUP]}), Parties())
-        self.assertEqual([p.party_code for p in ex.parliamentarians], ["FDP"])
+        self.assertEqual([(p.party_code, p.person_number) for p in ex.parliamentarians], [("FDP", 1108)])
         self.assertEqual([(t.id, t.pay_year, t.pay) for t in ex.ties], [(10, 2026, 1)])      # ended tie dropped
         self.assertEqual([(o.id, o.lobby_group_fr) for o in ex.organisations], [(100, "Restauration")])
 

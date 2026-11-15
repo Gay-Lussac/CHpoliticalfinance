@@ -142,3 +142,19 @@ source); it is credited in the footer, on the About page and under every block t
   on every sync. If the export fails, the previous data stays.
 - The dataIF REST API (`cms.lobbywatch.ch/de/data/interface/v1/json/…`) returned 0 records when tested (2026-11-15);
   the export is the reliable route.
+
+## G. National Council final votes (implemented)
+
+Parliamentary Services of the Federal Assembly, open data web service `https://ws.parlament.ch/odata.svc` (OData v2, no
+key). Terms: credit "Services du Parlement de l'Assemblée fédérale, Berne" with the download date, unchanged data, not
+presented as an official publication. This service is to be retired by the end of 2028; its successor `ws.parl.ch` needs a
+free API key (registration by the site operator) and adds Council of States individual votes.
+
+- `Vote` (one per recorded vote) filtered on `BusinessShortNumber` = Swissvotes `gesch_nr` and subject "Vote final" or
+  "Schlussabstimmung" (the subject language varies); `Voting` (one row per member: `PersonNumber`, group, `Decision`
+  1 yes, 2 no, 3 abstain, 4/5 absent, 6 excused, 7 chair).
+- The final vote used for a ballot is the one whose yes/no counts equal Swissvotes `nrja`/`nrnein`, directly or
+  reversed (± 2): reversed = Parliament voted on its recommendation decree (popular initiatives), stored as `inverted`.
+- Fetched once per business and vote (re-fetched while still empty), archived under `payloads/pa/…`; ~30 votes, ~6 000 rows.
+- `PersonNumber` = Lobbywatch `parlament_biografie_id`, which links votes to candidate pages (`lw_parliamentarian.parl_person_number`).
+- Tables `parl_vote`, `parl_voting` (migration 006).

@@ -7,6 +7,7 @@ import { lang, locale, setPageTitle, T, type Lang } from '../i18n';
 import { href } from '../router';
 import { statTiles } from './common';
 import { tiesCard, wireLobby, type Parliament } from './lobby';
+import { memberVotesCard } from './parliament';
 
 export interface CandidateRow {
   id: number; name: string; canton: string | null; party_code: string | null; party_color: string | null;
@@ -206,6 +207,6 @@ export async function candidatePage(main: HTMLElement, id: string | undefined) {
     { label: m.backers_title, value: num(c.backers.length), sub: m.backers_sub },
     { label: m.own_title, value: own.length ? chfShort(ownTotal) : '–', sub: m.own_sub(own.length) },
     { label: m.shared_title, value: num(shared.length), sub: m.shared_sub(shared.length) },
-  ]) + byElection + donors + (c.parliament ? tiesCard(c.parliament) : '') + `<p class="muted small">${esc(m.method)}</p>`;
+  ]) + byElection + donors + (c.parliament ? memberVotesCard(c.parliament.final_votes) + tiesCard(c.parliament) : '') + `<p class="muted small">${esc(m.method)}</p>`;
   wireLobby(main);
 }

@@ -27,7 +27,7 @@ MAX_MEMBER_BYTES = 80 * 1024 * 1024
 KEEP_VERSIONS = 4
 
 MEMBERS = {
-    "parlamentarier": {"id", "nachname", "vorname", "vorname_kurz", "kanton", "rat", "partei", "partei_name", "im_rat_seit"},
+    "parlamentarier": {"id", "nachname", "vorname", "vorname_kurz", "parlament_biografie_id", "kanton", "rat", "partei", "partei_name", "im_rat_seit"},
     "interessenbindung": {"id", "parlamentarier_id", "organisation_id", "art", "funktion_im_gremium", "beschreibung",
                           "beschreibung_fr", "deklarationstyp", "hauptberuflich", "von", "bis"},
     "interessenbindung_jahr": {"interessenbindung_id", "jahr", "verguetung"},
@@ -48,6 +48,7 @@ class Parliamentarian:
     party_code: str | None
     since: date | None
     short_first_name: str | None = None
+    person_number: int | None = None      # Parliament's person number (parlament_biografie_id)
 
 
 @dataclass
@@ -146,7 +147,8 @@ def parse(body: bytes, parties: Parties) -> Export:
     people = [Parliamentarian(int(p["id"]), p["nachname"].strip(), p["vorname"].strip(), _s(p["kanton"], 2),
                               p["rat"] if p["rat"] in ("NR", "SR") else None, _s(p["partei"], 40),
                               parties.match(p["partei_name"]) or parties.match(p["partei"]), _date(p["im_rat_seit"]),
-                              _s(p["vorname_kurz"], 120))
+                              _s(p["vorname_kurz"], 120),
+                              int(p["parlament_biografie_id"]) if p["parlament_biografie_id"].isdigit() else None)
               for p in parl if p["id"].isdigit()]
     ids = {p.id for p in people}
 
@@ -286,6 +288,10 @@ def load(conn, export: Export, overrides: dict) -> dict:
             "in_council_since) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)",
             [(p.id, p.last_name, p.first_name, p.canton, p.council, p.party_label,
               party_ids.get(p.party_code) if p.party_code else None, p.since) for p in export.parliamentarians])
+        c.execute("SHOW COLUMNS FROM lw_parliamentarian LIKE 'parl_person_number'")      # migration 006
+        if c.fetchone() is not None:
+            c.executemany("UPDATE lw_parliamentarian SET parl_person_number=%s WHERE id=%s",
+                          [(p.person_number, p.id) for p in export.parliamentarians if p.person_number])
         c.executemany("INSERT IGNORE INTO lw_candidate (candidate_id, parliamentarian_id) VALUES (%s,%s)",
                       [(cid, pid) for pid, cids in cand.items() for cid in cids])
         c.executemany(

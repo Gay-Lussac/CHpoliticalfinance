@@ -21,7 +21,7 @@ from . import settings
 from .archive import Archive
 from .efk import EfkClient, EfkError
 from .load import Snapshot, connect, load_snapshot
-from . import lobbywatch, swissvotes
+from . import lobbywatch, parliament, swissvotes
 from .parse import Cantons, Parties, ParseError, classify_form, parse_candidates, parse_detail, parse_trees
 
 TREES = ["campaign_financings", "party_financings"]
@@ -112,6 +112,30 @@ def load_lobbywatch(conn, archive: Archive, parties: Parties) -> str:
         conn.rollback()
         return f"FAILED ({e}) – previous data kept"
     return ", ".join(f"{k} {v}" for k, v in counts.items()) or "tables missing (apply migration 004)"
+
+
+def fetch_parliament(archive: Archive) -> str:
+    """Fetch, once, the National Council final votes of the Swissvotes ballots. Never raises."""
+    try:
+        snap, _, _, _ = build_snapshot(archive, Cantons())
+        ballots, _, _ = build_ballots(archive, snap.financings)
+        businesses = sorted({b.business for b in ballots or [] if b.business and b.nr_yes is not None})
+        n, errors = parliament.fetch(archive, businesses)
+        return f"{n} new files" + (f", {len(errors)} errors: {'; '.join(errors[:3])}" if errors else "")
+    except Exception as e:
+        return f"FAILED ({e})"
+
+
+def load_parliament(conn, archive: Archive, ballots) -> list[str]:
+    try:
+        r = parliament.load(conn, archive, ballots)
+    except Exception as e:
+        conn.rollback()
+        return [f"- Parliament final votes: FAILED ({e}) – previous data kept"]
+    if not r:
+        return ["- Parliament final votes: tables missing (apply migration 006)"]
+    return [f"- Parliament final votes: {r['final_votes']} votes, {r['votings']} individual votes"] + \
+        [f"  - not matched: {p}" for p in r["problems"]]
 
 
 def build_ballots(archive: Archive, financings) -> tuple[list | None, dict, list[str]]:
@@ -289,6 +313,7 @@ def cmd_load(trigger: str, full: bool, fetch: bool) -> int:
             log("fetching Swissvotes dataset")
             report.append(f"- Swissvotes dataset: {fetch_swissvotes(archive)}")
             report.append(f"- Lobbywatch export: {fetch_lobbywatch(archive)}")
+            report.append(f"- Parliament final votes: {fetch_parliament(archive)}")
             snap, forms, _, _ = build_snapshot(archive, cantons)
             refs, (state_file, new_state) = select_details(archive, forms, snap.financings, full)
             log(f"fetching {len(refs)} of {len(forms)} declaration details")
@@ -307,6 +332,8 @@ def cmd_load(trigger: str, full: bool, fetch: bool) -> int:
         record_payloads(conn, run_id, archive)
         log("loading Lobbywatch")
         report.append(f"- Lobbywatch: {load_lobbywatch(conn, archive, parties)}")
+        log("loading National Council final votes")
+        report += load_parliament(conn, archive, snap.ballots)
         report += ["", "## Loaded", *[f"- {k}: {v}" for k, v in sorted(ld.stats.items())],
                    f"- new donors: {len(ld.new_donor_keys)}"]
         report += ["", f"## Swissvotes: {len(snap.ballot_map)} ballots matched to EFK votes",
