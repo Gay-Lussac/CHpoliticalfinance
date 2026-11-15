@@ -13,13 +13,15 @@ import hashlib
 import json
 import sys
 from collections import defaultdict
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
+
+import yaml
 
 from . import settings
 from .archive import Archive
 from .efk import EfkClient, EfkError
 from .load import Snapshot, connect, load_snapshot
-from . import swissvotes
+from . import lobbywatch, swissvotes
 from .parse import Cantons, Parties, ParseError, classify_form, parse_candidates, parse_detail, parse_trees
 
 TREES = ["campaign_financings", "party_financings"]
@@ -79,6 +81,37 @@ def fetch_swissvotes(archive: Archive) -> str:
         return "changed" if is_new else "unchanged"
     except Exception as e:   # Swissvotes is enrichment: an outage must not block the EFK sync
         return f"FAILED ({e}) – previous version kept"
+
+
+def fetch_lobbywatch(archive: Archive) -> str:
+    """Fetch the weekly Lobbywatch export at most once every 6 days (it is refreshed on Monday mornings).
+    Returns a status line for the report; never raises."""
+    latest = archive.latest(lobbywatch.ARCHIVE_LANG, lobbywatch.ARCHIVE_PATH)
+    if latest and datetime.now(timezone.utc) - datetime.fromisoformat(latest.fetched_at) < timedelta(days=6):
+        return "recent copy kept"
+    try:
+        body, checksum = lobbywatch.fetch()
+        _, is_new = archive.store(lobbywatch.ARCHIVE_LANG, lobbywatch.ARCHIVE_PATH, checksum, body, ext="zip")
+        # Only current Lobbywatch data is openly licensed: keep the last few versions, not a history.
+        folder = (settings.RAW_DIR / archive.latest(lobbywatch.ARCHIVE_LANG, lobbywatch.ARCHIVE_PATH).file).parent
+        for old in sorted(folder.glob("*.zip"), key=lambda f: f.stat().st_mtime)[:-lobbywatch.KEEP_VERSIONS]:
+            old.unlink()
+        return "changed" if is_new else "unchanged"
+    except Exception as e:   # enrichment: an outage must not block the EFK sync
+        return f"FAILED ({e}) – previous version kept"
+
+
+def load_lobbywatch(conn, archive: Archive, parties: Parties) -> str:
+    body = archive.load_bytes(lobbywatch.ARCHIVE_LANG, lobbywatch.ARCHIVE_PATH)
+    if body is None:
+        return "not fetched yet"
+    try:
+        overrides = yaml.safe_load((settings.CONFIG_DIR / "lobbywatch_matches.yaml").read_text()) or {}
+        counts = lobbywatch.load(conn, lobbywatch.parse(body, parties), overrides)
+    except Exception as e:
+        conn.rollback()
+        return f"FAILED ({e}) – previous data kept"
+    return ", ".join(f"{k} {v}" for k, v in counts.items()) or "tables missing (apply migration 004)"
 
 
 def build_ballots(archive: Archive, financings) -> tuple[list | None, dict, list[str]]:
@@ -255,6 +288,7 @@ def cmd_load(trigger: str, full: bool, fetch: bool) -> int:
             report.append(f"- changed trees: {', '.join(changed_trees) or 'none'}")
             log("fetching Swissvotes dataset")
             report.append(f"- Swissvotes dataset: {fetch_swissvotes(archive)}")
+            report.append(f"- Lobbywatch export: {fetch_lobbywatch(archive)}")
             snap, forms, _, _ = build_snapshot(archive, cantons)
             refs, (state_file, new_state) = select_details(archive, forms, snap.financings, full)
             log(f"fetching {len(refs)} of {len(forms)} declaration details")
@@ -271,6 +305,8 @@ def cmd_load(trigger: str, full: bool, fetch: bool) -> int:
         log(f"loading {len(snap.financings)} financings, {len(snap.declarations)} declarations")
         ld = load_snapshot(conn, run_id, snap, parties, cands)
         record_payloads(conn, run_id, archive)
+        log("loading Lobbywatch")
+        report.append(f"- Lobbywatch: {load_lobbywatch(conn, archive, parties)}")
         report += ["", "## Loaded", *[f"- {k}: {v}" for k, v in sorted(ld.stats.items())],
                    f"- new donors: {len(ld.new_donor_keys)}"]
         report += ["", f"## Swissvotes: {len(snap.ballot_map)} ballots matched to EFK votes",

@@ -1,0 +1,7 @@
+# Manual corrections for the Lobbywatch ↔ EFK organisation matching (pipeline/chpf/lobbywatch.py).
+# Automatic matching links organisations with identical names only. Use this file for the rest.
+#
+# actors:        Lobbywatch organisation id: EFK actor id (the number in https://politikfinanzierung.efk.admin.ch URLs)
+# not_matched:   Lobbywatch organisation ids whose automatic match is wrong
+actors: {}
+not_matched: []

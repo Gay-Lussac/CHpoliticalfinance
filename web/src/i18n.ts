@@ -165,6 +165,7 @@ const fr = {
   optional_referendum: 'Référendum facultatif',
   tie_break: 'Question subsidiaire',
   source_swissvotes: 'Résultats et recommandations : Swissvotes (Année politique suisse, Université de Berne), CC BY 4.0',
+  source_lobbywatch: "Liens d'intérêts des parlementaires : Lobbywatch, CC BY-SA 4.0",
 };
 
 type Dict = typeof fr;
@@ -332,6 +333,7 @@ const de: Dict = {
   optional_referendum: 'Fakultatives Referendum',
   tie_break: 'Stichfrage',
   source_swissvotes: 'Ergebnisse und Parolen: Swissvotes (Année politique suisse, Universität Bern), CC BY 4.0',
+  source_lobbywatch: 'Interessenbindungen der Ratsmitglieder: Lobbywatch, CC BY-SA 4.0',
 };
 
 const it: Dict = {
@@ -497,6 +499,7 @@ const it: Dict = {
   optional_referendum: 'Referendum facoltativo',
   tie_break: 'Domanda risolutiva',
   source_swissvotes: 'Risultati e raccomandazioni: Swissvotes (Année politique suisse, Università di Berna), CC BY 4.0',
+  source_lobbywatch: "Relazioni d'interesse dei parlamentari: Lobbywatch, CC BY-SA 4.0",
 };
 
 const en: Dict = {
@@ -662,6 +665,7 @@ const en: Dict = {
   optional_referendum: 'Optional referendum',
   tie_break: 'Tie-break question',
   source_swissvotes: 'Results and recommendations: Swissvotes (Année politique suisse, University of Bern), CC BY 4.0',
+  source_lobbywatch: 'Ties of members of parliament: Lobbywatch, CC BY-SA 4.0',
 };
 
 const dicts: Record<Lang, Dict> = { fr, de, it, en };

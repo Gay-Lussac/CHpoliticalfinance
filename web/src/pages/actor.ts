@@ -4,6 +4,7 @@ import { setPageTitle, T } from '../i18n';
 import { href } from '../router';
 import { PAGES, renderViews } from '../views';
 import { statTiles, viewsGrid } from './common';
+import { lobbyLinksCard } from './lobby';
 import { hasOrientation, loadOrientation, orientationHtml, OT } from './orientation';
 
 export async function actorPage(main: HTMLElement, id: string | undefined, params?: URLSearchParams) {
@@ -35,4 +36,8 @@ export async function actorPage(main: HTMLElement, id: string | undefined, param
     { label: t.campaigns, value: String(a.campaigns) },
   ]));
   renderViews(viewsGrid(main), PAGES.actor ?? [], { actor_id: a.id });
+  const extra = document.createElement('div');
+  extra.className = 'extra-cards';
+  main.append(extra);
+  await lobbyLinksCard(extra, 'actors', a.id);
 }
