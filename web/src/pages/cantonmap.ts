@@ -16,14 +16,14 @@ type Mode = 'people' | 'nr';
 
 const TEXT: Record<Lang, {
   title: string; lead: string; people: string; nr: string; col_canton: string; col_people: string; col_nr: string; col_gap: string;
-  gap: string; same: string; none: string; tip_people: (p: string) => string; tip_nr: (f: number, a: number, o: number) => string;
+  gap: string; same: string; split: string; none: string; tip_people: (p: string) => string; tip_nr: (f: number, a: number, o: number) => string;
   legend_yes: string; legend_no: string; legend_nr_for: string; legend_nr_against: string; no_members: string; source: string;
   upcoming: string; provisional: string; nr_short: string;
 }> = {
   fr: {
     title: 'Les cantons et leurs élu·e·s', lead: 'Résultat dans chaque canton et vote final de ses conseiller·ère·s nationaux·ales sur le même objet.',
     people: 'Résultat dans le canton', nr: 'Ses conseiller·ère·s nationaux·ales', col_canton: 'Canton', col_people: 'Oui dans le canton',
-    col_nr: 'Conseil national (pour / contre)', col_gap: 'Accord', gap: 'élu·e·s à contre-courant', same: 'même avis', none: '–',
+    col_nr: 'Conseil national (pour / contre)', col_gap: 'Accord', gap: 'élu·e·s à contre-courant', same: 'même avis', split: 'élu·e·s partagé·e·s', none: '–',
     tip_people: (p) => `Peuple : ${p} de oui`, tip_nr: (f, a, o) => `Conseil national : ${f} pour, ${a} contre${o ? `, ${o} abstention ou absence` : ''}`,
     legend_yes: 'Oui', legend_no: 'Non', legend_nr_for: 'Pour', legend_nr_against: 'Contre', no_members: 'aucun vote ou égalité',
     source: 'Résultats : Office fédéral de la statistique (données ouvertes du jour de vote). Votes : Services du Parlement de l’Assemblée fédérale. Fond de carte : OFS / swisstopo, via swiss-maps.',
@@ -33,7 +33,7 @@ const TEXT: Record<Lang, {
   de: {
     title: 'Die Kantone und ihre Gewählten', lead: 'Resultat in jedem Kanton und Schlussabstimmung seiner Nationalratsmitglieder zur selben Vorlage.',
     people: 'Resultat im Kanton', nr: 'Seine Nationalratsmitglieder', col_canton: 'Kanton', col_people: 'Ja im Kanton',
-    col_nr: 'Nationalrat (dafür / dagegen)', col_gap: 'Übereinstimmung', gap: 'Gewählte gegen die Kantonsmehrheit', same: 'gleiche Meinung', none: '–',
+    col_nr: 'Nationalrat (dafür / dagegen)', col_gap: 'Übereinstimmung', gap: 'Gewählte gegen die Kantonsmehrheit', same: 'gleiche Meinung', split: 'Gewählte geteilt', none: '–',
     tip_people: (p) => `Volk: ${p} Ja`, tip_nr: (f, a, o) => `Nationalrat: ${f} dafür, ${a} dagegen${o ? `, ${o} Enthaltung oder abwesend` : ''}`,
     legend_yes: 'Ja', legend_no: 'Nein', legend_nr_for: 'Dafür', legend_nr_against: 'Dagegen', no_members: 'keine Stimme oder Gleichstand',
     source: 'Resultate: Bundesamt für Statistik (Open Data am Abstimmungstag). Stimmen: Parlamentsdienste der Bundesversammlung. Kartengrundlage: BFS / swisstopo, via swiss-maps.',
@@ -43,7 +43,7 @@ const TEXT: Record<Lang, {
   it: {
     title: 'I cantoni e i loro eletti', lead: 'Risultato in ogni cantone e votazione finale dei suoi consiglieri nazionali sullo stesso oggetto.',
     people: 'Risultato nel cantone', nr: 'I suoi consiglieri nazionali', col_canton: 'Cantone', col_people: 'Sì nel cantone',
-    col_nr: 'Consiglio nazionale (favorevoli / contrari)', col_gap: 'Accordo', gap: 'eletti controcorrente', same: 'stessa opinione', none: '–',
+    col_nr: 'Consiglio nazionale (favorevoli / contrari)', col_gap: 'Accordo', gap: 'eletti controcorrente', same: 'stessa opinione', split: 'eletti divisi', none: '–',
     tip_people: (p) => `Popolo: ${p} di sì`, tip_nr: (f, a, o) => `Consiglio nazionale: ${f} favorevoli, ${a} contrari${o ? `, ${o} astensioni o assenze` : ''}`,
     legend_yes: 'Sì', legend_no: 'No', legend_nr_for: 'Favorevoli', legend_nr_against: 'Contrari', no_members: 'nessun voto o parità',
     source: 'Risultati: Ufficio federale di statistica (dati aperti del giorno di voto). Voti: Servizi del Parlamento dell’Assemblea federale. Base cartografica: UST / swisstopo, tramite swiss-maps.',
@@ -53,7 +53,7 @@ const TEXT: Record<Lang, {
   en: {
     title: 'The cantons and their representatives', lead: "Result in each canton, and the final vote of its National Council members on the same proposal.",
     people: 'Result in the canton', nr: 'Its National Council members', col_canton: 'Canton', col_people: 'Yes in the canton',
-    col_nr: 'National Council (for / against)', col_gap: 'Agreement', gap: 'members against the canton majority', same: 'same view', none: '–',
+    col_nr: 'National Council (for / against)', col_gap: 'Agreement', gap: 'members against the canton majority', same: 'same view', split: 'members split evenly', none: '–',
     tip_people: (p) => `People: ${p} yes`, tip_nr: (f, a, o) => `National Council: ${f} for, ${a} against${o ? `, ${o} abstained or absent` : ''}`,
     legend_yes: 'Yes', legend_no: 'No', legend_nr_for: 'For', legend_nr_against: 'Against', no_members: 'no vote or tie',
     source: 'Results: Federal Statistical Office (voting-day open data). Votes: Parliamentary Services of the Federal Assembly. Base map: FSO / swisstopo, via swiss-maps.',
@@ -100,7 +100,8 @@ function colourOf(share: number | null, pal: ReturnType<typeof palette>) {
   return share <= 35 ? pal.no[0] : share <= 45 ? pal.no[1] : pal.no[2];
 }
 
-const pct = (v: number) => `${new Intl.NumberFormat(locale(), { maximumFractionDigits: 1 }).format(v)} %`;
+// Percentages in each language's own style ("51.1%" in English, "51,1 %" in French).
+const pct = (v: number) => new Intl.NumberFormat(locale(), { style: 'percent', maximumFractionDigits: 1 }).format(v / 100);
 const nrShare = (n: NR) => (n.for + n.against ? (n.for / (n.for + n.against)) * 100 : null);
 
 let geo: Promise<any> | null = null;
@@ -140,13 +141,16 @@ export async function cantonMapCard(container: HTMLElement, financingId: number)
   const rows = [...b.cantons].sort((a, c) => a.canton.localeCompare(c.canton));
   section.querySelector('tbody')!.innerHTML = rows.map((c) => {
     const share = nrShare(c.nr);
-    const gap = c.yes_share != null && share != null && (c.yes_share >= 50) !== (share >= 50) && share !== 50;
+    // Compare majorities only when both exist: an evenly split delegation (or an exact 50 % result) has none.
+    const tie = share === 50 || c.yes_share === 50;
+    const gap = c.yes_share != null && share != null && !tie && (c.yes_share > 50) !== (share > 50);
     const people = c.yes_share == null ? m.none : pct(c.yes_share);
     const nr = c.nr.for + c.nr.against ? `${num(c.nr.for)} / ${num(c.nr.against)}` : m.none;
     return `<tr${gap ? ' class="gap"' : ''}><td><strong>${esc(c.canton)}</strong>
         <div class="m-only muted small"><span>${esc(people)}</span><span>${esc(`${m.nr_short}: ${nr}`)}</span></div></td>
       <td><span class="num">${esc(people)}</span></td><td><span class="num">${esc(nr)}</span></td>
-      <td>${c.yes_share == null || share == null ? m.none : gap ? `<span class="gap-flag">${esc(m.gap)}</span>` : `<span class="muted">${esc(m.same)}</span>`}</td></tr>`;
+      <td>${c.yes_share == null || share == null ? m.none : tie ? `<span class="muted">${esc(m.split)}</span>`
+        : gap ? `<span class="gap-flag">${esc(m.gap)}</span>` : `<span class="muted">${esc(m.same)}</span>`}</td></tr>`;
   }).join('');
 
   const draw = () => {
