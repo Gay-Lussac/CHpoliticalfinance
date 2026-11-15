@@ -41,33 +41,40 @@ export function summarizeVotes(stances, recs) {
 /**
  * rows: one per (campaign, candidate): [{ campaign_id, financing_id, title, event_date, total, candidate_id,
  *        party_code, party_color, party_label }]
+ * groups: campaigns for a party or a group of parties without named candidates, one row per party they name
+ *        (party_* null when they name none): [{ campaign_id, financing_id, title, event_date, total, party_* }]
+ * Each campaign's amount is split evenly between its candidates, or between the parties a group campaign names.
  */
-export function summarizeElections(rows) {
-  const perCampaign = new Map();
-  for (const r of rows) perCampaign.set(r.campaign_id, (perCampaign.get(r.campaign_id) ?? 0) + 1);
+export function summarizeElections(rows, groups = []) {
+  const units = new Map();
+  for (const r of [...rows, ...groups]) units.set(r.campaign_id, (units.get(r.campaign_id) ?? 0) + 1);
 
   const parties = new Map();
   const campaigns = new Map();
-  for (const r of rows) {
-    const n = perCampaign.get(r.campaign_id);
+  for (const r of [...rows, ...groups]) {
+    const isGroup = r.candidate_id === undefined;
+    const n = units.get(r.campaign_id);
     const share = r.total == null ? 0 : Number(r.total) / n;
     const key = r.party_code ?? r.party_label ?? '';
-    const p = parties.get(key) ?? { code: r.party_code, label: r.party_label, color: r.party_color, candidates: new Set(), chf: 0 };
-    p.candidates.add(r.candidate_id);
+    const p = parties.get(key) ?? { code: r.party_code ?? null, label: r.party_label ?? null, color: r.party_color ?? null,
+      candidates: new Set(), groups: new Set(), chf: 0 };
+    if (isGroup) p.groups.add(r.campaign_id); else p.candidates.add(r.candidate_id);
     p.chf += share;
     parties.set(key, p);
-    if (!campaigns.has(r.campaign_id)) {
-      campaigns.set(r.campaign_id, { campaign_id: r.campaign_id, financing_id: r.financing_id, title: r.title,
-        event_date: r.event_date, total: r.total == null ? null : Number(r.total), n_candidates: n });
-    }
+    const c = campaigns.get(r.campaign_id) ?? { campaign_id: r.campaign_id, financing_id: r.financing_id, title: r.title,
+      event_date: r.event_date, total: r.total == null ? null : Number(r.total), n_candidates: 0, parties: [] };
+    if (isGroup) { if (r.party_label) c.parties.push(r.party_label); } else c.n_candidates += 1;
+    campaigns.set(r.campaign_id, c);
   }
   const total = [...parties.values()].reduce((s, p) => s + p.chf, 0);
-  const nCand = new Set(rows.map((r) => r.candidate_id)).size;
+  const nUnits = [...parties.values()].reduce((s, p) => s + p.candidates.size + p.groups.size, 0);
   return {
-    n_candidates: nCand,
+    n_candidates: new Set(rows.map((r) => r.candidate_id)).size,
+    n_group_campaigns: new Set(groups.map((g) => g.campaign_id)).size,
     total_chf: total,
     parties: [...parties.values()].map((p) => ({ code: p.code, label: p.label, color: p.color, n_candidates: p.candidates.size,
-      est_chf: Math.round(p.chf), share: total ? p.chf / total : p.candidates.size / nCand }))
+      n_groups: p.groups.size, est_chf: Math.round(p.chf),
+      share: total ? p.chf / total : (p.candidates.size + p.groups.size) / nUnits }))
       .sort((a, b) => b.share - a.share || b.n_candidates - a.n_candidates),
     campaigns: [...campaigns.values()].sort((a, b) => String(b.event_date).localeCompare(String(a.event_date))),
   };

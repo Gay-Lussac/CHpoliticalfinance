@@ -36,6 +36,12 @@ class Labels(unittest.TestCase):
         self.assertEqual([(x.full_name, x.canton) for x in c],
                          [("Gössi Petra", "SZ"), ("Kandidierende der SVP Schweiz", None)])
 
+    def test_candidates_with_note_in_name_and_party_group(self):
+        c = parse_candidates("…: Roth Franziska (SR-Kampagne) (Soleure, Parti socialiste suisse).", Cantons())
+        self.assertEqual([(x.full_name, x.canton, x.party_label) for x in c], [("Roth Franziska", "SO", "Parti socialiste suisse")])
+        g = parse_candidates("…: Wahlkampfunterstützung (FDP, SVP, die Mitte, Glp) (dans toute la Suisse, Autres partis politiques)", Cantons())
+        self.assertEqual([(x.canton, x.scope, x.party_label) for x in g], [(None, "FDP", "SVP, die Mitte, Glp")])
+
 
 class PartyMatching(unittest.TestCase):
     def setUp(self):

@@ -296,3 +296,7 @@ main:focus { outline: none; }
   .meter-value { white-space: normal; text-align: right; }
   .orient td.nowrap { white-space: normal; }
 }
+
+/* extra cards (timing, in-kind) after the views */
+.extra-cards, .slot { display: grid; gap: 16px; margin-top: 16px; }
+.extra-cards:empty, .slot:empty { display: none; }

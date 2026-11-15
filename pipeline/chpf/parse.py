@@ -162,6 +162,7 @@ class Candidate:
     full_name: str
     canton: str | None
     party_label: str | None
+    scope: str | None = None       # raw text in the canton position ("Zurich", "dans toute la Suisse", "FDP"…)
 
 
 @dataclass
@@ -436,7 +437,8 @@ def parse_detail(ref: FormRef, phase: str, kind: str, payload: dict, checksum: s
     return decl
 
 
-_CANDIDATE = re.compile(r"([^,()]+?)\s*\(([^,()]+),\s*([^()]+?)\)")
+# "Name (Canton, Party)"; the name may carry a note in brackets: "Roth Franziska (SR-Kampagne) (Soleure, PS)".
+_CANDIDATE = re.compile(r"([^,()]+?(?:\s*\([^,()]*\))?)\s*\(([^,()]+),\s*([^()]+?)\)")
 
 
 def parse_candidates(campaign_label: str | None, cantons: Cantons) -> list[Candidate]:
@@ -448,9 +450,9 @@ def parse_candidates(campaign_label: str | None, cantons: Cantons) -> list[Candi
     body = campaign_label.split(":", 1)[1]
     out = []
     for name, canton, party in _CANDIDATE.findall(body):
-        name = re.sub(r"\s+", " ", name).strip(" ,.")
+        name = re.sub(r"\s+", " ", re.sub(r"\([^()]*\)", " ", name)).strip(" ,.")
         if name:
-            out.append(Candidate(name, cantons.code(canton.strip()), party.strip()))
+            out.append(Candidate(name, cantons.code(canton.strip()), party.strip(), canton.strip()))
     return out
 
 

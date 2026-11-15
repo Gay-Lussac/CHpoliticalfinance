@@ -6,6 +6,7 @@ Declarations that failed to fetch/parse are *kept* as they were (never deleted b
 """
 from __future__ import annotations
 
+import re
 from collections import Counter
 from dataclasses import dataclass, field
 
@@ -13,7 +14,7 @@ import pymysql
 import yaml
 
 from . import settings
-from .parse import Allowance, Declaration, Parties, donor_match_key
+from .parse import Allowance, Declaration, Parties, donor_match_key, fold
 
 
 def connect():
@@ -38,6 +39,9 @@ class Loader:
         self.parties = parties
         self.stats = Counter()
         self.new_donor_keys: list[str] = []
+        # campaign_target_party comes with migration 003; until it is applied the loader simply skips it.
+        self.c.execute("SHOW TABLES LIKE 'campaign_target_party'")
+        self.has_target_party = self.c.fetchone() is not None
 
     def _upsert_id(self, sql: str, args) -> int:
         """sql must end with 'ON DUPLICATE KEY UPDATE id=LAST_INSERT_ID(id), …'."""
@@ -116,6 +120,14 @@ class Loader:
 
     def campaigns_(self, snap: Snapshot, fin_ids, actor_ids, actor_party, party_ids, candidates_by_campaign) -> dict[int, int]:
         ids = {}
+        # The same person can be spelled differently across declarations ("SCHNEIDERSCHNEITER Elisabeth" vs
+        # "Schneider-Schneiter Elisabeth"): same letters + same canton = same person, stored under the best-cased name.
+        key = lambda c: (re.sub(r"[^a-z]", "", fold(c.full_name)), c.canton)
+        spelled = {}
+        for c in (c for cs in candidates_by_campaign.values() for c in cs if c.canton):
+            best = spelled.get(key(c))
+            if best is None or sum(ch.islower() for ch in c.full_name) > sum(ch.islower() for ch in best):
+                spelled[key(c)] = c.full_name
         for cp in snap.campaigns.values():
             cands = candidates_by_campaign.get(cp.efk_id, [])
             codes = [self.parties.match(c.party_label) for c in cands]
@@ -132,6 +144,15 @@ class Loader:
                  party_ids.get(party) if party else None, canton, cp.name, self.run, self.run))
             ids[cp.efk_id] = cid
             self.c.execute("DELETE FROM campaign_candidate WHERE campaign_id=%s", (cid,))
+            if self.has_target_party:
+                # Campaigns for a party or a group of parties without named people ("dans toute la Suisse"):
+                # keep the parties they name, e.g. "(FDP, SVP, die Mitte, Glp)".
+                self.c.execute("DELETE FROM campaign_target_party WHERE campaign_id=%s", (cid,))
+                if cands and not any(c.canton for c in cands):
+                    targets = {self.parties.match(piece) for c in cands
+                               for piece in [c.scope or "", *(c.party_label or "").split(",")]}
+                    for code in sorted(t for t in targets if t and party_ids.get(t)):
+                        self.c.execute("INSERT IGNORE INTO campaign_target_party VALUES (%s,%s)", (cid, party_ids[code]))
             for cand in cands:
                 if not cand.canton:       # national campaign label ("dans toute la Suisse") or unreadable: not a person
                     continue
@@ -139,7 +160,7 @@ class Loader:
                 cand_id = self._upsert_id(
                     "INSERT INTO candidate (full_name, canton, party_label, party_id) VALUES (%s,%s,%s,%s) "
                     "ON DUPLICATE KEY UPDATE id=LAST_INSERT_ID(id), party_label=VALUES(party_label), party_id=VALUES(party_id)",
-                    (cand.full_name, cand.canton, cand.party_label, party_ids.get(code) if code else None))
+                    (spelled.get(key(cand), cand.full_name), cand.canton, cand.party_label, party_ids.get(code) if code else None))
                 self.c.execute("INSERT IGNORE INTO campaign_candidate VALUES (%s,%s)", (cid, cand_id))
             self.stats["campaigns"] += 1
         return ids

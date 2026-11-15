@@ -8,6 +8,7 @@ import { lang, locale, setPageTitle, T, type Lang } from '../i18n';
 import { href } from '../router';
 import { cssVar, plotTheme, wireSvgTips } from '../views';
 import { defaultPhase, sideTotals, statTiles } from './common';
+import { timingCard } from './timing';
 
 const TEXT: Record<Lang, {
   title: string; lead: (won: number, total: number) => string; coin: (pct: string) => string; plain: (pct: string) => string;
@@ -142,6 +143,7 @@ export async function moneyPage(main: HTMLElement) {
         sub: m.tile_init_sub(inits.filter((r) => r.yes > r.no).length) },
     ])
     + `<section class="card"><h2>${esc(m.chart_title)}</h2><div id="money-chart"></div></section>
+    <div id="timing-slot" class="slot"></div>
     <section class="card"><h2>${esc(m.caveats_title)}</h2><ul>${m.caveats.map((c) => `<li>${esc(c)}</li>`).join('')}</ul>
       <p><a href="${href('law')}">${esc(m.law_link)} →</a></p></section>
     <section class="card"><h2>${esc(m.table_title)}</h2><div class="table-wrap"><table>
@@ -152,6 +154,7 @@ export async function moneyPage(main: HTMLElement) {
         <td>${esc(t[r.outcome as 'accepted' | 'rejected'] ?? r.outcome)} (${esc(pct(r.yesShare))} %)</td>
         <td>${esc(r.won === null ? m.tie : r.won ? m.yes : m.no)}</td></tr>`).join('')}</tbody></table></div></section>`;
   drawChart(document.getElementById('money-chart')!, data, m);
+  void timingCard(document.getElementById('timing-slot')!);
 }
 
 function drawChart(el: HTMLElement, data: Row[], m: (typeof TEXT)[Lang]) {
