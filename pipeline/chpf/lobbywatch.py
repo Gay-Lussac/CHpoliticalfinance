@@ -88,12 +88,17 @@ class Export:
     ties: list
 
 
-def fetch(client: httpx.Client | None = None) -> tuple[bytes, str]:
+def fetch(client: httpx.Client | None = None, validators=None, have_copy: bool = False) -> tuple[bytes, str] | None:
+    """The export, or None when it has not changed since our copy (conditional request)."""
     own = client is None
     client = client or httpx.Client(headers={"User-Agent": settings.USER_AGENT}, timeout=120, follow_redirects=True)
     try:
-        r = client.get(URL)
+        r = client.get(URL, headers=validators.headers("lobbywatch", have_copy) if validators else None)
+        if r.status_code == 304:
+            return None
         r.raise_for_status()
+        if validators:
+            validators.remember("lobbywatch", r)
     finally:
         if own:
             client.close()
