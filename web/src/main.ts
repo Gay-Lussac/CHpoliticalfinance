@@ -74,6 +74,7 @@ function shell(page: string) {
     <footer class="site-footer wrap">
       <p>${esc(t.source_efk)}: <a href="https://politikfinanzierung.efk.admin.ch/app/${route.lang === 'en' ? 'de' : route.lang}" target="_blank" rel="noopener">politikfinanzierung.efk.admin.ch</a>
       · ${esc(t.source_swissvotes)}: <a href="https://swissvotes.ch" target="_blank" rel="noopener">swissvotes.ch</a>
+      · ${esc(t.source_lobbywatch)}: <a href="https://lobbywatch.ch" target="_blank" rel="noopener">lobbywatch.ch</a>
       · <span id="updated"></span></p>
       <p>${esc(t.independent_note)} · <a href="${href('law')}">${esc(lawTitle())}</a> · <a href="${href('privacy')}">${esc(privacyTitle())}</a> · <a href="${href('legal')}">${esc(legalTitle())}</a></p>
     </footer>`;

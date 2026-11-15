@@ -177,7 +177,8 @@ app.get('/api/meta', async () => cached('meta', async () => {
       (SELECT COUNT(*) FROM donor) AS donors,
       (SELECT COUNT(*) FROM allowance) AS allowances,
       (SELECT COALESCE(SUM(value_chf), 0) FROM v_flow WHERE is_latest) AS donations_chf`);
-  return { last_run: run ?? null, counts, datasets: Object.fromEntries(
+  const [[lw]] = await pool.query("SELECT v FROM lw_meta WHERE k = 'exported_at'").catch(noLobbywatch);
+  return { last_run: run ?? null, counts, lobbywatch_exported_at: lw?.v || null, datasets: Object.fromEntries(
     Object.entries(config.datasets).map(([k, d]) => [k, { description: d.description, fields: d.fields,
       measures: Object.keys(d.measures) }])) };
 }));
@@ -356,6 +357,63 @@ app.get('/api/candidates/:id', async (req, reply) => {
   return (await candidateById(lang, id)) ?? reply.code(404).send({ error: 'not found' });
 });
 
+// ------------------------------------------------------------------ Lobbywatch (tables from migration 004)
+// Organisation and lobby-group names in the page language (Lobbywatch has de/fr, sometimes it).
+const lwOrgName = (lang) => (lang === 'fr' ? 'COALESCE(o.name_fr, o.name_de)' : lang === 'it' ? 'COALESCE(o.name_it, o.name_fr, o.name_de)' : 'o.name_de');
+const lwGroup = (lang) => (lang === 'fr' || lang === 'it' ? 'COALESCE(o.lobby_group_fr, o.lobby_group_de)' : 'o.lobby_group_de');
+const noLobbywatch = (err) => { if (err.code === 'ER_NO_SUCH_TABLE') return [[]]; throw err; };
+
+/** The member of parliament matched to an EFK candidate, with current ties; null when none. */
+async function parliamentOf(lang, candidateId) {
+  const [[p]] = await pool.query(
+    `SELECT p.id, p.council, p.in_council_since, p.canton, pa.code AS party_code, pa.color AS party_color,
+            COALESCE(${i18nExpr('party', 'pa.id', 'name', lang, 'NULL')}, p.party_label) AS party_label
+       FROM lw_candidate lc JOIN lw_parliamentarian p ON p.id = lc.parliamentarian_id
+       LEFT JOIN party pa ON pa.id = p.party_id
+      WHERE lc.candidate_id = ?`, [candidateId]).catch(noLobbywatch);
+  if (!p) return null;
+  const [ties] = await pool.query(
+    `SELECT t.kind, t.role, t.pay, t.pay_year, t.must_declare, t.main_job,
+            ${lang === 'fr' || lang === 'it' ? 'COALESCE(t.description_fr, t.description_de)' : 't.description_de'} AS description,
+            o.id AS org_id, ${lwOrgName(lang)} AS org_name, ${lwGroup(lang)} AS lobby_group, o.actor_id, o.donor_id
+       FROM lw_tie t JOIN lw_organisation o ON o.id = t.organisation_id
+      WHERE t.parliamentarian_id = ?
+      ORDER BY FIELD(t.kind, 'geschaeftsfuehrend', 'vorstand', 'beirat', 'taetig', 'gesellschafter', 'finanziell', 'mitglied'),
+               t.pay DESC, org_name`, [p.id]);
+  return { ...p, ties: ties.map((t) => ({ ...t, must_declare: !!t.must_declare, main_job: !!t.main_job,
+    donor_id: suppressed.has(t.donor_id) ? null : t.donor_id })) };
+}
+
+/** Members of parliament with a current tie to the Lobbywatch organisation(s) matched to an EFK actor or donor. */
+async function lobbyLinks(lang, column, id) {
+  const [rows] = await pool.query(
+    `SELECT p.id AS lw_id, p.last_name, p.first_name, p.canton, p.council, pa.code AS party_code, pa.color AS party_color,
+            COALESCE(${i18nExpr('party', 'pa.id', 'name', lang, 'NULL')}, p.party_label) AS party_label,
+            (SELECT MIN(lc.candidate_id) FROM lw_candidate lc WHERE lc.parliamentarian_id = p.id) AS candidate_id,
+            t.kind, t.role, t.pay, ${lwOrgName(lang)} AS org_name
+       FROM lw_organisation o JOIN lw_tie t ON t.organisation_id = o.id
+       JOIN lw_parliamentarian p ON p.id = t.parliamentarian_id
+       LEFT JOIN party pa ON pa.id = p.party_id
+      WHERE o.${column} = ?
+      ORDER BY FIELD(t.kind, 'geschaeftsfuehrend', 'vorstand', 'beirat', 'taetig', 'gesellschafter', 'finanziell', 'mitglied'),
+               p.last_name, p.first_name`, [id]).catch(noLobbywatch);
+  return rows;
+}
+
+app.get('/api/actors/:id/lobby', async (req, reply) => {
+  const lang = langOf(req.query);
+  const id = idOf(req.params.id);
+  if (id === null) return reply.code(404).send({ error: 'not found' });
+  return cached(`lobby:a:${lang}:${id}`, () => lobbyLinks(lang, 'actor_id', id));
+});
+
+app.get('/api/donors/:id/lobby', async (req, reply) => {
+  const lang = langOf(req.query);
+  const id = idOf(req.params.id);
+  if (id === null || suppressed.has(id)) return reply.code(404).send({ error: 'not found' });
+  return cached(`lobby:d:${lang}:${id}`, () => lobbyLinks(lang, 'donor_id', id));
+});
+
 async function candidateById(lang, id) {
   const row = await cached(`cand:${lang}:${id}`, async () => {
     const [[c]] = await pool.query(
@@ -386,7 +444,8 @@ async function candidateById(lang, id) {
           WHERE v.campaign_id IN (?) AND v.is_latest
           GROUP BY v.donor_id, dn.display_name, v.donor_type ORDER BY total DESC`, [dedicated]);
     }
-    return { ...c, backers: backers.map((b) => ({ ...b, is_final: !!b.is_final })), donors };
+    return { ...c, backers: backers.map((b) => ({ ...b, is_final: !!b.is_final })), donors,
+      parliament: await parliamentOf(lang, id) };
   });
   if (!row) return null;
   // Masked donors (objection): no name, no link. Applied after the cache so a new objection takes effect at once.

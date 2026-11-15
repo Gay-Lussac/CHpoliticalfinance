@@ -6,6 +6,7 @@ import { chf, chfShort, date, esc, num, typo } from '../format';
 import { lang, locale, setPageTitle, T, type Lang } from '../i18n';
 import { href } from '../router';
 import { statTiles } from './common';
+import { tiesCard, wireLobby, type Parliament } from './lobby';
 
 export interface CandidateRow {
   id: number; name: string; canton: string | null; party_code: string | null; party_color: string | null;
@@ -19,7 +20,7 @@ interface Backer {
 interface DonorRow { donor_id: number | null; display_name: string | null; donor_type: string; total: number; n: number;
   is_anonymous: number; suppressed?: boolean }
 interface Candidate { id: number; name: string; canton: string | null; party_code: string | null; party_color: string | null;
-  party_label: string | null; backers: Backer[]; donors: DonorRow[] }
+  party_label: string | null; backers: Backer[]; donors: DonorRow[]; parliament: Parliament | null }
 
 const TEXT: Record<Lang, {
   section: string; intro: string; search: string; canton: string; party: string; all: string;
@@ -205,5 +206,6 @@ export async function candidatePage(main: HTMLElement, id: string | undefined) {
     { label: m.backers_title, value: num(c.backers.length), sub: m.backers_sub },
     { label: m.own_title, value: own.length ? chfShort(ownTotal) : '–', sub: m.own_sub(own.length) },
     { label: m.shared_title, value: num(shared.length), sub: m.shared_sub(shared.length) },
-  ]) + byElection + donors + `<p class="muted small">${esc(m.method)}</p>`;
+  ]) + byElection + donors + (c.parliament ? tiesCard(c.parliament) : '') + `<p class="muted small">${esc(m.method)}</p>`;
+  wireLobby(main);
 }

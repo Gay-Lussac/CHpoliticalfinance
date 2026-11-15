@@ -3,6 +3,7 @@ import { chf, date, esc, num } from '../format';
 import { setPageTitle, T, tr } from '../i18n';
 import { PAGES, renderViews } from '../views';
 import { statTiles, viewsGrid } from './common';
+import { lobbyLinksCard } from './lobby';
 
 export async function donorPage(main: HTMLElement, id: string | undefined) {
   const t = T();
@@ -32,4 +33,10 @@ export async function donorPage(main: HTMLElement, id: string | undefined) {
     { label: t.first_last, value: `${date(d.first_date)}`, sub: date(d.last_date) },
   ]);
   renderViews(viewsGrid(main), PAGES.donor ?? [], { donor_id: d.id, donor_type: d.donor_type });
+  if (d.donor_type === 'legal') {
+    const extra = document.createElement('div');
+    extra.className = 'extra-cards';
+    main.append(extra);
+    await lobbyLinksCard(extra, 'donors', d.id);
+  }
 }

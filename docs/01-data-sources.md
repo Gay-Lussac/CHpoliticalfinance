@@ -120,3 +120,25 @@ and back off on 429 or 5xx. Also send the EFK a short courtesy email about the r
 
 The previous project's Excel downloads and graph JSONs served as a one-off regression reference: per-vote totals in the
 new DB matched them exactly. They were removed on 2026-09-29.
+
+## F. Lobbywatch: ties of members of parliament (implemented)
+
+Website: https://lobbywatch.ch, data export page https://lobbywatch.ch/datenexport/. Licence **CC BY-SA 4.0** for current
+data (see their data guide, `lobbywatch_daten_merkblatt.pdf`). Historical data is copyrighted and is **not** imported.
+Lobbywatch is one source among several here, so attribution is enough ("share-alike" applies only when it is the main
+source); it is credited in the footer, on the About page and under every block that shows its data.
+
+- Source file: the weekly "flat" CSV export `lobbywatch_export_flat.csv.zip` (~4 MB zipped, ~17 MB unpacked,
+  tab-separated, refreshed early Monday morning). Fetched at most once every 6 days; the last 4 versions are kept in
+  the raw archive (`payloads/lw/…`). The zip is read in memory, never extracted.
+- Used tables: `parlamentarier` (246 current members), `interessenbindung` (current ties only: no end date),
+  `interessenbindung_jahr` (latest remuneration: -1 paying member, 0 unpaid, 1 paid amount not disclosed, >1 CHF/year),
+  `organisation` (only those with a current tie, ~2 700), `interessengruppe`.
+- Matching (`pipeline/chpf/lobbywatch.py`): members → EFK candidates by name letters + canton (both name orders,
+  full or short first name; all exact spellings kept). Organisations → EFK actors and legal donors on identical
+  normalised names only (legal forms, bracketed abbreviations and punctuation ignored), unambiguous on both sides.
+  Corrections in `config/lobbywatch_matches.yaml`.
+- Tables: `lw_parliamentarian`, `lw_candidate`, `lw_organisation`, `lw_tie`, `lw_meta` (migration 004), reloaded in full
+  on every sync. If the export fails, the previous data stays.
+- The dataIF REST API (`cms.lobbywatch.ch/de/data/interface/v1/json/…`) returned 0 records when tested (2026-11-15);
+  the export is the reliable route.

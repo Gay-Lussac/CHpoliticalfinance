@@ -12,6 +12,7 @@ Depuis 2023, les partis représentés à l'Assemblée fédérale, ainsi que les 
 Les libéralités (dons) de plus de 15 000 CHF par donateur doivent être déclarées nominativement.</p>
 <p>Ce site récupère automatiquement ces déclarations, les archive et les rassemble dans une base de données. Il ne les modifie pas : les montants sont ceux déclarés.</p>
 <p>Les résultats des votations et les recommandations des partis et associations proviennent de <a href="https://swissvotes.ch" target="_blank" rel="noopener">Swissvotes</a> (Année politique suisse, Université de Berne), sous licence CC BY 4.0.</p>
+<p>Les liens d'intérêts des membres de l'Assemblée fédérale (conseils d'administration, comités, emplois, adhésions) proviennent de <a href="https://lobbywatch.ch" target="_blank" rel="noopener">Lobbywatch.ch</a>, sous licence CC BY-SA 4.0, mis à jour chaque semaine. Seules les données actuelles sont reprises. Les parlementaires sont reliés aux candidat·e·s de l'EFK par le nom et le canton, et les organisations par un nom identique ; un lien manquant ne signifie donc pas qu'il n'y a pas de relation.</p>
 <h2>Budget et décompte final</h2>
 <p>Pour chaque campagne, deux déclarations existent : les <strong>recettes budgétées</strong>, publiées avant le scrutin, et le <strong>décompte final</strong>, publié après. Elles sont présentées séparément et ne sont jamais additionnées.</p>
 <h2>Limites</h2>
@@ -33,6 +34,7 @@ Seit 2023 müssen die in der Bundesversammlung vertretenen Parteien sowie Person
 Zuwendungen über 15 000 CHF pro Zuwender·in müssen namentlich deklariert werden.</p>
 <p>Diese Website ruft die Offenlegungen automatisch ab, archiviert sie und führt sie in einer Datenbank zusammen. Die Beträge werden nicht verändert.</p>
 <p>Abstimmungsergebnisse und Parolen der Parteien und Verbände stammen von <a href="https://swissvotes.ch" target="_blank" rel="noopener">Swissvotes</a> (Année politique suisse, Universität Bern), Lizenz CC BY 4.0.</p>
+<p>Die Interessenbindungen der Mitglieder der Bundesversammlung (Verwaltungsräte, Vorstände, Anstellungen, Mitgliedschaften) stammen von <a href="https://lobbywatch.ch" target="_blank" rel="noopener">Lobbywatch.ch</a>, Lizenz CC BY-SA 4.0, wöchentlich aktualisiert. Übernommen werden nur aktuelle Daten. Ratsmitglieder werden den EFK-Kandidierenden über Name und Kanton zugeordnet, Organisationen über einen identischen Namen; eine fehlende Verknüpfung heisst also nicht, dass keine Beziehung besteht.</p>
 <h2>Budget und Schlussrechnung</h2>
 <p>Für jede Kampagne gibt es zwei Offenlegungen: die <strong>budgetierten Einnahmen</strong> vor dem Urnengang und die <strong>Schlussrechnung</strong> danach. Sie werden getrennt dargestellt und nie addiert.</p>
 <h2>Grenzen</h2>
@@ -54,6 +56,7 @@ Dal 2023 i partiti rappresentati nell'Assemblea federale, nonché le persone e l
 Le liberalità (donazioni) superiori a 15 000 CHF per donatore devono essere dichiarate nominativamente.</p>
 <p>Questo sito recupera automaticamente queste dichiarazioni, le archivia e le riunisce in una banca dati. Non le modifica: gli importi sono quelli dichiarati.</p>
 <p>I risultati delle votazioni e le raccomandazioni dei partiti e delle associazioni provengono da <a href="https://swissvotes.ch" target="_blank" rel="noopener">Swissvotes</a> (Année politique suisse, Università di Berna), licenza CC BY 4.0.</p>
+<p>Le relazioni d'interesse dei membri dell'Assemblea federale (consigli d'amministrazione, comitati, impieghi, affiliazioni) provengono da <a href="https://lobbywatch.ch" target="_blank" rel="noopener">Lobbywatch.ch</a>, licenza CC BY-SA 4.0, aggiornate ogni settimana. Sono ripresi solo i dati attuali. I parlamentari sono collegati alle candidature dell'EFK tramite nome e cantone, le organizzazioni tramite un nome identico; un collegamento mancante non significa quindi che non ci sia una relazione.</p>
 <h2>Preventivo e conto finale</h2>
 <p>Per ogni campagna esistono due dichiarazioni: le <strong>entrate preventivate</strong>, pubblicate prima del voto, e il <strong>conto finale</strong>, pubblicato dopo. Sono presentate separatamente e non vengono mai sommate.</p>
 <h2>Limiti</h2>
@@ -77,6 +80,7 @@ Donations above CHF 15,000 per donor must be declared by name.</p>
 <p>This site collects these declarations automatically, archives them and brings them together in a database. It does not alter them: amounts are as declared.</p>
 <p>The SFAO publishes in French, German and Italian only. Titles of votes and other official labels are shown in French on the English version.</p>
 <p>Vote results and the recommendations of parties and federations come from <a href="https://swissvotes.ch" target="_blank" rel="noopener">Swissvotes</a> (Année politique suisse, University of Bern), licensed CC BY 4.0.</p>
+<p>Ties of members of the Federal Assembly (boards, committees, jobs, memberships) come from <a href="https://lobbywatch.ch" target="_blank" rel="noopener">Lobbywatch.ch</a>, licensed CC BY-SA 4.0, updated weekly. Only current data is used. Members are linked to EFK candidates by name and canton, and organisations by identical name, so a missing link does not mean there is no relationship.</p>
 <h2>Budget and final accounts</h2>
 <p>Each campaign files two declarations: <strong>budgeted revenue</strong>, published before the vote, and the <strong>final accounts</strong>, published afterwards. They are shown separately and never added together.</p>
 <h2>Limitations</h2>
