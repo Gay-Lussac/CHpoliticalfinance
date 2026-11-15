@@ -327,3 +327,89 @@ main:focus { outline: none; }
 .parl-list li { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; font-size: .9rem; }
 .parl-list li[hidden] { display: none; }
 @media (max-width: 600px) { .parl-groups th:nth-child(4), .parl-groups td:nth-child(4), .parl-groups th:nth-child(5), .parl-groups td:nth-child(5) { display: none; } }
+
+/* ---------- sober layout (Nov 2026): white, few borders, square corners, one red accent ----------
+   Inspired by the restraint of institutional sites (whitespace, hairlines, flat tags). Deliberately NOT the federal
+   corporate design (no coat of arms, federal wordmark or Frutiger): polimoney.ch must not look like an official site. */
+:root {
+  --bg: #ffffff; --surface: #ffffff; --surface-2: #f4f4f4; --border: #e3e3e3;
+  --text-primary: #1a1a1a; --text-secondary: #474747; --text-muted: #6b6b6b;
+  --accent: #d8232a; --link: #1a5aa6; --axis: #c8c8c8; --neutral: #9e9e9e;
+  --radius: 2px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121212; --surface: #121212; --surface-2: #1d1d1d; --border: #2d2d2d;
+    --text-primary: #f2f2f2; --text-secondary: #c4c4c4; --text-muted: #9a9a9a; --accent: #ef4a4f; --link: #8ab8f0;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121212; --surface: #121212; --surface-2: #1d1d1d; --border: #2d2d2d;
+  --text-primary: #f2f2f2; --text-secondary: #c4c4c4; --text-muted: #9a9a9a; --accent: #ef4a4f; --link: #8ab8f0;
+}
+
+body { font-size: 16px; line-height: 1.6; }
+h1 { font-weight: 600; letter-spacing: -.015em; }
+h2 { font-size: 1.2rem; font-weight: 600; margin-bottom: .5em; }
+h3 { font-weight: 600; }
+
+/* header: thin red line on top, hairline below, underlined active item */
+.site-header { background: var(--surface); border-top: 3px solid var(--accent); border-bottom: 1px solid var(--border);
+  backdrop-filter: none; }
+.logo { border-radius: 2px; }
+.main-nav { gap: 6px; }
+.main-nav a { border-radius: 0; padding: 8px 6px; }
+.main-nav a.active, .main-nav a:hover { background: none; color: var(--text-primary); box-shadow: inset 0 -2px 0 var(--accent); }
+.lang-switch a { border-radius: 0; }
+.lang-switch a.active { box-shadow: inset 0 -2px 0 var(--accent); }
+.search-box input { border-radius: var(--radius); background: var(--surface); border-color: #c9c9c9; }
+.search-results { border-radius: var(--radius); box-shadow: 0 6px 20px rgb(0 0 0 / .10); }
+
+/* content blocks: no frames, separated by space and a hairline on top */
+.card { background: none; border: 0; border-top: 1px solid var(--border); border-radius: 0; padding: 22px 0 6px; }
+.views-grid { gap: 8px 48px; margin-top: 24px; }
+.extra-cards, .slot, .orient-wrap { gap: 8px; }
+main > section + section, main > .views-grid { margin-top: 24px; }
+
+/* vote cards on lists: a hairline on top, title underlined on hover */
+.cards { gap: 0 32px; }
+.vote-card { padding: 18px 0 16px; }
+@media (hover: hover) and (pointer: fine) { .vote-card:hover { border-color: var(--border); } .vote-card:hover h3 { text-decoration: underline; } }
+.vote-card:active { transform: none; }
+
+/* key figures: no boxes, a short rule on the left */
+.stats { gap: 16px 32px; margin: 16px 0 24px; }
+.stat { background: none; border: 0; border-left: 2px solid var(--border); border-radius: 0; padding: 2px 0 2px 14px; }
+.stat-value { font-size: 1.5rem; }
+
+/* flat tags instead of pills */
+.badge, .chip { background: var(--surface-2); border: 0; border-radius: var(--radius); }
+.badge { padding: 1px 7px; }
+.badge.final { box-shadow: inset 2px 0 0 var(--phase-final); }
+
+/* tabs and switches: underlined, no frame */
+.segmented { border: 0; border-bottom: 1px solid var(--border); border-radius: 0; background: none; gap: 4px; }
+.segmented a, .segmented span { padding: 6px 8px; }
+.segmented a.active { background: none; color: var(--text-primary); box-shadow: inset 0 -2px 0 var(--accent); }
+
+/* tables: quiet header, hairline rows */
+th { font-size: .78rem; text-transform: uppercase; letter-spacing: .04em; font-weight: 600; }
+th, td { padding: 8px 8px 8px 0; }
+td:has(.num), th:last-child { padding-right: 0; }
+
+/* forms and buttons: square, light */
+.explore-form select, .explore-form input[type=search], .stats-key input { border-radius: var(--radius); background: var(--surface); border-color: #c9c9c9; }
+.more-btn, .stats-key button { border-radius: var(--radius); }
+.more-btn { background: var(--surface); }
+.skip-link { border-radius: var(--radius); }
+.tooltip { border-radius: var(--radius); }
+
+/* notes, meters, bars */
+.view-note { background: none; border-left: 2px solid var(--border); border-radius: 0; padding: 2px 0 2px 12px; }
+.meter { border: 0; background: var(--surface-2); border-radius: 0; }
+.meter span { border-radius: 0; }
+.split span, .split.empty, .coverage-bar, .bar, .seg:last-child, .share .share-track { border-radius: 0 2px 2px 0; }
+.skeleton span { border-radius: 2px; background: var(--surface-2); }
+.swatch, .coverage-list .sw { border-radius: 1px; }
+
+@media (max-width: 640px) { .card { padding: 18px 0 4px; } }
