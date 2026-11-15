@@ -1,0 +1,181 @@
+# Swissvotes policy areas (variables d1e1…d3e3, codebook: https://swissvotes.ch/page/dataset/codebook-de.pdf).
+# Codes as in the dataset: "10" (level 1), "10.2" (level 2), "10.21" (level 3 = 10.2.1).
+# Names: German from the codebook, FR/IT/EN our translation. `words`: extra search terms (any language) so that a
+# search for e.g. "retraite" or "AHV" finds votes classified under old-age insurance. Used only by the site search.
+
+"1": { de: "Staatsordnung", fr: "Institutions et État", it: "Ordinamento dello Stato", en: "State and institutions" }
+"1.1": { de: "Nationale Identität", fr: "Identité nationale", it: "Identità nazionale", en: "National identity" }
+"1.2": { de: "Politisches System", fr: "Système politique", it: "Sistema politico", en: "Political system" }
+"1.21": { de: "Bundesverfassung", fr: "Constitution fédérale", it: "Costituzione federale", en: "Federal Constitution" }
+"1.22": { de: "Verfassungsgebungsverfahren", fr: "Procédure constitutionnelle", it: "Procedura costituzionale", en: "Constitutional procedure" }
+"1.23": { de: "Gesetzgebungsverfahren", fr: "Procédure législative", it: "Procedura legislativa", en: "Legislative procedure" }
+"1.24": { de: "Wahlsystem", fr: "Système électoral", it: "Sistema elettorale", en: "Electoral system" }
+"1.3": { de: "Institutionen", fr: "Institutions", it: "Istituzioni", en: "Institutions" }
+"1.31": { de: "Regierung, Verwaltung", fr: "Gouvernement, administration", it: "Governo, amministrazione", en: "Government, administration", words: ["Bundesrat", "Conseil fédéral"] }
+"1.32": { de: "Parlament", fr: "Parlement", it: "Parlamento", en: "Parliament" }
+"1.33": { de: "Gerichte", fr: "Tribunaux", it: "Tribunali", en: "Courts", words: ["justice", "Justiz", "giustizia", "juges", "Richter"] }
+"1.34": { de: "Nationalbank", fr: "Banque nationale", it: "Banca nazionale", en: "National Bank", words: ["BNS", "SNB"] }
+"1.4": { de: "Volksrechte", fr: "Droits populaires", it: "Diritti popolari", en: "Popular rights", words: ["démocratie directe", "direkte Demokratie"] }
+"1.41": { de: "Initiative", fr: "Initiative", it: "Iniziativa", en: "Initiative" }
+"1.42": { de: "Referendum", fr: "Référendum", it: "Referendum", en: "Referendum" }
+"1.43": { de: "Stimmrecht", fr: "Droit de vote", it: "Diritto di voto", en: "Right to vote", words: ["Stimmrechtsalter", "vote à 16 ans"] }
+"1.5": { de: "Föderalismus", fr: "Fédéralisme", it: "Federalismo", en: "Federalism", words: ["cantons", "Kantone", "cantoni"] }
+"1.51": { de: "Territorialfragen", fr: "Questions territoriales", it: "Questioni territoriali", en: "Territorial questions", words: ["Jura"] }
+"1.52": { de: "Beziehungen zwischen Bund und Kantonen", fr: "Relations Confédération-cantons", it: "Relazioni Confederazione-cantoni", en: "Federal-cantonal relations" }
+"1.53": { de: "Aufgabenteilung", fr: "Répartition des tâches", it: "Ripartizione dei compiti", en: "Division of tasks" }
+"1.6": { de: "Rechtsordnung", fr: "Ordre juridique", it: "Ordinamento giuridico", en: "Legal order" }
+"1.61": { de: "Internationales Recht", fr: "Droit international", it: "Diritto internazionale", en: "International law", words: ["juges étrangers", "fremde Richter", "autodétermination", "Selbstbestimmung"] }
+"1.62": { de: "Grundrechte", fr: "Droits fondamentaux", it: "Diritti fondamentali", en: "Fundamental rights", words: ["libertés", "Freiheit", "liberté"] }
+"1.63": { de: "Bürgerrecht", fr: "Droit de cité", it: "Cittadinanza", en: "Citizenship", words: ["naturalisation", "Einbürgerung", "naturalizzazione"] }
+"1.64": { de: "Privatrecht", fr: "Droit privé", it: "Diritto privato", en: "Private law" }
+"1.65": { de: "Strafrecht", fr: "Droit pénal", it: "Diritto penale", en: "Criminal law" }
+"1.66": { de: "Datenschutz", fr: "Protection des données", it: "Protezione dei dati", en: "Data protection", words: ["e-ID", "eID", "identité électronique", "privacy", "vie privée", "Privatsphäre", "numérique", "digital"] }
+"2": { de: "Aussenpolitik", fr: "Politique étrangère", it: "Politica estera", en: "Foreign policy" }
+"2.1": { de: "Aussenpolitische Grundhaltung", fr: "Orientation de la politique étrangère", it: "Orientamento della politica estera", en: "Foreign policy stance" }
+"2.11": { de: "Neutralität", fr: "Neutralité", it: "Neutralità", en: "Neutrality" }
+"2.12": { de: "Unabhängigkeit", fr: "Indépendance", it: "Indipendenza", en: "Independence", words: ["souveraineté", "Souveränität"] }
+"2.13": { de: "Gute Dienste", fr: "Bons offices", it: "Buoni uffici", en: "Good offices" }
+"2.2": { de: "Europapolitik", fr: "Politique européenne", it: "Politica europea", en: "European policy", words: ["Europe", "Europa", "bilatérales", "Bilaterale", "Schengen"] }
+"2.21": { de: "EFTA", fr: "AELE", it: "AELS", en: "EFTA" }
+"2.22": { de: "EU", fr: "UE", it: "UE", en: "EU", words: ["Union européenne", "Europäische Union", "Unione europea", "European Union", "libre circulation", "Personenfreizügigkeit", "libera circolazione", "free movement"] }
+"2.23": { de: "EWR", fr: "EEE", it: "SEE", en: "EEA" }
+"2.24": { de: "Andere europäische Organisationen", fr: "Autres organisations européennes", it: "Altre organizzazioni europee", en: "Other European organisations" }
+"2.3": { de: "Internationale Organisationen", fr: "Organisations internationales", it: "Organizzazioni internazionali", en: "International organisations" }
+"2.31": { de: "UNO", fr: "ONU", it: "ONU", en: "UN" }
+"2.32": { de: "Andere internationale Organisationen", fr: "Autres organisations internationales", it: "Altre organizzazioni internazionali", en: "Other international organisations" }
+"2.4": { de: "Entwicklungszusammenarbeit", fr: "Coopération au développement", it: "Cooperazione allo sviluppo", en: "Development cooperation", words: ["aide au développement", "Entwicklungshilfe"] }
+"2.5": { de: "Staatsverträge mit einzelnen Staaten", fr: "Traités avec d'autres États", it: "Trattati con altri Stati", en: "Treaties with other states" }
+"2.6": { de: "Aussenwirtschaftspolitik", fr: "Économie extérieure", it: "Economia esterna", en: "Foreign trade", words: ["libre-échange", "Freihandel", "libero scambio", "free trade"] }
+"2.61": { de: "Exportförderung", fr: "Promotion des exportations", it: "Promozione delle esportazioni", en: "Export promotion" }
+"2.62": { de: "Zollwesen", fr: "Douanes", it: "Dogane", en: "Customs" }
+"2.7": { de: "Diplomatie", fr: "Diplomatie", it: "Diplomazia", en: "Diplomacy" }
+"2.8": { de: "Auslandschweizer:innen", fr: "Suisses de l'étranger", it: "Svizzeri all'estero", en: "Swiss abroad" }
+"3": { de: "Sicherheitspolitik", fr: "Politique de sécurité", it: "Politica di sicurezza", en: "Security policy" }
+"3.1": { de: "Öffentliche Sicherheit", fr: "Sécurité publique", it: "Sicurezza pubblica", en: "Public security" }
+"3.11": { de: "Bevölkerungsschutz", fr: "Protection de la population", it: "Protezione della popolazione", en: "Civil protection" }
+"3.12": { de: "Staatsschutz", fr: "Protection de l'État", it: "Protezione dello Stato", en: "State security", words: ["renseignement", "Nachrichtendienst", "terrorisme", "Terrorismus"] }
+"3.13": { de: "Polizei", fr: "Police", it: "Polizia", en: "Police" }
+"3.2": { de: "Armee", fr: "Armée", it: "Esercito", en: "Army", words: ["militaire", "Militär", "militare", "military", "défense", "Verteidigung"] }
+"3.21": { de: "Armee (allgemein)", fr: "Armée (en général)", it: "Esercito (in generale)", en: "Army (general)" }
+"3.22": { de: "Militärorganisation", fr: "Organisation militaire", it: "Organizzazione militare", en: "Military organisation" }
+"3.23": { de: "Rüstung", fr: "Armement", it: "Armamento", en: "Armaments", words: ["avions de combat", "Kampfjets", "Kampfflugzeuge", "aerei da combattimento", "fighter jets", "armes", "Waffen", "armi", "weapons", "exportations de matériel de guerre", "Kriegsmaterial"] }
+"3.24": { de: "Militäranlagen", fr: "Installations militaires", it: "Installazioni militari", en: "Military installations" }
+"3.25": { de: "Dienstverweigerung, Zivildienst", fr: "Objection de conscience, service civil", it: "Obiezione di coscienza, servizio civile", en: "Conscientious objection, civilian service", words: ["service citoyen", "Service citoyen"] }
+"3.26": { de: "Armeeabschaffung", fr: "Abolition de l'armée", it: "Abolizione dell'esercito", en: "Abolition of the army" }
+"3.27": { de: "Militärische Ausbildung", fr: "Instruction militaire", it: "Istruzione militare", en: "Military training" }
+"3.28": { de: "Internationale Einsätze", fr: "Engagements internationaux", it: "Impieghi internazionali", en: "International deployments" }
+"3.3": { de: "Landesversorgung", fr: "Approvisionnement du pays", it: "Approvvigionamento del Paese", en: "National supply" }
+"4": { de: "Wirtschaft", fr: "Économie", it: "Economia", en: "Economy" }
+"4.1": { de: "Wirtschaftspolitik", fr: "Politique économique", it: "Politica economica", en: "Economic policy" }
+"4.11": { de: "Konjunkturpolitik", fr: "Politique conjoncturelle", it: "Politica congiunturale", en: "Business-cycle policy" }
+"4.12": { de: "Wettbewerbspolitik", fr: "Politique de la concurrence", it: "Politica della concorrenza", en: "Competition policy" }
+"4.13": { de: "Strukturpolitik", fr: "Politique structurelle", it: "Politica strutturale", en: "Structural policy" }
+"4.14": { de: "Preispolitik", fr: "Politique des prix", it: "Politica dei prezzi", en: "Price policy", words: ["prix", "Preise", "prezzi", "prices", "îlot de cherté", "Hochpreisinsel"] }
+"4.15": { de: "Konsumentenschutz", fr: "Protection des consommateurs", it: "Protezione dei consumatori", en: "Consumer protection" }
+"4.16": { de: "Gesellschaftsrecht", fr: "Droit des sociétés", it: "Diritto societario", en: "Company law", words: ["entreprises responsables", "Konzernverantwortung", "multinationales", "Konzerne", "rémunérations abusives", "Abzocker"] }
+"4.2": { de: "Arbeit und Beschäftigung", fr: "Travail et emploi", it: "Lavoro e occupazione", en: "Work and employment" }
+"4.21": { de: "Arbeitsbedingungen", fr: "Conditions de travail", it: "Condizioni di lavoro", en: "Working conditions", words: ["salaire minimum", "Mindestlohn", "salario minimo", "minimum wage", "salaires", "Löhne"] }
+"4.22": { de: "Arbeitszeit", fr: "Temps de travail", it: "Orario di lavoro", en: "Working time", words: ["vacances", "Ferien", "congé", "Urlaub"] }
+"4.23": { de: "Sozialpartnerschaft", fr: "Partenariat social", it: "Partenariato sociale", en: "Social partnership", words: ["syndicats", "Gewerkschaften", "sindacati", "unions"] }
+"4.24": { de: "Beschäftigungspolitik", fr: "Politique de l'emploi", it: "Politica dell'occupazione", en: "Employment policy" }
+"4.3": { de: "Finanzwesen", fr: "Finances", it: "Finanze", en: "Finance" }
+"4.31": { de: "Geld- und Währungspolitik", fr: "Politique monétaire", it: "Politica monetaria", en: "Monetary policy", words: ["argent liquide", "Bargeld", "contanti", "cash", "monnaie", "Währung", "or", "Gold"] }
+"4.32": { de: "Banken, Börsen, Versicherungen", fr: "Banques, bourses, assurances", it: "Banche, borse, assicurazioni", en: "Banks, stock exchanges, insurance" }
+"4.4": { de: "Freizeit und Tourismus", fr: "Loisirs et tourisme", it: "Tempo libero e turismo", en: "Leisure and tourism" }
+"4.41": { de: "Fremdenverkehr", fr: "Tourisme", it: "Turismo", en: "Tourism" }
+"4.42": { de: "Hotellerie und Gastgewerbe", fr: "Hôtellerie et restauration", it: "Albergheria e ristorazione", en: "Hotels and restaurants", words: ["Gastronomie", "gastronomie"] }
+"4.43": { de: "Geldspiele", fr: "Jeux d'argent", it: "Giochi in denaro", en: "Gambling", words: ["casinos", "Spielbanken", "loteries", "Lotterien"] }
+"5": { de: "Landwirtschaft", fr: "Agriculture", it: "Agricoltura", en: "Agriculture", words: ["paysans", "Bauern", "contadini", "farmers", "agricole"] }
+"5.1": { de: "Agrarpolitik", fr: "Politique agricole", it: "Politica agricola", en: "Agricultural policy", words: ["pesticides", "Pestizide", "eau potable", "Trinkwasser", "sécurité alimentaire", "Ernährungssicherheit", "souveraineté alimentaire"] }
+"5.2": { de: "Tierische Produktion", fr: "Production animale", it: "Produzione animale", en: "Livestock", words: ["élevage intensif", "Massentierhaltung", "allevamento intensivo", "factory farming", "cornes", "Hornkuh"] }
+"5.3": { de: "Pflanzliche Produktion", fr: "Production végétale", it: "Produzione vegetale", en: "Crop production" }
+"5.4": { de: "Forstwirtschaft", fr: "Sylviculture", it: "Selvicoltura", en: "Forestry", words: ["forêt", "Wald", "bosco", "forest"] }
+"5.5": { de: "Fischerei, Jagd, Haustiere", fr: "Pêche, chasse, animaux domestiques", it: "Pesca, caccia, animali domestici", en: "Fishing, hunting, pets", words: ["loup", "Wolf", "lupo", "wolf"] }
+"6": { de: "Öffentliche Finanzen", fr: "Finances publiques", it: "Finanze pubbliche", en: "Public finances" }
+"6.1": { de: "Steuerwesen", fr: "Fiscalité", it: "Fiscalità", en: "Taxation", words: ["impôts", "Steuern", "imposte", "taxes"] }
+"6.11": { de: "Steuerpolitik", fr: "Politique fiscale", it: "Politica fiscale", en: "Tax policy" }
+"6.12": { de: "Steuersystem", fr: "Système fiscal", it: "Sistema fiscale", en: "Tax system", words: ["imposition individuelle", "Individualbesteuerung", "tassazione individuale", "individual taxation", "valeur locative", "Eigenmietwert"] }
+"6.13": { de: "Direkte Steuern", fr: "Impôts directs", it: "Imposte dirette", en: "Direct taxes", words: ["succession", "Erbschaft", "successione", "inheritance", "fortune", "Vermögen"] }
+"6.14": { de: "Indirekte Steuern", fr: "Impôts indirects", it: "Imposte indirette", en: "Indirect taxes", words: ["TVA", "MWST", "IVA", "VAT"] }
+"6.2": { de: "Finanzordnung", fr: "Régime financier", it: "Ordinamento finanziario", en: "Financial system" }
+"6.3": { de: "Öffentliche Ausgaben", fr: "Dépenses publiques", it: "Spesa pubblica", en: "Public spending", words: ["budget"] }
+"6.4": { de: "Spar- und Sanierungsmassnahmen", fr: "Mesures d'économie", it: "Misure di risparmio", en: "Austerity measures" }
+"7": { de: "Energie", fr: "Énergie", it: "Energia", en: "Energy" }
+"7.1": { de: "Energiepolitik", fr: "Politique énergétique", it: "Politica energetica", en: "Energy policy", words: ["électricité", "Strom", "elettricità", "electricity", "climat", "Klima", "clima", "climate", "CO2"] }
+"7.2": { de: "Kernenergie", fr: "Énergie nucléaire", it: "Energia nucleare", en: "Nuclear power", words: ["atome", "Atomkraft", "AKW", "centrale nucléaire", "nucleare"] }
+"7.3": { de: "Wasserkraft", fr: "Énergie hydraulique", it: "Energia idroelettrica", en: "Hydropower" }
+"7.4": { de: "Alternativenergien", fr: "Énergies renouvelables", it: "Energie rinnovabili", en: "Renewable energy", words: ["solaire", "Solar", "éolien", "Wind", "erneuerbar"] }
+"7.5": { de: "Erdöl, Gas", fr: "Pétrole, gaz", it: "Petrolio, gas", en: "Oil, gas" }
+"8": { de: "Verkehr und Infrastruktur", fr: "Transports et infrastructures", it: "Trasporti e infrastrutture", en: "Transport and infrastructure" }
+"8.1": { de: "Verkehrspolitik", fr: "Politique des transports", it: "Politica dei trasporti", en: "Transport policy", words: ["mobilité", "Mobilität", "mobilità", "mobility"] }
+"8.11": { de: "Agglomerationsverkehr", fr: "Trafic d'agglomération", it: "Traffico d'agglomerato", en: "Urban transport" }
+"8.12": { de: "Transitverkehr", fr: "Trafic de transit", it: "Traffico di transito", en: "Transit traffic", words: ["Alpes", "Alpen", "Alpi", "Alps", "Gothard", "Gotthard"] }
+"8.2": { de: "Strassenverkehr", fr: "Trafic routier", it: "Traffico stradale", en: "Road traffic", words: ["voitures", "Autos", "automobili", "cars"] }
+"8.21": { de: "Strassenbau", fr: "Construction de routes", it: "Costruzione stradale", en: "Road building", words: ["autoroutes", "Autobahn", "Nationalstrassen", "routes nationales", "autostrade", "motorways"] }
+"8.22": { de: "Schwerverkehr", fr: "Trafic poids lourds", it: "Traffico pesante", en: "Heavy goods traffic", words: ["camions", "Lastwagen", "LSVA", "RPLP"] }
+"8.3": { de: "Schienenverkehr", fr: "Trafic ferroviaire", it: "Traffico ferroviario", en: "Rail", words: ["train", "Bahn", "treno", "CFF", "SBB", "FFS"] }
+"8.31": { de: "Güterverkehr", fr: "Transport de marchandises", it: "Trasporto merci", en: "Freight" }
+"8.32": { de: "Personenverkehr", fr: "Transport de voyageurs", it: "Trasporto passeggeri", en: "Passenger transport", words: ["transports publics", "öffentlicher Verkehr", "trasporti pubblici", "public transport"] }
+"8.4": { de: "Luftverkehr", fr: "Trafic aérien", it: "Traffico aereo", en: "Air transport", words: ["aviation", "aéroport", "Flughafen", "aeroporto", "airport"] }
+"8.5": { de: "Schifffahrt", fr: "Navigation", it: "Navigazione", en: "Shipping" }
+"8.6": { de: "Post", fr: "Poste", it: "Posta", en: "Postal service" }
+"8.7": { de: "Telekommunikation", fr: "Télécommunications", it: "Telecomunicazioni", en: "Telecommunications" }
+"9": { de: "Umwelt und Lebensraum", fr: "Environnement et territoire", it: "Ambiente e territorio", en: "Environment and land" }
+"9.1": { de: "Boden", fr: "Sol", it: "Suolo", en: "Land" }
+"9.11": { de: "Raumplanung", fr: "Aménagement du territoire", it: "Pianificazione del territorio", en: "Spatial planning", words: ["mitage", "Zersiedelung", "résidences secondaires", "Zweitwohnungen", "zone à bâtir", "Bauzone"] }
+"9.12": { de: "Bodenrecht", fr: "Droit foncier", it: "Diritto fondiario", en: "Land law" }
+"9.2": { de: "Wohnen", fr: "Logement", it: "Abitazione", en: "Housing", words: ["logements", "Wohnungen", "abitazioni"] }
+"9.21": { de: "Mietwesen", fr: "Bail à loyer", it: "Locazione", en: "Tenancy", words: ["loyer", "Miete", "affitto", "rent", "locataires", "Mieter", "inquilini", "tenants", "sous-location", "Untermiete"] }
+"9.22": { de: "Wohnungsbau, Wohneigentum", fr: "Construction et propriété du logement", it: "Costruzione e proprietà dell'abitazione", en: "Housing construction and ownership", words: ["propriétaires", "Eigentümer", "proprietari", "owners"] }
+"9.3": { de: "Umwelt", fr: "Environnement", it: "Ambiente", en: "Environment", words: ["écologie", "Ökologie", "ecologia", "ecology"] }
+"9.31": { de: "Umweltpolitik", fr: "Politique environnementale", it: "Politica ambientale", en: "Environmental policy", words: ["climat", "Klima", "clima", "climate", "CO2", "biodiversité", "Biodiversität", "biodiversità", "biodiversity"] }
+"9.32": { de: "Lärmschutz", fr: "Protection contre le bruit", it: "Protezione contro il rumore", en: "Noise protection", words: ["feux d'artifice", "Feuerwerk", "fuochi d'artificio", "fireworks"] }
+"9.33": { de: "Luftreinhaltung", fr: "Protection de l'air", it: "Protezione dell'aria", en: "Air pollution control" }
+"9.34": { de: "Gewässerschutz", fr: "Protection des eaux", it: "Protezione delle acque", en: "Water protection" }
+"9.35": { de: "Bodenschutz", fr: "Protection des sols", it: "Protezione del suolo", en: "Soil protection" }
+"9.36": { de: "Abfälle", fr: "Déchets", it: "Rifiuti", en: "Waste" }
+"9.37": { de: "Natur- und Heimatschutz", fr: "Protection de la nature et du paysage", it: "Protezione della natura e del paesaggio", en: "Nature and heritage protection", words: ["paysage", "Landschaft", "paesaggio", "landscape"] }
+"9.38": { de: "Tierschutz", fr: "Protection des animaux", it: "Protezione degli animali", en: "Animal welfare" }
+"10": { de: "Sozial- und Gesellschaftspolitik", fr: "Politique sociale et société", it: "Politica sociale e società", en: "Social policy and society" }
+"10.1": { de: "Gesundheit", fr: "Santé", it: "Sanità", en: "Health" }
+"10.11": { de: "Gesundheitspolitik", fr: "Politique de la santé", it: "Politica sanitaria", en: "Health policy", words: ["soins infirmiers", "Pflege", "cure infermieristiche", "nursing", "coûts de la santé", "Gesundheitskosten", "Covid", "vaccin", "Impfung"] }
+"10.12": { de: "Medizinforschung und -technik", fr: "Recherche et technique médicales", it: "Ricerca e tecnica mediche", en: "Medical research and technology", words: ["don d'organes", "Organspende", "donazione di organi", "organ donation", "transplantation"] }
+"10.13": { de: "Medikamente", fr: "Médicaments", it: "Medicamenti", en: "Medicines" }
+"10.14": { de: "Suchtmittel", fr: "Addictions", it: "Dipendenze", en: "Addictive substances", words: ["tabac", "Tabak", "tabacco", "tobacco", "alcool", "Alkohol", "drogues", "Drogen", "cannabis"] }
+"10.15": { de: "Fortpflanzungsmedizin", fr: "Procréation médicalement assistée", it: "Procreazione medicalmente assistita", en: "Reproductive medicine" }
+"10.2": { de: "Sozialversicherungen", fr: "Assurances sociales", it: "Assicurazioni sociali", en: "Social insurance" }
+"10.21": { de: "Alters- und Hinterbliebenenversicherung", fr: "Assurance-vieillesse et survivants", it: "Assicurazione vecchiaia e superstiti", en: "Old-age and survivors' insurance", words: ["AVS", "AHV", "rente", "Rente", "rendita", "retraite", "Pension", "pension", "pensione", "vieillesse", "Alter", "âge de la retraite", "Rentenalter", "13e rente"] }
+"10.22": { de: "Invalidenversicherung", fr: "Assurance-invalidité", it: "Assicurazione invalidità", en: "Disability insurance", words: ["AI", "IV"] }
+"10.23": { de: "Berufliche Vorsorge", fr: "Prévoyance professionnelle", it: "Previdenza professionale", en: "Occupational pensions", words: ["LPP", "BVG", "2e pilier", "zweite Säule", "secondo pilastro", "second pillar", "caisse de pension", "Pensionskasse", "cassa pensione", "pension fund", "retraite", "Rente", "pension"] }
+"10.24": { de: "Kranken- und Unfallversicherung", fr: "Assurance-maladie et accidents", it: "Assicurazione malattia e infortuni", en: "Health and accident insurance", words: ["LAMal", "KVG", "primes", "Prämien", "premi", "premiums", "caisse-maladie", "Krankenkasse", "cassa malati"] }
+"10.25": { de: "Mutterschaftsversicherung", fr: "Assurance-maternité", it: "Assicurazione maternità", en: "Maternity insurance", words: ["congé maternité", "Mutterschaftsurlaub", "congé paternité", "Vaterschaftsurlaub"] }
+"10.26": { de: "Arbeitslosenversicherung", fr: "Assurance-chômage", it: "Assicurazione contro la disoccupazione", en: "Unemployment insurance", words: ["chômage", "Arbeitslosigkeit", "disoccupazione"] }
+"10.27": { de: "Erwerbsersatzordnung", fr: "Allocations pour perte de gain", it: "Indennità di perdita di guadagno", en: "Income compensation", words: ["APG", "EO", "IPG"] }
+"10.28": { de: "Fürsorge", fr: "Aide sociale", it: "Assistenza sociale", en: "Social assistance", words: ["revenu de base", "Grundeinkommen", "reddito di base", "basic income"] }
+"10.3": { de: "Gesellschaftsfragen", fr: "Questions de société", it: "Questioni sociali", en: "Social issues" }
+"10.31": { de: "Migrations- und Integrationspolitik", fr: "Migration et intégration", it: "Migrazione e integrazione", en: "Migration and integration", words: ["immigration", "Zuwanderung", "Einwanderung", "immigrazione", "étrangers", "Ausländer", "stranieri", "foreigners", "population", "Bevölkerung", "10 millions", "10-Millionen"] }
+"10.32": { de: "Asylpolitik", fr: "Asile", it: "Asilo", en: "Asylum", words: ["réfugiés", "Flüchtlinge", "rifugiati", "refugees"] }
+"10.33": { de: "Frauen und Gleichstellungspolitik", fr: "Femmes et égalité", it: "Donne e parità", en: "Women and equality", words: ["égalité", "Gleichstellung", "parità", "equality"] }
+"10.34": { de: "Familienpolitik", fr: "Politique familiale", it: "Politica familiare", en: "Family policy", words: ["famille", "Familie", "famiglia", "family", "enfants", "Kinder", "crèches", "Kita", "mariage", "Ehe"] }
+"10.35": { de: "Kinder- und Jugendpolitik", fr: "Enfance et jeunesse", it: "Infanzia e gioventù", en: "Children and youth" }
+"10.36": { de: "Alterspolitik", fr: "Politique de la vieillesse", it: "Politica della vecchiaia", en: "Ageing policy", words: ["personnes âgées", "Senioren", "anziani", "seniors"] }
+"10.37": { de: "Menschen mit Behinderungen", fr: "Personnes handicapées", it: "Persone con disabilità", en: "People with disabilities", words: ["handicap", "Behinderung", "disabilità", "disability", "inclusion", "Inklusion"] }
+"10.38": { de: "LGBTQIA+", fr: "LGBTQIA+", it: "LGBTQIA+", en: "LGBTQIA+", words: ["mariage pour tous", "Ehe für alle", "matrimonio per tutti"] }
+"11": { de: "Bildung und Forschung", fr: "Formation et recherche", it: "Formazione e ricerca", en: "Education and research" }
+"11.1": { de: "Bildungspolitik", fr: "Politique de la formation", it: "Politica della formazione", en: "Education policy" }
+"11.2": { de: "Schulen", fr: "Écoles", it: "Scuole", en: "Schools" }
+"11.3": { de: "Hochschulen", fr: "Hautes écoles", it: "Scuole universitarie", en: "Higher education", words: ["universités", "Universitäten", "università", "universities"] }
+"11.4": { de: "Forschung", fr: "Recherche", it: "Ricerca", en: "Research" }
+"11.41": { de: "Gentechnologie", fr: "Génie génétique", it: "Ingegneria genetica", en: "Genetic engineering", words: ["OGM", "GVO"] }
+"11.42": { de: "Tierversuche", fr: "Expérimentation animale", it: "Sperimentazione animale", en: "Animal testing" }
+"11.5": { de: "Berufsbildung", fr: "Formation professionnelle", it: "Formazione professionale", en: "Vocational training", words: ["apprentissage", "Lehre", "apprendistato", "apprenticeship"] }
+"12": { de: "Kultur, Religion, Medien", fr: "Culture, religion, médias", it: "Cultura, religione, media", en: "Culture, religion, media" }
+"12.1": { de: "Kulturpolitik", fr: "Politique culturelle", it: "Politica culturale", en: "Cultural policy", words: ["cinéma", "Film", "cinema", "film", "Netflix", "Lex Netflix"] }
+"12.2": { de: "Sprachpolitik", fr: "Langues", it: "Lingue", en: "Languages" }
+"12.3": { de: "Religion, Kirchen", fr: "Religion, Églises", it: "Religione, Chiese", en: "Religion, churches", words: ["burqa", "Burka", "voile", "Verhüllungsverbot", "minarets", "Minarett"] }
+"12.4": { de: "Sport", fr: "Sport", it: "Sport", en: "Sport" }
+"12.5": { de: "Medien und Kommunikation", fr: "Médias et communication", it: "Media e comunicazione", en: "Media and communication" }
+"12.51": { de: "Medienpolitik", fr: "Politique des médias", it: "Politica dei media", en: "Media policy" }
+"12.52": { de: "Presse", fr: "Presse", it: "Stampa", en: "Press" }
+"12.53": { de: "Radio, Fernsehen, Elektronische Medien", fr: "Radio, télévision, médias électroniques", it: "Radio, televisione, media elettronici", en: "Radio, TV, electronic media", words: ["SSR", "SRG", "RSI", "Billag", "Serafe", "redevance", "Gebühren", "canone", "licence fee", "200 francs", "200 Franken"] }
+"12.54": { de: "Medienfreiheit", fr: "Liberté des médias", it: "Libertà dei media", en: "Media freedom" }

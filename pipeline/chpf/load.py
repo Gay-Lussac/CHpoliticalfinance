@@ -42,6 +42,8 @@ class Loader:
         # campaign_target_party comes with migration 003; until it is applied the loader simply skips it.
         self.c.execute("SHOW TABLES LIKE 'campaign_target_party'")
         self.has_target_party = self.c.fetchone() is not None
+        self.c.execute("SHOW COLUMNS FROM ballot LIKE 'policy_areas'")          # migration 005
+        self.has_policy_areas = self.c.fetchone() is not None
 
     def _upsert_id(self, sql: str, args) -> int:
         """sql must end with 'ON DUPLICATE KEY UPDATE id=LAST_INSERT_ID(id), …'."""
@@ -262,6 +264,8 @@ class Loader:
                  b.cantons_yes, self.run))
             for lang, title in b.titles.items():
                 self._label("ballot", bid, "title", lang, title, official=False)
+            if self.has_policy_areas:
+                self.c.execute("UPDATE ballot SET policy_areas=%s WHERE id=%s", (",".join(b.policy_areas) or None, bid))
             self.c.execute("DELETE FROM ballot_recommendation WHERE ballot_id=%s", (bid,))
             rows = [(bid, rec_ids[code], rec) for code, rec in b.recommendations.items() if code in rec_ids]
             if rows:
