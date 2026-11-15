@@ -527,19 +527,42 @@ app.get('/api/mandates', async (req) => {
 });
 
 // When named donations arrive: weeks before vote day (-1 = after the vote, 26 = 26 weeks or more), by side.
+// Only named donations (> CHF 15,000) carry a date, so the answer also gives the campaigns' whole declared revenue and
+// its sources, for the page to say how much of the money the chart covers.
 const MAX_WEEKS = 26;
 app.get('/api/timing', async (req) => {
   const id = req.query.financing_id === undefined ? null : idOf(req.query.financing_id);
-  if (req.query.financing_id !== undefined && id === null) return [];
+  if (req.query.financing_id !== undefined && id === null) return { weeks: [], revenue: null };
   return cached(`timing:${id ?? 'all'}`, async () => {
+    const one = id === null ? '' : 'AND financing_id = ?';
+    const args = id === null ? [] : [id];
     const [rows] = await pool.query(
       `SELECT GREATEST(-1, LEAST(${MAX_WEEKS}, FLOOR(DATEDIFF(event_date, granted_on) / 7))) AS weeks, stance,
-              SUM(value_chf) AS total, COUNT(*) AS n, COUNT(DISTINCT financing_id) AS votes
+              SUM(value_chf) AS total, COUNT(*) AS n
          FROM v_flow
         WHERE financing_kind = 'vote' AND is_latest AND granted_on IS NOT NULL AND event_date IS NOT NULL
-          AND stance IN ('for', 'against') ${id === null ? '' : 'AND financing_id = ?'}
-        GROUP BY weeks, stance ORDER BY weeks DESC`, id === null ? [] : [id]);
-    return rows.map((r) => ({ weeks: Number(r.weeks), stance: r.stance, total: Number(r.total), n: Number(r.n) }));
+          AND stance IN ('for', 'against') ${one}
+        GROUP BY weeks, stance ORDER BY weeks DESC`, args);
+    const [[named]] = await pool.query(
+      `SELECT COALESCE(SUM(value_chf), 0) AS total, COALESCE(SUM(granted_on IS NULL), 0) AS undated
+         FROM v_flow WHERE financing_kind = 'vote' AND is_latest AND stance IN ('for', 'against') ${one}`, args);
+    // Declared revenue of the same campaigns: final accounts, or the budget where no final accounts exist yet.
+    const [[rev]] = await pool.query(
+      `SELECT COALESCE(SUM(t.total), 0) AS total, COALESCE(SUM(t.equity), 0) AS own_funds,
+              COALESCE(SUM(t.monetary_allowances + t.non_monetary_allowances), 0) AS donations,
+              COALESCE(SUM(t.events + t.sales), 0) AS events_sales
+         FROM declaration_totals t JOIN declaration d ON d.id = t.declaration_id
+         JOIN financing f ON f.id = d.financing_id JOIN campaign c ON c.id = d.campaign_id
+        WHERE f.kind = 'vote' AND c.stance IN ('for', 'against') ${id === null ? '' : 'AND f.id = ?'}
+          AND (d.phase = 'final' OR NOT EXISTS (SELECT 1 FROM declaration d2
+                WHERE d2.efk_campaign_id = d.efk_campaign_id AND d2.phase = 'final'))`, args);
+    const n = (v) => Number(v ?? 0);
+    const revenue = { total: n(rev.total), own_funds: n(rev.own_funds), donations: n(rev.donations),
+      events_sales: n(rev.events_sales), named: n(named.total) };
+    revenue.smaller_donations = Math.max(0, revenue.donations - revenue.named);
+    revenue.other = Math.max(0, revenue.total - revenue.own_funds - revenue.donations - revenue.events_sales);
+    return { weeks: rows.map((r) => ({ weeks: Number(r.weeks), stance: r.stance, total: n(r.total), n: n(r.n) })),
+      undated_named: n(named.undated), revenue };
   });
 });
 
